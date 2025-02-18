@@ -57,9 +57,7 @@ if 'selected_etf' not in st.session_state:
 # Create a Streamlit sidebar that lets the user select an ETF
 selected_etf = st.sidebar.selectbox(
     'Select an ETF',
-    etf_tickers,
-    index=etf_tickers.index(st.session_state.selected_etf),
-    on_change=lambda: st.session_state.update(selected_etf=st.session_state.selected_etf)
+    etf_tickers
 )
 
 # Update the selected ETF in session state
