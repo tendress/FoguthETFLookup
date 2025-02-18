@@ -42,7 +42,7 @@ def load_etf_data(etf_tickers):
     etf_corr = etf_corr.pct_change().corr()
     return tickerdata, etf_corr
 
-etf_tickers = pd.read_excel(r'factsheets/tickers.xlsx')
+etf_tickers = pd.read_excel(r'tickers.xlsx')
 etf_tickers = etf_tickers['Ticker'].tolist()
 
 # Load ETF data and correlation matrix
