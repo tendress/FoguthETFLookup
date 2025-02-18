@@ -1,4 +1,9 @@
 ### Foguth Financial ETF Lookup Tool ###
+import yfinance as yf
+import pandas as pd
+import numpy as np
+import streamlit as st
+
 
 def etflookup(etf):
     # Get the ETF data
