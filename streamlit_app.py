@@ -104,6 +104,12 @@ st.write(tickerdata[selected_etf]['Sector Weightings'])
 st.header('Fund Operations', divider=True)
 st.write(tickerdata[selected_etf]['Fund Operations'])
 
+#display a graph of performance history
+etf_data = yf.Ticker(selected_etf)
+etf_history = etf_data.history(period='max')
+st.header('Performance History', divider=True)
+st.line_chart(etf_history['Close'])
+
 
 st.header('Correlation Matrix', divider=True)
 st.write(etf_corr.style.background_gradient(cmap='YlGn'))
