@@ -10,8 +10,8 @@ import matplotlib
 def etflookup(etf):
     # Get the ETF data
     etf_data = yf.Ticker(etf)
-    etf_info = etf_data.info
-    etf_balance_sheet = etf_data.balance_sheet
+    #etf_info = etf_data.info
+    #etf_balance_sheet = etf_data.balance_sheet
     etf_trades = etf_data.get_funds_data()
     
     #return etf_info
@@ -44,12 +44,13 @@ def load_etf_data(etf_tickers):
     etf_corr = etf_corr.pct_change().corr()
     return tickerdata, etf_corr
 
-etf_tickers = pd.read_excel(r'tickers1.xlsx')
-etf_tickers = etf_tickers['Ticker'].tolist()
+#etf_tickers = pd.read_excel(r'tickers1.xlsx')
+#etf_tickers = etf_tickers['Ticker'].tolist()
+etf_tickers = ['QQQM', 'SPY', 'DIVB', 'MOAT', 'AGG', 'SPYG', 'TLT', 'LQD', 'SPSM', 'UTEN', 'UFIV', 'VTI', 'PHYL', 'FLBL', 'BIL', 'SPYV', 'FJAN', 'FJUN', 'DJUL', 'DOCT', 'XLC', 'XLE', 'XLF', 'XLV', 'XLY', 'XLK', 'OMFL', 'AIQ', 'SMH', 'IBLC', 'BOTZ', 'GRID', 'JEPI', 'SCHD', 'QYLD', 'DIVO', 'FNDX', 'IUS', 'SDIV', 'SPHD', 'KNG', 'PAAA', 'NCLO']
+
 
 # Load ETF data and correlation matrix
 tickerdata, etf_corr = load_etf_data(etf_tickers)
-
 # Initialize session state
 if 'selected_etf' not in st.session_state:
     st.session_state.selected_etf = etf_tickers[0]
@@ -59,6 +60,28 @@ selected_etf = st.sidebar.selectbox(
     'Select an ETF',
     etf_tickers
 )
+
+# read the json file foguthmodels.json
+foguthmodels = pd.read_json('foguthmodels.json')
+foguthmodels = foguthmodels.to_dict()
+
+# Create a Streamlit sidebar that lets the user select a model
+selected_model = st.sidebar.selectbox(
+    'Select a Model',
+    foguthmodels.keys()
+)
+
+# After the user selects the model, display the weights for the selected model in the sidebar
+# and do not display tickers that have a weight of 0
+# Display the model weights in the sidebar
+# sort the dictionary by value
+sorted_weights = sorted(foguthmodels[selected_model].items(), key=lambda x: x[1], reverse=True)
+for ticker, weight in sorted_weights:
+    if weight > 0:
+        st.sidebar.write(f'{ticker}: {weight}')
+        
+
+
 
 # Update the selected ETF in session state
 st.session_state.selected_etf = selected_etf
