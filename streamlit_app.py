@@ -57,7 +57,7 @@ if 'selected_etf' not in st.session_state:
 
 # Create a Streamlit sidebar that lets the user select an ETF
 st.sidebar.title('Foguth Financial ETF Lookup Tool')
-st.sidebar.write("https://foguthetflookup.streamlit.app/")
+st.sidebar.markdown("[Foguth ETP Model Performance](https://foguthmodelperformance.streamlit.app/)")
 selected_etf = st.sidebar.selectbox(
     'Select an ETF',
     etf_tickers
