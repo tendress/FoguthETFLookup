@@ -4,7 +4,7 @@ import streamlit as st
 import yfinance as yf
 
 # Streamlit app title
-st.title("Models Table Viewer")
+st.title("Foguth ETP Models Year to Date Performance")
 
 # Connect to SQLite database
 def load_models_table():
@@ -45,6 +45,11 @@ def load_security_sets_table():
 
 # Load the models, security_sets table
 models_df = load_models_table()
+
+
+st.title("Foguth Investment Strategies Year to Date Performance")
+
+
 security_sets_df = load_security_sets_table()
 
 # Display the models table in the Streamlit app and remove the id column and sort by YTDPriceReturn
