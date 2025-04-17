@@ -25,7 +25,6 @@ def load_models_table():
         st.error(f"Error loading models table: {e}")
         return pd.DataFrame()  # Return an empty DataFrame if there's an error
     
-    
 
 def load_security_sets_table():
     try:
@@ -113,4 +112,5 @@ st.sidebar.write(f"S&P 500 YTD: {spy_ytd_return:.2f}%" if spy_ytd_return is not 
 st.sidebar.write(f"Nasdaq YTD: {qqqm_ytd_return:.2f}%" if qqqm_ytd_return is not None else "QQQM data not available")
 st.sidebar.write(f"Dow Jones YTD: {dia_ytd_return:.2f}%" if dia_ytd_return is not None else "DIA data not available")
 
-st.sidebar.write("https://foguthetflookup.streamlit.app/")
+# Display the link to the Foguth ETP Lookup app
+st.sidebar.markdown("[Foguth ETP Lookup](https://foguth.com/etp-lookup/)")
