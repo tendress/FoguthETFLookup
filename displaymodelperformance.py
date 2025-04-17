@@ -113,4 +113,4 @@ st.sidebar.write(f"Nasdaq YTD: {qqqm_ytd_return:.2f}%" if qqqm_ytd_return is not
 st.sidebar.write(f"Dow Jones YTD: {dia_ytd_return:.2f}%" if dia_ytd_return is not None else "DIA data not available")
 
 # Display the link to the Foguth ETP Lookup app
-
+st.sidebar.markdown("[Foguth ETP Lookup](https://foguth.com/etp-lookup/)")
