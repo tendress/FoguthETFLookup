@@ -68,7 +68,8 @@ if not models_df.empty:
 else:
     st.warning("No data available in the models table.")
     
-st.title("Foguth Investment Strategies Year to Date Performance")
+st.title("Foguth Investment Strategies")
+st.header("Year to Date Performance")
 # Display the security_sets table in the Streamlit app and remove the id column and sort by YTDPriceReturn
 if not security_sets_df.empty:
     # Remove the 'id' column if it exists
