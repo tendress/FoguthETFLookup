@@ -1,6 +1,7 @@
 import sqlite3
 import pandas as pd
 import streamlit as st
+import yfinance as yf
 
 # Streamlit app title
 st.title("Models Table Viewer")
@@ -76,4 +77,31 @@ if not security_sets_df.empty:
     st.dataframe(security_sets_df, use_container_width=True, height=500, hide_index=True)
     
 
+# get the YTD price return of SPY, QQQM and DIA from yfinance
+def get_ytd_price_return(ticker):
+    try:
+        # Fetch the ticker data from yfinance
+        etf = yf.Ticker(ticker)
+        ytd_data = etf.history(period='ytd')
         
+        if not ytd_data.empty:
+            start_price = ytd_data['Close'].iloc[0]  # Price on the first trading day of the year
+            current_price = ytd_data['Close'].iloc[-1]  # Latest price
+            ytd_price_return = ((current_price - start_price) / start_price) * 100 if start_price else None
+            return ytd_price_return
+        else:
+            return None
+    except Exception as e:
+        st.error(f"Error fetching YTD price return for {ticker}: {e}")
+        return None
+    
+
+
+# create a sidebar that displays the YTD performance of SPY, QQQM and DIA only
+st.sidebar.title("YTD Performance of SPY, QQQM and DIA")
+spy_ytd_return = get_ytd_price_return('SPY')
+qqqm_ytd_return = get_ytd_price_return('QQQM')
+dia_ytd_return = get_ytd_price_return('DIA')
+st.sidebar.write(f"SPY YTD Price Return: {spy_ytd_return:.2f}%" if spy_ytd_return is not None else "SPY data not available")   
+st.sidebar.write(f"QQQM YTD Price Return: {qqqm_ytd_return:.2f}%" if qqqm_ytd_return is not None else "QQQM data not available")
+st.sidebar.write(f"DIA YTD Price Return: {dia_ytd_return:.2f}%" if dia_ytd_return is not None else "DIA data not available")
