@@ -5,7 +5,7 @@ import yfinance as yf
 
 # Streamlit app title
 st.title("Foguth ETP Models")
-st.heading("Year to Date Performance")
+st.header("Year to Date Performance")
 
 # Connect to SQLite database
 def load_models_table():
