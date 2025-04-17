@@ -113,4 +113,4 @@ st.sidebar.write(f"Nasdaq YTD: {qqqm_ytd_return:.2f}%" if qqqm_ytd_return is not
 st.sidebar.write(f"Dow Jones YTD: {dia_ytd_return:.2f}%" if dia_ytd_return is not None else "DIA data not available")
 
 # make a hyperlink to the foguth website
-st.sidebar.markdown("[Foguth ETF Lookup Tool](https://www.foguth.com)")
+st.sidebar.markdown("[Foguth ETF Lookup Tool](https://foguthetflookup.streamlit.app/)")
