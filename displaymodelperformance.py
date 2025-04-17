@@ -98,7 +98,7 @@ def get_ytd_price_return(ticker):
 
 
 # create a sidebar that displays the YTD performance of SPY, QQQM and DIA only
-st.sidebar.title("YTD Performance of SPY, QQQM and DIA")
+st.sidebar.title("Benchmarks")
 spy_ytd_return = get_ytd_price_return('SPY')
 qqqm_ytd_return = get_ytd_price_return('QQQM')
 dia_ytd_return = get_ytd_price_return('DIA')
