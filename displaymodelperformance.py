@@ -117,4 +117,4 @@ st.sidebar.write(f"Dow Jones YTD: {dia_ytd_return:.2f}%" if dia_ytd_return is no
 st.sidebar.title("Links")
 #st.sidebar.link_button(label="", url="")
 if st.sidebar.button("Foguth ETF Models"):
-    st.switch_page("https://foguthetfmodels.streamlit.app/")
+    st.switch_page("https://foguthetflookup.streamlit.app/")
