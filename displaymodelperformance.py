@@ -115,4 +115,4 @@ st.sidebar.write(f"Dow Jones YTD: {dia_ytd_return:.2f}%" if dia_ytd_return is no
 # make a hyperlink to the foguth website
 
 st.sidebar.title("Links")
-st.sidebar.markdown("[Foguth ETF Lookup Tool](https://foguthetflookup.streamlit.app/)")
+st.sidebar.link_button(label="Foguth ETF Models", url="https://foguthetfmodels.streamlit.app/")
