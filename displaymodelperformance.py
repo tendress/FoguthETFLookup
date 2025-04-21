@@ -17,7 +17,7 @@ def load_models_table():
         conn = sqlite3.connect('foguth_etf_models.db')
         
         # Load the models table into a DataFrame
-        query = "SELECT name AS Name, YTDPriceReturn AS YTDReturn, YTDPriceReturnDate AS AsOf, yield AS AnnualYield%, ExpenseRatio FROM models"
+        query = "SELECT name AS Name, YTDPriceReturn AS YTDReturn, YTDPriceReturnDate AS AsOf, yield AS AnnualYield, ExpenseRatio FROM models"
         models_df = pd.read_sql_query(query, conn)
         
         # Close the connection
@@ -67,7 +67,7 @@ if not models_df.empty:
     
     # Format the Yield and ExpenseRatio columns
     if 'AnnualYield' in models_df.columns:
-        models_df['AnnualYield%'] = models_df['AnnualYield%'].apply(lambda x: f"{x * 100:.2f}" if pd.notnull(x) else "N/A")
+        models_df['AnnualYield'] = models_df['AnnualYield'].apply(lambda x: f"{x * 100:.2f}" if pd.notnull(x) else "N/A")
     if 'ExpenseRatio' in models_df.columns:
         models_df['ExpenseRatio'] = models_df['ExpenseRatio'].apply(lambda x: f"{x:.2f}%" if pd.notnull(x) else "N/A")
     
