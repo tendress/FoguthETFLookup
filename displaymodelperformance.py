@@ -10,11 +10,7 @@ database_path = 'foguth_etf_models.db'
 st.title("Foguth ETP Models")
 st.header("Year to Date Performance")
 
-##TEST CODE
 
-st.write("Columns in models DataFrame:", models_df.columns)
-
-##
 
 
 # Connect to SQLite database
@@ -150,6 +146,12 @@ dia_ytd_return = get_ytd_price_return('DIA')
 st.sidebar.write(f"S&P 500 YTD: {spy_ytd_return:.2f}%" if spy_ytd_return is not None else "SPY data not available")   
 st.sidebar.write(f"Nasdaq YTD: {qqqm_ytd_return:.2f}%" if qqqm_ytd_return is not None else "QQQM data not available")
 st.sidebar.write(f"Dow Jones YTD: {dia_ytd_return:.2f}%" if dia_ytd_return is not None else "DIA data not available")
+
+##TEST CODE
+
+st.sidebar.write("Columns in models DataFrame:", models_df.columns)
+
+##
 
 # make a hyperlink to the foguth website
 
