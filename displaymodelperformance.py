@@ -10,9 +10,6 @@ database_path = 'foguth_etf_models.db'
 st.title("Foguth ETP Models")
 st.header("Year to Date Performance")
 
-
-
-
 # Connect to SQLite database
 def load_models_table():
     try:
@@ -67,6 +64,12 @@ if not models_df.empty:
     # Sort by YTDPriceReturn in descending order
     if 'YTDPriceReturn' in models_df.columns:
         models_df = models_df.sort_values(by='YTDPriceReturn', ascending=False).reset_index(drop=True)
+    
+    # Format the Yield and ExpenseRatio columns
+    if 'Yield' in models_df.columns:
+        models_df['Yield'] = models_df['Yield'].apply(lambda x: f"{x * 100:.2f}%" if pd.notnull(x) else "N/A")
+    if 'ExpenseRatio' in models_df.columns:
+        models_df['ExpenseRatio'] = models_df['ExpenseRatio'].apply(lambda x: f"{x:.2f}%" if pd.notnull(x) else "N/A")
     
     # Display the DataFrame in the Streamlit app
     st.dataframe(models_df, use_container_width=True, height=500, hide_index=True)
@@ -146,7 +149,6 @@ dia_ytd_return = get_ytd_price_return('DIA')
 st.sidebar.write(f"S&P 500 YTD: {spy_ytd_return:.2f}%" if spy_ytd_return is not None else "SPY data not available")   
 st.sidebar.write(f"Nasdaq YTD: {qqqm_ytd_return:.2f}%" if qqqm_ytd_return is not None else "QQQM data not available")
 st.sidebar.write(f"Dow Jones YTD: {dia_ytd_return:.2f}%" if dia_ytd_return is not None else "DIA data not available")
-
 
 # make a hyperlink to the foguth website
 
