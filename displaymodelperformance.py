@@ -85,8 +85,8 @@ if not security_sets_df.empty:
     # Display the DataFrame in the Streamlit app
     st.dataframe(security_sets_df, use_container_width=True, height=500, hide_index=True)
 
-st.header("Use these buttons to update the YTD returns and yield.")
-st.header("First, click the button to update the ETFs and wait until it completes.")
+st.write("Use these buttons to update the YTD returns and yield.")
+st.write("First, click the button to update the ETFs and wait until it completes.")
 
 # Button to update ETF YTD returns
 if st.button("Update ETF YTD Returns"):
@@ -104,7 +104,7 @@ if st.button("Update Security Set YTD Returns"):
     st.write("Security Set YTD returns updated successfully!")
     st.dataframe(security_set_df)
 
-st.header("Finally, click the button to update the Models")
+st.write("Finally, click the button to update the Models")
 
 
 # Button to update Model YTD returns
