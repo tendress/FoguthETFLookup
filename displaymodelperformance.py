@@ -17,7 +17,7 @@ def load_models_table():
         conn = sqlite3.connect('foguth_etf_models.db')
         
         # Load the models table into a DataFrame
-        query = "SELECT name AS Name, YTDPriceReturn AS YTDReturn, YTDPriceReturnDate AS AsOf, yield AS Yield, ExpenseRatio FROM models"
+        query = "SELECT name AS Name, YTDPriceReturn AS YTDReturn, YTDPriceReturnDate AS AsOf, yield AS AnnualYield, ExpenseRatio FROM models"
         models_df = pd.read_sql_query(query, conn)
         
         # Close the connection
