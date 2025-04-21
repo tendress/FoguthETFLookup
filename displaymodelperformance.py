@@ -10,6 +10,13 @@ database_path = 'foguth_etf_models.db'
 st.title("Foguth ETP Models")
 st.header("Year to Date Performance")
 
+##TEST CODE
+
+st.write("Columns in models DataFrame:", models_df.columns)
+
+##
+
+
 # Connect to SQLite database
 def load_models_table():
     try:
