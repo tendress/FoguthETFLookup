@@ -67,7 +67,7 @@ if not models_df.empty:
     
     # Format the Yield and ExpenseRatio columns
     if 'AnnualYield' in models_df.columns:
-        models_df['AnnualYield'] = models_df['AnnualYield'].apply(lambda x: f"{x * 100:.2f}" if pd.notnull(x) else "N/A")
+        models_df['AnnualYield'] = models_df['AnnualYield'].apply(lambda x: f"{x * 100:.2f}%" if pd.notnull(x) else "N/A")
     if 'ExpenseRatio' in models_df.columns:
         models_df['ExpenseRatio'] = models_df['ExpenseRatio'].apply(lambda x: f"{x:.2f}%" if pd.notnull(x) else "N/A")
     
