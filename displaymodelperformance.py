@@ -66,8 +66,6 @@ if not models_df.empty:
         models_df = models_df.sort_values(by='YTDPriceReturn', ascending=False).reset_index(drop=True)
     
     # Format the Yield and ExpenseRatio columns
-    if 'AnnualYield' in models_df.columns:
-        models_df['AnnualYield'] = models_df['AnnualYield'].apply(lambda x: f"{x * 100:.2f}%" if pd.notnull(x) else "N/A")
     if 'ExpenseRatio' in models_df.columns:
         models_df['ExpenseRatio'] = models_df['ExpenseRatio'].apply(lambda x: f"{x:.2f}%" if pd.notnull(x) else "N/A")
     
