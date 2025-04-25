@@ -1,116 +1,144 @@
 ### Foguth Financial ETF Lookup Tool ###
 import yfinance as yf
 import pandas as pd
-import numpy as np
 import streamlit as st
-import openpyxl
-import matplotlib
+import sqlite3
 
+# Database connection
+database_path = 'foguth_etf_models.db'
+conn = sqlite3.connect(database_path)
+cursor = conn.cursor()
 
+# Fetch the list of ETF tickers from the database
+cursor.execute('SELECT symbol FROM etfs')
+myTickers = [row[0] for row in cursor.fetchall()]  # Create a list of tickers
+
+# Function to fetch ETF data using yfinance
 def etflookup(etf):
-    # Get the ETF data
     etf_data = yf.Ticker(etf)
-    #etf_info = etf_data.info
-    #etf_balance_sheet = etf_data.balance_sheet
-    etf_trades = etf_data.get_funds_data()
-    
-    #return etf_info
-    return etf_trades
+    return etf_data.get_funds_data()
 
+# Cache ETF data and correlation matrix
 @st.cache_data
-def load_etf_data(etf_tickers):
+def load_etf_data(myTickers):
     tickerdata = {}
     etf_corr = pd.DataFrame()
 
-    for etf in etf_tickers:
+    for etf in myTickers:
         etf_info = etflookup(etf)
-        # Get the data for the individual ETFs
         top_holdings = etf_info.top_holdings
-        top_holdings['Holding Percent'] = top_holdings['Holding Percent'] * 100
-        # add a percent symbol after the number
+        top_holdings['Holding Percent'] = top_holdings['Holding Percent'] * 100  # Convert to percentage
         asset_classes = etf_info.asset_classes
         sector_weightings = etf_info.sector_weightings
         fund_overview = etf_info.fund_overview
         fund_operations = etf_info.fund_operations
         fund_description = etf_info.description
-        # store the data in a dictionary with the ticker as the key
-        etf_data = {'Top Holdings': top_holdings, 'Asset Classes': asset_classes, 'Sector Weightings': sector_weightings, 'Fund Overview': fund_overview, 'Fund Operations': fund_operations, 'Fund Description': fund_description}
-        tickerdata[etf] = etf_data
+
+        etf_dict = {
+            'Top Holdings': top_holdings,
+            'Asset Classes': asset_classes,
+            'Sector Weightings': sector_weightings,
+            'Fund Overview': fund_overview,
+            'Fund Operations': fund_operations,
+            'Fund Description': fund_description
+        }
+        tickerdata[etf] = etf_dict
 
         etf_data = yf.Ticker(etf)
         etf_history = etf_data.history(period='max')
         etf_corr[etf] = etf_history['Close']
-    
+
     etf_corr = etf_corr.pct_change().corr()
     return tickerdata, etf_corr
 
-#etf_tickers = pd.read_excel(r'tickers1.xlsx')
-#etf_tickers = etf_tickers['Ticker'].tolist()
-etf_tickers = ['QQQM', 'SPY', 'DIVB', 'MOAT', 'AGG', 'SPYG', 'TLT', 'LQD', 'SPSM', 'UTEN', 'UFIV', 'VTI', 'PHYL', 'FLBL', 'BIL', 'SPYV', 'FJAN', 'FJUN', 'DJUL', 'DOCT', 'XLC', 'XLE', 'XLF', 'XLV', 'XLY', 'XLK', 'OMFL', 'AIQ', 'SMH', 'IBLC', 'BOTZ', 'GRID', 'JEPI', 'SCHD', 'QYLD', 'DIVO', 'FNDX', 'IUS', 'SDIV', 'SPHD', 'KNG', 'PAAA', 'NCLO']
-
-
 # Load ETF data and correlation matrix
-tickerdata, etf_corr = load_etf_data(etf_tickers)
-# Initialize session state
-if 'selected_etf' not in st.session_state:
-    st.session_state.selected_etf = etf_tickers[0]
+tickerdata, etf_corr = load_etf_data(myTickers)
 
-# Create a Streamlit sidebar that lets the user select an ETF
+# Initialize session state for selected ETF
+if 'selected_etf' not in st.session_state:
+    st.session_state.selected_etf = myTickers[0]
+
+# Sidebar: ETF selection
 st.sidebar.title('Foguth Financial ETF Lookup Tool')
-st.sidebar.markdown("[Foguth ETP Model Performance](https://foguthmodelperformance.streamlit.app/)")
 selected_etf = st.sidebar.selectbox(
     'Select an ETF',
-    etf_tickers
+    myTickers,
+    key='etf_selectbox'
 )
 
-# read the json file foguthmodels.json
-foguthmodels = pd.read_json('foguthmodels.json')
-foguthmodels = foguthmodels.to_dict()
+# Sidebar: Model selection
+query = 'SELECT name FROM models'
+cursor.execute(query)
+models = cursor.fetchall()
+foguthmodels = [model[0] for model in models]
 
-# Create a Streamlit sidebar that lets the user select a model
-selected_model = st.sidebar.selectbox(
-    'Select a Model',
-    foguthmodels.keys()
-)
+if not foguthmodels:
+    st.sidebar.warning("No models available in the database.")
+else:
+    selected_model = st.sidebar.selectbox(
+        'Select a Model',
+        foguthmodels,
+        format_func=lambda x: x,
+        key='model_selectbox'
+    )
 
-# After the user selects the model, display the weights for the selected model in the sidebar
-# and do not display tickers that have a weight of 0
-# Display the model weights in the sidebar
-# sort the dictionary by value
-sorted_weights = sorted(foguthmodels[selected_model].items(), key=lambda x: x[1], reverse=True)
-for ticker, weight in sorted_weights:
-    if weight > 0:
-        st.sidebar.write(f'{ticker}: {weight}')
-        
+    # Query the database to get ETF weights grouped by security set
+    query = '''
+        SELECT 
+            ss.name AS SecuritySet,
+            e.symbol AS ETF,
+            ms.weight * se.weight AS Weight
+        FROM models m
+        JOIN model_security_set ms ON m.id = ms.model_id
+        JOIN security_sets ss ON ms.security_set_id = ss.id
+        JOIN security_sets_etfs se ON ss.id = se.security_set_id
+        JOIN etfs e ON se.etf_id = e.id
+        WHERE m.name = ?
+        ORDER BY SecuritySet, Weight DESC
+    '''
+    cursor.execute(query, (selected_model,))
+    etf_weights = cursor.fetchall()
 
+    # Display ETF weights grouped by security set
+    st.sidebar.subheader(f"ETF Weights for Model: {selected_model}")
+    current_security_set = None
+    for security_set, etf, weight in etf_weights:
+        if security_set != current_security_set:
+            st.sidebar.write(f"**{security_set}**")
+            current_security_set = security_set
+        st.sidebar.write(f"- {etf}: {weight:.2%}")
 
-
-# Update the selected ETF in session state
+# Update session state for selected ETF
 st.session_state.selected_etf = selected_etf
 
-# Display the data for the selected ETF
-# Streamlit headline
+# Main content: Display selected ETF information
 st.title('ETF Information')
-# Style a Streamlit header for the selected ETF
 st.header(selected_etf, divider=True)
 st.write(tickerdata[selected_etf]['Fund Description'])
 st.write(tickerdata[selected_etf]['Fund Overview'])
-# Streamlit header
+
+# Display top holdings
 st.header('Top Holdings', divider=True)
 st.write(tickerdata[selected_etf]['Top Holdings'])
+
+# Display asset classes
 st.header('Asset Classes', divider=True)
 st.write(tickerdata[selected_etf]['Asset Classes'])
+
+# Display sector weightings
 st.header('Sector Weightings', divider=True)
 st.write(tickerdata[selected_etf]['Sector Weightings'])
+
+# Display fund operations
 st.header('Fund Operations', divider=True)
 st.write(tickerdata[selected_etf]['Fund Operations'])
 
-#display a graph of performance history
+# Display performance history graph
 etf_data = yf.Ticker(selected_etf)
 etf_history = etf_data.history(period='max')
 st.header('Performance History', divider=True)
 st.line_chart(etf_history['Close'])
 
-
+# Display correlation matrix
 st.header('Correlation Matrix', divider=True)
 st.write(etf_corr.style.background_gradient(cmap='YlGn'))
