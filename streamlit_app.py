@@ -109,6 +109,11 @@ else:
     cursor.execute(query, (selected_model,))
     etf_weights = cursor.fetchall()
 
+
+    # create space between the sidebar element above this
+    st.sidebar.write("")
+    st.sidebar.write("")
+    
     # Display ETF weights grouped by security set on two lines
     st.sidebar.write("**ETF Weights by Strategy**")
     st.sidebar.write("**Model:**", selected_model)
