@@ -99,8 +99,9 @@ else:
     cursor.execute(query, (selected_model,))
     etf_weights = cursor.fetchall()
 
-    # Display ETF weights grouped by security set
-    st.sidebar.subheader(f"ETF Weights for Model: {selected_model}")
+    # Display ETF weights grouped by security set on two lines
+    st.sidebar.write("**ETF Weights by Security Set**")
+    st.sidebar.write("**Model:**", selected_model)
     current_security_set = None
     for security_set, etf, weight in etf_weights:
         if security_set != current_security_set:
