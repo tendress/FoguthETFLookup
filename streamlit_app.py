@@ -103,7 +103,7 @@ else:
     etf_weights = cursor.fetchall()
 
     # Display ETF weights grouped by security set on two lines
-    st.sidebar.write("**ETF Weights by Security Set**")
+    st.sidebar.write("**ETF Weights by Strategy**")
     st.sidebar.write("**Model:**", selected_model)
     current_security_set = None
     for security_set, etf, weight in etf_weights:
