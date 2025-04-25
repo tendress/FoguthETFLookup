@@ -10,6 +10,12 @@ database_path = 'foguth_etf_models.db'
 st.title("Foguth ETP Models")
 st.header("Year to Date Performance")
 
+st.sidebar.image(
+    "logo.png",
+    caption="Foguth Financial Group",
+    use_container_width=True
+)
+
 # Connect to SQLite database
 def load_models_table():
     try:
