@@ -52,7 +52,7 @@ def load_etf_data(myTickers):
     return tickerdata, etf_corr
 
 st.sidebar.title("Links")
-st.sidebar.link_button(label="Foguth ETF Lookup Tool", url="https://foguthetflookup.streamlit.app/")
+st.sidebar.link_button(label="Foguth ETP Model Performance", url="https://foguthmodelperformance.streamlit.app/")
 
 # Load ETF data and correlation matrix
 tickerdata, etf_corr = load_etf_data(myTickers)
