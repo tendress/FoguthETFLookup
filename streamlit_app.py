@@ -4,6 +4,13 @@ import pandas as pd
 import streamlit as st
 import sqlite3
 
+st.sidebar.image(
+    "logo.png",
+    caption="Foguth Financial Group",
+    use_container_width=True
+)
+
+
 # Database connection
 database_path = 'foguth_etf_models.db'
 conn = sqlite3.connect(database_path)
