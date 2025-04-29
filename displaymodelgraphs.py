@@ -1,14 +1,14 @@
 import sqlite3
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import yfinance as yf
 import datetime as dt
 import streamlit as st
+import plotly.graph_objects as go
 
 def display_model_graphs():
     st.title("Model Graphs")
-    st.write("This page displays graphs for model performance.")
+    st.write("This page displays interactive graphs for model performance.")
 
     # Database connection
     database_path = 'foguth_etf_models.db'
@@ -100,17 +100,26 @@ def display_model_graphs():
         # Convert the dictionary to a DataFrame
         daily_returns_df = pd.DataFrame(daily_returns_dict)
 
-        # Plot the YTD returns for the selected group
-        fig, ax = plt.subplots(figsize=(12, 6))
+        # Create an interactive Plotly graph
+        fig = go.Figure()
         for model_name in selected_models:
             if model_name in daily_returns_df.columns:
                 model_data = daily_returns_df[model_name]
-                ax.plot(model_data.index, np.cumsum(model_data), label=model_name)
+                fig.add_trace(go.Scatter(
+                    x=model_data.index,
+                    y=np.cumsum(model_data),
+                    mode='lines',
+                    name=model_name
+                ))
 
-        ax.set_title(f"{selected_group} - Cumulative YTD Returns")
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Cumulative Returns")
-        ax.legend()
+        # Customize the layout
+        fig.update_layout(
+            title=f"{selected_group} - Cumulative YTD Returns",
+            xaxis_title="Date",
+            yaxis_title="Cumulative Returns",
+            legend_title="Models",
+            template="plotly_white"
+        )
 
-        # Display the plot in Streamlit
-        st.pyplot(fig)
+        # Display the interactive Plotly graph in Streamlit
+        st.plotly_chart(fig, use_container_width=True)
