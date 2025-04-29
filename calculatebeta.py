@@ -98,7 +98,17 @@ if st.button("Calculate Weighted Beta"):
             if not np.isnan(beta):
                 total_weighted_beta += model_weight * security_set_weight * beta
 
-    st.write(f"Weighted Beta for Model '{selected_model}' from {start_date} to {end_date}: {total_weighted_beta:.4f}")
-
+    # Display the result prominently
+    st.markdown(
+        f"""
+        <div style="text-align: center; margin-top: 20px;">
+            <h1 style="color: #4CAF50; font-size: 48px;">Weighted Beta</h1>
+            <h2 style="color: #FF5722; font-size: 36px;">{total_weighted_beta:.4f}</h2>
+            <p style="font-size: 18px;">Model: <strong>{selected_model}</strong></p>
+            <p style="font-size: 18px;">Time Period: <strong>{start_date} to {end_date}</strong></p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 # Close the database connection
 conn.close()
