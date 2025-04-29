@@ -1,0 +1,116 @@
+import sqlite3
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import yfinance as yf
+import datetime as dt
+import streamlit as st
+
+def display_model_graphs():
+    st.title("Model Graphs")
+    st.write("This page displays graphs for model performance.")
+
+    # Database connection
+    database_path = 'foguth_etf_models.db'
+
+    @st.cache_data
+    def fetch_models():
+        """
+        Fetch model names and YTD returns from the database.
+        """
+        conn = sqlite3.connect(database_path)
+        query = '''
+            SELECT name, YTDPriceReturn
+            FROM models
+        '''
+        models = pd.read_sql_query(query, conn)
+        conn.close()
+        return models
+
+    @st.cache_data
+    def calculate_model_daily_returns(model_name):
+        """
+        Calculate daily price returns for a model using YTD data.
+        """
+        conn = sqlite3.connect(database_path)
+        query = '''
+            SELECT 
+                e.symbol AS ETF,
+                ms.weight * se.weight AS Weight
+            FROM models m
+            JOIN model_security_set ms ON m.id = ms.model_id
+            JOIN security_sets_etfs se ON ms.security_set_id = se.security_set_id
+            JOIN etfs e ON se.etf_id = e.id
+            WHERE m.name = ?
+        '''
+        cursor = conn.cursor()
+        cursor.execute(query, (model_name,))
+        etf_weights = cursor.fetchall()
+        conn.close()
+
+        # Create a DataFrame for ETF weights
+        etf_weights_df = pd.DataFrame(etf_weights, columns=['ETF', 'Weight'])
+
+        # Fetch historical price data for the ETFs (YTD)
+        etf_data = {}
+        start_date = dt.datetime(dt.datetime.now().year, 1, 1).strftime('%Y-%m-%d')  # Start from January 1st of the current year
+        for etf in etf_weights_df['ETF']:
+            ticker = yf.Ticker(etf)
+            etf_data[etf] = ticker.history(start=start_date)['Close']
+
+        # Combine ETF price data into a single DataFrame
+        etf_prices = pd.DataFrame(etf_data)
+
+        # Calculate daily returns for each ETF
+        etf_daily_returns = etf_prices.pct_change(fill_method=None)
+
+        # Calculate the weighted daily returns for the model
+        etf_weights_df.set_index('ETF', inplace=True)
+        weighted_returns = etf_daily_returns.mul(etf_weights_df['Weight'], axis=1).sum(axis=1)
+
+        return weighted_returns
+
+    # Fetch models
+    models_df = fetch_models()
+
+    # Define the model groups
+    model_groups = [
+        ['Conservative Growth', 'Balanced Growth', 'Bullish Growth', 'Aggressive', 'Momentum'],
+        ['Conservative Value', 'Balanced Value', 'Bullish Value', 'Aggressive', 'Momentum'],
+        ['Rising Dividend Conservative', 'Rising Dividend Balanced', 'Rising Dividend Bullish', 'Rising Dividend Aggressive', 'Rising Dividend Momentum']
+    ]
+
+    # Streamlit selectbox for group selection
+    group_mapping = {
+        "Growth Tilt": 0,
+        "Value Tilt": 1,
+        "Rising Dividend": 2
+    }
+    selected_group = st.selectbox("Select a Model Group", list(group_mapping.keys()))
+    group_index = group_mapping[selected_group]  # Map the selected group to its index
+    selected_models = model_groups[group_index]
+
+    # Display a button to initiate the calculation
+    if st.button("Run Model Graphs"):
+        # Calculate daily returns for each model and store them in a dictionary
+        daily_returns_dict = {}
+        for model_name in models_df['name']:
+            daily_returns_dict[model_name] = calculate_model_daily_returns(model_name)
+
+        # Convert the dictionary to a DataFrame
+        daily_returns_df = pd.DataFrame(daily_returns_dict)
+
+        # Plot the YTD returns for the selected group
+        fig, ax = plt.subplots(figsize=(12, 6))
+        for model_name in selected_models:
+            if model_name in daily_returns_df.columns:
+                model_data = daily_returns_df[model_name]
+                ax.plot(model_data.index, np.cumsum(model_data), label=model_name)
+
+        ax.set_title(f"{selected_group} - Cumulative YTD Returns")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Cumulative Returns")
+        ax.legend()
+
+        # Display the plot in Streamlit
+        st.pyplot(fig)
