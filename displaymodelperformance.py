@@ -13,13 +13,12 @@ def display_model_performance():
     # Run update functions first
     st.write("Updating ETF YTD returns...")
     etf_df = update_etf_ytd_returns(database_path)
-    st.write("ETF YTD returns updated successfully!")
+    #st.write("ETF YTD returns updated successfully!")
 
-    st.write("Updating Security Set YTD returns...")
+    #st.write("Updating Security Set YTD returns...")
     security_set_df = update_security_set_ytd_returns(database_path)
-    st.write("Security Set YTD returns updated successfully!")
-
-    st.write("Updating Model YTD returns...")
+    #
+    #st.write("Updating Model YTD returns...")
     model_df = update_model_ytd_returns(database_path)
     st.write("Model YTD returns updated successfully!")
 
