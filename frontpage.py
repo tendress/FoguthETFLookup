@@ -11,7 +11,7 @@ st.sidebar.image("assets/logo.png", use_container_width=True)
 # Sidebar navigation
 st.sidebar.title("Navigation")
 pages = {
-    "Home": "Welcome to the Foguth Financial App",
+    "Home": "Welcome to the Foguth ETP Model App",
     "Model Performance": display_model_performance,
     "ETF Lookup": etf_lookup,
     "Beta Calculator": calculate_beta_page,
@@ -24,13 +24,13 @@ if selected_page == "Home":
     st.title("Welcome to the Foguth Financial App")
     st.markdown(
         """
-        This app provides tools for analyzing ETF models, calculating betas, and visualizing model performance.
+        This app provides tools for analyzing the Foguth ETP models, calculating betas, and visualizing model performance.
         
         **Features:**
         - View model performance metrics.
-        - Perform ETF lookups.
-        - Calculate weighted beta for models.
-        - Visualize model graphs.
+        - Lookup information on the individual ETFs.
+        - Calculate weighted beta for each models and customize the time frame.
+        - Visualize model graphs Year to Date.
         
         Use the navigation menu on the left to explore the app.
         """
