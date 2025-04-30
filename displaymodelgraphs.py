@@ -30,7 +30,7 @@ def display_model_graphs():
     @st.cache_data
     def calculate_model_daily_returns(model_name):
         """
-        Calculate daily price returns for a model using YTD data.
+        Calculate daily price returns for a model using YTD data from the etf_prices table.
         """
         conn = sqlite3.connect(database_path)
         query = '''
@@ -51,12 +51,24 @@ def display_model_graphs():
         # Create a DataFrame for ETF weights
         etf_weights_df = pd.DataFrame(etf_weights, columns=['ETF', 'Weight'])
 
-        # Fetch historical price data for the ETFs (YTD)
+        # Fetch historical price data for the ETFs (YTD) from the database
         etf_data = {}
         start_date = dt.datetime(dt.datetime.now().year, 1, 1).strftime('%Y-%m-%d')  # Start from January 1st of the current year
+        conn = sqlite3.connect(database_path)
         for etf in etf_weights_df['ETF']:
-            ticker = yf.Ticker(etf)
-            etf_data[etf] = ticker.history(start=start_date)['Close']
+            query = '''
+                SELECT Date, Close
+                FROM etf_prices
+                JOIN etfs ON etf_prices.etf_id = etfs.id
+                WHERE etfs.symbol = ? AND Date >= ?
+                ORDER BY Date
+            '''
+            df = pd.read_sql_query(query, conn, params=(etf, start_date))
+            if not df.empty:
+                df['Date'] = pd.to_datetime(df['Date'])
+                df.set_index('Date', inplace=True)
+                etf_data[etf] = df['Close']
+        conn.close()
 
         # Combine ETF price data into a single DataFrame
         etf_prices = pd.DataFrame(etf_data)
