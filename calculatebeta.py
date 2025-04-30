@@ -98,20 +98,11 @@ def calculate_beta_page():
     selected_model = st.selectbox("Select a Model", models)
 
     # Streamlit dropdown for benchmark selection
-    # Streamlit dropdown for benchmark selection
     benchmark_symbol = st.selectbox(
         "Select a Benchmark",
-        options=["S&P 500", "Dow Jones Industrial Average", "Nasdaq 100"],  # Renamed benchmark options
-        index=0  # Default to S&P 500
+        options=["SPY", "DIA", "QQQM"],  # Available benchmark options
+        index=0  # Default to SPY
     )
-
-    # Map the user-friendly names back to their ticker symbols
-    benchmark_mapping = {
-        "S&P 500": "SPY",
-        "Dow Jones Industrial Average": "DIA",
-        "Nasdaq 100": "QQQM"
-    }
-    benchmark_ticker = benchmark_mapping[benchmark_symbol]
 
     # Streamlit inputs for time frame
     start_date = st.date_input(
