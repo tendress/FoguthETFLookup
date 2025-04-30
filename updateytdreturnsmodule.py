@@ -5,71 +5,95 @@ from datetime import datetime
 
 def update_etf_ytd_returns(database_path):
     """
-    Update the YTD returns for ETFs in the database.
+    Update the YTD returns for ETFs in the database using the etf_prices table.
     """
     # Connect to SQLite database
     conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
 
-    # Fetch the list of tickers from the etfs table
-    cursor.execute('SELECT symbol FROM etfs')
-    myTickers = [row[0] for row in cursor.fetchall()]  # Create a list of tickers
+    # Fetch the list of tickers and their corresponding etf_id
+    cursor.execute('SELECT id, symbol FROM etfs')
+    etf_data = cursor.fetchall()  # Fetch all rows as a list of tuples
     print("List of tickers fetched from the etfs table:")
-    print(myTickers)
+    print(etf_data)
 
-    # Create a DataFrame to store the data
-    df = pd.DataFrame()
+    # Loop through each ETF and calculate the YTD return
+    for etf_id, ticker in etf_data:
+        # Fetch the first and most recent close prices for the current year
+        cursor.execute('''
+            SELECT Close FROM etf_prices
+            WHERE etf_id = ? AND Date = (
+                SELECT MIN(Date) FROM etf_prices
+                WHERE etf_id = ? AND strftime('%Y', Date) = strftime('%Y', 'now')
+            )
+        ''', (etf_id, etf_id))
+        start_price = cursor.fetchone()
 
-    # Loop through each ticker and get the yield, price, price_date, and YTD price return
-    for ticker in myTickers:
-        new_ticker = yf.Ticker(ticker)
-        try:
-            # Fetch yield information
-            yield_info = new_ticker.info.get('yield', None)
+        cursor.execute('''
+            SELECT Close FROM etf_prices
+            WHERE etf_id = ? AND Date = (
+                SELECT MAX(Date) FROM etf_prices
+                WHERE etf_id = ? AND strftime('%Y', Date) = strftime('%Y', 'now')
+            )
+        ''', (etf_id, etf_id))
+        end_price = cursor.fetchone()
 
-            # Fetch the latest close price
-            price_info = new_ticker.history(period='1d')['Close'].iloc[-1] if not new_ticker.history(period='1d').empty else None
+        # Calculate YTD return
+        if start_price and end_price:
+            start_price = start_price[0]
+            end_price = end_price[0]
+            ytd_price_return = ((end_price - start_price) / start_price) * 100 if start_price else None
+        else:
+            ytd_price_return = None
 
-            # Get the current date for the price_date column
-            price_date = datetime.now().strftime('%Y-%m-%d')
-
-            # Fetch year-to-date price history
-            ytd_data = new_ticker.history(period='ytd')
-            if not ytd_data.empty:
-                start_price = ytd_data['Close'].iloc[0]  # Price on the first trading day of the year
-                ytd_price_return = ((price_info - start_price) / start_price) * 100 if start_price else None
-            else:
-                ytd_price_return = None
-
-            # Append the data to the DataFrame
-            df = pd.concat([df, pd.DataFrame({
-                'Ticker': [ticker],
-                'Yield': [yield_info],
-                'Price': [price_info],
-                'PriceDate': [price_date],
-                'YTDPriceReturn': [ytd_price_return]
-            })], ignore_index=True)
-        except Exception as e:
-            print(f"Error fetching data for {ticker}: {e}")
-
-    # Sort the DataFrame by YTD price return in descending order
-    df = df.sort_values(by='YTDPriceReturn', ascending=False).reset_index(drop=True)
-    print("DataFrame with yield, price, price_date, and YTD price return information:")
-    print(df)
-
-    # Update the 'yield', 'price', 'price_date', 'YTDPriceReturn', and 'PriceReturnDate' columns in the etfs table
-    for index, row in df.iterrows():
+        # Update the YTD return in the database
         cursor.execute('''
             UPDATE etfs
-            SET yield = ?, price = ?, price_date = ?, YTDPriceReturn = ?, PriceReturnDate = ?
-            WHERE symbol = ?
-        ''', (row['Yield'], row['Price'], row['PriceDate'], row['YTDPriceReturn'], datetime.now().strftime('%Y-%m-%d'), row['Ticker']))
+            SET YTDPriceReturn = ?, PriceReturnDate = ?
+            WHERE id = ?
+        ''', (ytd_price_return, datetime.now().strftime('%Y-%m-%d'), etf_id))
+
+        print(f"ETF: {ticker}, YTD Price Return: {ytd_price_return}")
 
     conn.commit()
     conn.close()
     print("ETF YTD returns updated successfully.")
-    return df
+    return ytd_price_return
 
+def update_etf_yields(database_path):
+    """
+    Update the yields for ETFs in the database.
+    """
+    # Connect to SQLite database
+    conn = sqlite3.connect(database_path)
+    cursor = conn.cursor()
+
+    # Fetch the list of tickers
+    cursor.execute('SELECT id, symbol FROM etfs')
+    etf_data = cursor.fetchall()  # Fetch all rows as a list of tuples
+    print("List of tickers fetched from the etfs table:")
+    print(etf_data)
+
+    # Loop through each ETF and update the yield
+    for etf_id, ticker in etf_data:
+        try:
+            # Fetch yield information from yfinance
+            yield_info = yf.Ticker(ticker).info.get('yield', None)
+
+            # Update the yield in the database
+            cursor.execute('''
+                UPDATE etfs
+                SET yield = ?
+                WHERE id = ?
+            ''', (yield_info, etf_id))
+
+            print(f"ETF: {ticker}, Yield: {yield_info}")
+        except Exception as e:
+            print(f"Error fetching yield for {ticker}: {e}")
+
+    conn.commit()
+    conn.close()
+    print("ETF yields updated successfully.")
 
 def update_security_set_ytd_returns(database_path):
     """
