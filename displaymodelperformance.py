@@ -10,55 +10,37 @@ def display_model_performance():
 
     database_path = 'foguth_etf_models.db'
 
-    # Run update functions first
-    st.write("Updating ETF YTD returns...")
-    etf_df = update_etf_ytd_returns(database_path)
-    #st.write("ETF YTD returns updated successfully!")
-
-    #st.write("Updating Security Set YTD returns...")
-    security_set_df = update_security_set_ytd_returns(database_path)
-    #
-    #st.write("Updating Model YTD returns...")
-    model_df = update_model_ytd_returns(database_path)
-    st.write("Model YTD returns updated successfully!")
-
     # Load the models table
     def load_models_table():
+        """
+        Load the models table from the database.
+        """
         try:
-            # Connect to the database
             conn = sqlite3.connect(database_path)
-            
-            # Load the models table into a DataFrame
             query = "SELECT name AS Name, YTDPriceReturn AS YTDReturn, YTDPriceReturnDate AS AsOf, yield AS AnnualYield, ExpenseRatio FROM models"
             models_df = pd.read_sql_query(query, conn)
-            
-            # Close the connection
             conn.close()
-            
             return models_df
         except Exception as e:
             st.error(f"Error loading models table: {e}")
-            return pd.DataFrame()  # Return an empty DataFrame if there's an error
+            return pd.DataFrame()
 
     # Load the security_sets table
     def load_security_sets_table():
+        """
+        Load the security_sets table from the database.
+        """
         try:
-            # Connect to the database
             conn = sqlite3.connect(database_path)
-            
-            # Load the security_sets table into a DataFrame
             query = "SELECT name AS Name, YTDPriceReturn AS YTDReturn, YTDPriceReturnDate AS AsOf, yield as Yield FROM security_sets"
             security_sets_df = pd.read_sql_query(query, conn)
-            
-            # Close the connection
             conn.close()
-            
             return security_sets_df
         except Exception as e:
             st.error(f"Error loading Security Sets table: {e}")
-            return pd.DataFrame()  # Return an empty DataFrame if there's an error
+            return pd.DataFrame()
 
-    # Load the models and security_sets tables
+    # Load data from the database
     models_df = load_models_table()
     security_sets_df = load_security_sets_table()
 
@@ -92,14 +74,15 @@ def display_model_performance():
 
     # Sidebar for benchmark YTD performance
     def get_ytd_price_return(ticker):
+        """
+        Calculate the YTD price return for a given ticker.
+        """
         try:
-            # Fetch the ticker data from yfinance
             etf = yf.Ticker(ticker)
             ytd_data = etf.history(period='ytd')
-            
             if not ytd_data.empty:
-                start_price = ytd_data['Close'].iloc[0]  # Price on the first trading day of the year
-                current_price = ytd_data['Close'].iloc[-1]  # Latest price
+                start_price = ytd_data['Close'].iloc[0]
+                current_price = ytd_data['Close'].iloc[-1]
                 ytd_price_return = ((current_price - start_price) / start_price) * 100 if start_price else None
                 return ytd_price_return
             else:
@@ -116,3 +99,19 @@ def display_model_performance():
     st.sidebar.write(f"S&P 500 YTD: {spy_ytd_return:.2f}%" if spy_ytd_return is not None else "SPY data not available")   
     st.sidebar.write(f"Nasdaq YTD: {qqqm_ytd_return:.2f}%" if qqqm_ytd_return is not None else "QQQM data not available")
     st.sidebar.write(f"Dow Jones YTD: {dia_ytd_return:.2f}%" if dia_ytd_return is not None else "DIA data not available")
+
+    # Add a button to update the data in the database
+    if st.button("Update Data"):
+        st.write("Updating ETF YTD returns...")
+        update_etf_ytd_returns(database_path)
+        st.write("ETF YTD returns updated successfully!")
+
+        st.write("Updating Security Set YTD returns...")
+        update_security_set_ytd_returns(database_path)
+        st.write("Security Set YTD returns updated successfully!")
+
+        st.write("Updating Model YTD returns...")
+        update_model_ytd_returns(database_path)
+        st.write("Model YTD returns updated successfully!")
+
+        st.success("All data updated successfully! Refresh the page to see the latest data.")
