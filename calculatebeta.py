@@ -1,31 +1,62 @@
-import yfinance as yf
+import sqlite3
 import pandas as pd
 import numpy as np
-import sqlite3
 import streamlit as st
 
 def calculate_beta_page():
     st.title("Beta Calculator")
     st.write("This page calculates the weighted beta for models.")
-    # Add your beta calculation functionality here
+
+    # Function to fetch historical price data from the database
+    def fetch_historical_prices(symbol, start_date, end_date, database_path):
+        """
+        Fetch historical price data for a given symbol from the etf_prices table.
+
+        Args:
+            symbol (str): The ticker symbol of the ETF.
+            start_date (str): The start date for the time period (format: 'YYYY-MM-DD').
+            end_date (str): The end date for the time period (format: 'YYYY-MM-DD').
+            database_path (str): Path to the SQLite database.
+
+        Returns:
+            pd.Series: A pandas Series containing the historical close prices.
+        """
+        conn = sqlite3.connect(database_path)
+        query = '''
+            SELECT Date, Close
+            FROM etf_prices
+            JOIN etfs ON etf_prices.etf_id = etfs.id
+            WHERE etfs.symbol = ? AND Date BETWEEN ? AND ?
+            ORDER BY Date
+        '''
+        df = pd.read_sql_query(query, conn, params=(symbol, start_date, end_date))
+        conn.close()
+
+        if df.empty:
+            return pd.Series(dtype=float)  # Return an empty Series if no data is found
+
+        df['Date'] = pd.to_datetime(df['Date'])
+        df.set_index('Date', inplace=True)
+        return df['Close']
 
     # Function to calculate beta
-    def calculate_beta(symbol, benchmark_symbol, start_date, end_date):
+    def calculate_beta(symbol, benchmark_symbol, start_date, end_date, database_path):
         """
         Calculate the beta of a stock or ETF relative to a benchmark index.
 
         Args:
             symbol (str): The ticker symbol of the stock or ETF.
-            benchmark_symbol (str): The ticker symbol of the benchmark index (e.g., '^GSPC' for S&P 500).
+            benchmark_symbol (str): The ticker symbol of the benchmark index.
             start_date (str): The start date for the time period (format: 'YYYY-MM-DD').
             end_date (str): The end date for the time period (format: 'YYYY-MM-DD').
+            database_path (str): Path to the SQLite database.
 
         Returns:
             float: The beta value.
         """
-        # Fetch historical price data for the asset and the benchmark
-        asset_data = yf.Ticker(symbol).history(start=start_date, end=end_date)['Close']
-        benchmark_data = yf.Ticker(benchmark_symbol).history(start=start_date, end=end_date)['Close']
+        # Fetch historical price data for the asset and the benchmark from the database
+        asset_data = fetch_historical_prices(symbol, start_date, end_date, database_path)
+        benchmark_data = fetch_historical_prices(benchmark_symbol, start_date, end_date, database_path)
 
         # Ensure both datasets have the same dates
         data = pd.DataFrame({'Asset': asset_data, 'Benchmark': benchmark_data}).dropna()
@@ -66,12 +97,34 @@ def calculate_beta_page():
     # Streamlit selectbox for model selection
     selected_model = st.selectbox("Select a Model", models)
 
-    # Streamlit inputs for time frame
-    start_date = st.date_input("Start Date", value=pd.Timestamp("2024-01-01"))
-    end_date = st.date_input("End Date", value=pd.Timestamp.now())
+    # Streamlit dropdown for benchmark selection
+    # Streamlit dropdown for benchmark selection
+    benchmark_symbol = st.selectbox(
+        "Select a Benchmark",
+        options=["S&P 500", "Dow Jones Industrial Average", "Nasdaq 100"],  # Renamed benchmark options
+        index=0  # Default to S&P 500
+    )
 
-    # Benchmark symbol
-    benchmark_symbol = '^GSPC'  # S&P 500 as the benchmark
+    # Map the user-friendly names back to their ticker symbols
+    benchmark_mapping = {
+        "S&P 500": "SPY",
+        "Dow Jones Industrial Average": "DIA",
+        "Nasdaq 100": "QQQM"
+    }
+    benchmark_ticker = benchmark_mapping[benchmark_symbol]
+
+    # Streamlit inputs for time frame
+    start_date = st.date_input(
+        "Start Date",
+        value=pd.Timestamp("2024-01-01"),
+        min_value=pd.Timestamp("2022-01-01"),  # Limit to dates after January 1, 2022
+        max_value=pd.Timestamp.now()  # Limit to today's date
+    )
+    end_date = st.date_input(
+        "End Date",
+        value=pd.Timestamp.now(),
+        max_value=pd.Timestamp.now()  # Limit to today's date
+    )
 
     if st.button("Calculate Weighted Beta"):
         # Query to get security sets and weights for the selected model
@@ -99,7 +152,7 @@ def calculate_beta_page():
 
             # Calculate the weighted beta for each ETF
             for etf_symbol, security_set_weight in etfs:
-                beta = calculate_beta(etf_symbol, benchmark_symbol, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
+                beta = calculate_beta(etf_symbol, benchmark_symbol, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), database_path)
                 if not np.isnan(beta):
                     total_weighted_beta += model_weight * security_set_weight * beta
 
@@ -111,9 +164,11 @@ def calculate_beta_page():
                 <h2 style="color: #FF5722; font-size: 36px;">{total_weighted_beta:.4f}</h2>
                 <p style="font-size: 18px;">Model: <strong>{selected_model}</strong></p>
                 <p style="font-size: 18px;">Time Period: <strong>{start_date} to {end_date}</strong></p>
+                <p style="font-size: 18px;">Benchmark: <strong>{benchmark_symbol}</strong></p>
             </div>
             """,
             unsafe_allow_html=True
         )
+        
     # Close the database connection
     conn.close()
