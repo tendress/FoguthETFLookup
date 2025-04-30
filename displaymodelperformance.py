@@ -1,7 +1,6 @@
 import sqlite3
 import pandas as pd
 import streamlit as st
-import yfinance as yf
 from updateytdreturnsmodule import update_etf_ytd_returns, update_security_set_ytd_returns, update_model_ytd_returns
 
 def display_model_performance():
@@ -17,7 +16,14 @@ def display_model_performance():
         """
         try:
             conn = sqlite3.connect(database_path)
-            query = "SELECT name AS Name, YTDPriceReturn AS YTDReturn, YTDPriceReturnDate AS AsOf, yield AS AnnualYield, ExpenseRatio FROM models"
+            query = """
+                SELECT name AS Name, 
+                       YTDPriceReturn AS YTDReturn, 
+                       YTDPriceReturnDate AS AsOf, 
+                       yield AS AnnualYield, 
+                       ExpenseRatio 
+                FROM models
+            """
             models_df = pd.read_sql_query(query, conn)
             conn.close()
             return models_df
@@ -32,7 +38,13 @@ def display_model_performance():
         """
         try:
             conn = sqlite3.connect(database_path)
-            query = "SELECT name AS Name, YTDPriceReturn AS YTDReturn, YTDPriceReturnDate AS AsOf, yield as Yield FROM security_sets"
+            query = """
+                SELECT name AS Name, 
+                       YTDPriceReturn AS YTDReturn, 
+                       YTDPriceReturnDate AS AsOf, 
+                       yield AS Yield 
+                FROM security_sets
+            """
             security_sets_df = pd.read_sql_query(query, conn)
             conn.close()
             return security_sets_df
@@ -50,11 +62,11 @@ def display_model_performance():
         # Sort by YTDPriceReturn in descending order
         if 'YTDReturn' in models_df.columns:
             models_df = models_df.sort_values(by='YTDReturn', ascending=False).reset_index(drop=True)
-        
+
         # Format the Yield and ExpenseRatio columns
         if 'ExpenseRatio' in models_df.columns:
             models_df['ExpenseRatio'] = models_df['ExpenseRatio'].apply(lambda x: f"{x:.2f}%" if pd.notnull(x) else "N/A")
-        
+
         # Display the DataFrame
         st.dataframe(models_df, use_container_width=True, height=500, hide_index=True)
     else:
@@ -66,24 +78,59 @@ def display_model_performance():
         # Sort by YTDPriceReturn in descending order
         if 'YTDReturn' in security_sets_df.columns:
             security_sets_df = security_sets_df.sort_values(by='YTDReturn', ascending=False).reset_index(drop=True)
-        
+
         # Display the DataFrame
         st.dataframe(security_sets_df, use_container_width=True, height=500, hide_index=True)
     else:
         st.warning("No data available in the security sets table.")
 
     # Sidebar for benchmark YTD performance
-    def get_ytd_price_return(ticker):
+    def get_ytd_price_return(ticker, database_path):
         """
-        Calculate the YTD price return for a given ticker.
+        Calculate the YTD price return for a given ticker using the etf_prices table.
         """
         try:
-            etf = yf.Ticker(ticker)
-            ytd_data = etf.history(period='ytd')
-            if not ytd_data.empty:
-                start_price = ytd_data['Close'].iloc[0]
-                current_price = ytd_data['Close'].iloc[-1]
-                ytd_price_return = ((current_price - start_price) / start_price) * 100 if start_price else None
+            # Connect to the SQLite database
+            conn = sqlite3.connect(database_path)
+            cursor = conn.cursor()
+
+            # Fetch the etf_id for the given ticker
+            cursor.execute('SELECT id FROM etfs WHERE symbol = ?', (ticker,))
+            etf_id = cursor.fetchone()
+
+            if etf_id is None:
+                st.error(f"Ticker {ticker} not found in the database.")
+                return None
+
+            etf_id = etf_id[0]
+
+            # Fetch the first and most recent close prices for the current year
+            cursor.execute('''
+                SELECT Close FROM etf_prices
+                WHERE etf_id = ? AND Date = (
+                    SELECT MIN(Date) FROM etf_prices
+                    WHERE etf_id = ? AND strftime('%Y', Date) = strftime('%Y', 'now')
+                )
+            ''', (etf_id, etf_id))
+            start_price = cursor.fetchone()
+
+            cursor.execute('''
+                SELECT Close FROM etf_prices
+                WHERE etf_id = ? AND Date = (
+                    SELECT MAX(Date) FROM etf_prices
+                    WHERE etf_id = ? AND strftime('%Y', Date) = strftime('%Y', 'now')
+                )
+            ''', (etf_id, etf_id))
+            end_price = cursor.fetchone()
+
+            # Close the database connection
+            conn.close()
+
+            # Calculate YTD return
+            if start_price and end_price:
+                start_price = start_price[0]
+                end_price = end_price[0]
+                ytd_price_return = ((end_price - start_price) / start_price) * 100 if start_price else None
                 return ytd_price_return
             else:
                 return None
@@ -93,10 +140,11 @@ def display_model_performance():
 
     # Display benchmark YTD performance in the sidebar
     st.sidebar.title("Benchmarks")
-    spy_ytd_return = get_ytd_price_return('SPY')
-    qqqm_ytd_return = get_ytd_price_return('QQQM')
-    dia_ytd_return = get_ytd_price_return('DIA')
-    st.sidebar.write(f"S&P 500 YTD: {spy_ytd_return:.2f}%" if spy_ytd_return is not None else "SPY data not available")   
+    spy_ytd_return = get_ytd_price_return('SPY', database_path)
+    qqqm_ytd_return = get_ytd_price_return('QQQM', database_path)
+    dia_ytd_return = get_ytd_price_return('DIA', database_path)
+
+    st.sidebar.write(f"S&P 500 YTD: {spy_ytd_return:.2f}%" if spy_ytd_return is not None else "SPY data not available")
     st.sidebar.write(f"Nasdaq YTD: {qqqm_ytd_return:.2f}%" if qqqm_ytd_return is not None else "QQQM data not available")
     st.sidebar.write(f"Dow Jones YTD: {dia_ytd_return:.2f}%" if dia_ytd_return is not None else "DIA data not available")
 
