@@ -63,7 +63,7 @@ if selected_page == "Home":
             JOIN security_sets ON model_security_set.security_set_id = security_sets.id
             JOIN models ON model_security_set.model_id = models.id
             WHERE models.name = ?
-            ORDER BY security_sets.name DESC
+            ORDER BY security_sets.name ASC
         '''
         cursor.execute(query, (model_name,))
         results = cursor.fetchall()
