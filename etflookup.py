@@ -99,7 +99,7 @@ def etf_lookup():
                 security_set_weight = security_sets_and_etfs[
                     security_sets_and_etfs["Security Set"] == security_set
                 ]["Security Set Weight"].iloc[0]
-                st.sidebar.subheader(f"{security_set} ({security_set_weight}%)")
+                st.sidebar.subheader(f"{security_set} ({security_set_weight*100}%)")
 
                 # Display ETFs and their weights
                 etfs_in_set = security_sets_and_etfs[
