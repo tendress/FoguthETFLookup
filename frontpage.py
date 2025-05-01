@@ -14,9 +14,10 @@ st.sidebar.title("Navigation")
 pages = {
     "Home": "Welcome to Foguth ETP Model Insights",
     "Model Performance": display_model_performance,
+    "Model Graphs": display_model_graphs,
     "ETF Lookup": etf_lookup,
     "Beta Calculator": calculate_beta_page,
-    "Model Graphs": display_model_graphs,
+    
 }
 
 selected_page = st.sidebar.radio("Go to", list(pages.keys()))
