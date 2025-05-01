@@ -45,17 +45,22 @@ def etf_lookup():
     @st.cache_data
     def load_security_sets_and_etfs_for_model(selected_model):
         query = '''
-            SELECT security_sets.name AS security_set, etfs.symbol AS etf
+            SELECT 
+                security_sets.name AS security_set, 
+                model_security_set.weight AS security_set_weight,
+                etfs.symbol AS etf, 
+                security_sets_etfs.weight AS etf_weight
             FROM model_security_set
             JOIN security_sets ON model_security_set.security_set_id = security_sets.id
             JOIN security_sets_etfs ON security_sets.id = security_sets_etfs.security_set_id
             JOIN etfs ON security_sets_etfs.etf_id = etfs.id
             JOIN models ON model_security_set.model_id = models.id
             WHERE models.name = ?
+            ORDER BY etf_weight DESC
         '''
         cursor.execute(query, (selected_model,))
         results = cursor.fetchall()
-        return pd.DataFrame(results, columns=["Security Set", "ETF"])
+        return pd.DataFrame(results, columns=["Security Set", "Security Set Weight", "ETF", "ETF Weight"])
 
     # Load all ETFs
     all_etfs = load_all_etfs()
@@ -63,14 +68,6 @@ def etf_lookup():
     # Load models and security sets
     models, security_sets = load_models_and_security_sets()
 
-    # Sidebar: ETF selection (always show full list of ETFs)
-    st.sidebar.title("Select an ETF")
-    selected_etf = st.sidebar.selectbox(
-        "Select an ETF",
-        all_etfs,
-        key="etf_selectbox"
-    )
-    
     # Sidebar: Filters
     st.sidebar.title("Filters")
 
@@ -81,25 +78,40 @@ def etf_lookup():
         key="model_filter"
     )
 
-    
+    # Sidebar: ETF selection (always show full list of ETFs)
+    st.sidebar.title("Select an ETF")
+    selected_etf = st.sidebar.selectbox(
+        "Select an ETF",
+        all_etfs,
+        key="etf_selectbox"
+    )
 
     # Sidebar: Display security sets and ETFs for the selected model
     if selected_model != "All Models":
-        st.sidebar.title(f"Security Sets for Model: {selected_model}")
+        st.sidebar.title(f"Model: {selected_model}")
         security_sets_and_etfs = load_security_sets_and_etfs_for_model(selected_model)
 
         if not security_sets_and_etfs.empty:
             for security_set in security_sets_and_etfs["Security Set"].unique():
-                st.sidebar.subheader(f"Security Set: {security_set}")
-                etfs_in_set = security_sets_and_etfs[security_sets_and_etfs["Security Set"] == security_set]["ETF"]
-                st.sidebar.write(", ".join(etfs_in_set))
+                # Display security set name and weight
+                security_set_weight = security_sets_and_etfs[
+                    security_sets_and_etfs["Security Set"] == security_set
+                ]["Security Set Weight"].iloc[0]
+                st.sidebar.subheader(f"{security_set} ({security_set_weight}%)")
+
+                # Display ETFs and their weights
+                etfs_in_set = security_sets_and_etfs[
+                    security_sets_and_etfs["Security Set"] == security_set
+                ][["ETF", "ETF Weight"]]
+                for _, row in etfs_in_set.iterrows():
+                    st.sidebar.write(f"- {row['ETF']} ({row['ETF Weight']*100}%)")
         else:
             st.sidebar.write("No security sets or ETFs found for the selected model.")
     else:
         st.sidebar.write("Select a model to view its associated security sets and ETFs.")
 
     # Main content: Display selected ETF information
-
+    st.header(f"Details for Selected ETF: {selected_etf}")
     cursor.execute('SELECT * FROM etf_infos WHERE symbol = ?', (selected_etf,))
     result = cursor.fetchone()
     if result:
