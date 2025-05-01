@@ -112,7 +112,7 @@ def etf_lookup():
     else:
         st.sidebar.write("Select a model to view its associated security sets and ETFs.")
 
-    # Main content: Display selected ETF information
+# Main content: Display selected ETF information
     st.header(f"Details for Selected ETF: {selected_etf}")
     cursor.execute('SELECT * FROM etf_infos WHERE symbol = ?', (selected_etf,))
     result = cursor.fetchone()
@@ -129,6 +129,21 @@ def etf_lookup():
         st.write(f"**Summary:** {etf_info.get('longBusinessSummary', 'No summary available.')}")
     else:
         st.write("No details available for the selected ETF.")
+
+    # Display Top Holdings
+    st.header("Top 10 Holdings")
+    if result and etf_info.get('topHoldings'):
+        try:
+            # Parse the JSON string from the topHoldings column
+            top_holdings = pd.read_json(etf_info['topHoldings'])
+            top_holdings.index = range(1, len(top_holdings) + 1)
+            top_holdings['Holding Percent'] = top_holdings['Holding Percent'].apply(lambda x: f"{x:.2f}")
+            st.write(top_holdings)
+        except Exception as e:
+            st.write("Unable to display top holdings.")
+            st.write(f"Error: {e}")
+    else:
+        st.write("No top holdings data available for this ETF.")
 
     # Performance Graph
     st.header("Performance Graph")
@@ -182,6 +197,8 @@ def etf_lookup():
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.write("No price data available for the selected date range.")
+
+    
 
     # Close the database connection
     conn.close()
