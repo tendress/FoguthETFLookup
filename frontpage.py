@@ -102,7 +102,7 @@ if selected_page == "Home":
                 if st.session_state.open_buttons[model]:
                     security_sets = fetch_security_sets_for_model(model)
                     if security_sets:
-                        st.write(f"**Security Sets for {model}:**")
+
                         for security_set in security_sets:
                             st.write(f"- {security_set['name']} ({security_set['weight']}%)")
                     else:
