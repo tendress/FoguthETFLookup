@@ -104,7 +104,7 @@ if selected_page == "Home":
                     if security_sets:
 
                         for security_set in security_sets:
-                            st.write(f"- {security_set['name']} ({security_set['weight']}%)")
+                            st.write(f"{security_set['name']} ({security_set['weight']}%)")
                     else:
                         st.write(f"No security sets found for {model}.")
 
