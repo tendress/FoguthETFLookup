@@ -66,7 +66,7 @@ if selected_page == "Home":
         '''
         cursor.execute(query, (model_name,))
         results = cursor.fetchall()
-        return [{"name": row[0], "weight": row[1]} for row in results]
+        return [{"name": row[0], "weight": row[1] *100} for row in results]
 
     # Initialize session state for toggling buttons
     if "open_buttons" not in st.session_state:
