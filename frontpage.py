@@ -3,6 +3,7 @@ from displaymodelperformance import display_model_performance
 from etflookup import etf_lookup
 from calculatebeta import calculate_beta_page
 from displaymodelgraphs import display_model_graphs
+from correlationmatrix import display_correlation_matrix
 import sqlite3
 
 # Set the app title and logo
@@ -17,6 +18,7 @@ pages = {
     "Model Graphs": display_model_graphs,
     "ETF Lookup": etf_lookup,
     "Beta Calculator": calculate_beta_page,
+    "Correlation Matrix": display_correlation_matrix
     
 }
 
@@ -42,6 +44,20 @@ if selected_page == "Home":
             Use the navigation menu on the left to explore the app.
             """
         )
+    st.markdown(
+        """
+        <h1 style="color: red; font-size: 32px;">Sector Rotation Rebalance: Qualified 5/2, Non-Qualified 5/5</h1>
+        <ul style="color: red; font-size: 20px;">
+            <li>XLE: The Energy Select Sector SPDR Fund - 25%</li>
+            <li>XLU: The Utilities Select Sector SPDR Fund - 20%</li>
+            <li>XLK: The Technology Select Sector SPDR Fund - 15%</li>
+            <li>XLRE: The Real Estate Select Sector SPDR Fund - 15%</li>
+            <li>XLF: The Financial Select Sector SPDR Fund - 15%</li>
+            <li>XLC: The Communication Services Select Sector SPDR ETF Fund - 10%</li>
+        </ul>
+        """,
+        unsafe_allow_html=True,
+    )
     # Database connection
     database_path = 'foguth_etf_models.db'
     conn = sqlite3.connect(database_path)
