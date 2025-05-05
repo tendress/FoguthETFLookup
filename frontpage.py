@@ -47,7 +47,8 @@ if selected_page == "Home":
     st.markdown(
         """
         <h1 style="color: red; font-size: 32px;">Sector Rotation Rebalance: </h2>
-        <h2 style="color: red; font-size: 24px;">Qualified 5/2 (Complete), Non-Qualified 5/5 (Complete)</h2>
+        <h2 style="color: red; font-size: 24px;">Qualified 5/2 (Complete)</h2>
+        <h2 style="color: red; font-size: 24px;">Non-Qualified 5/5 (Complete)</h2>
         <ul style="color: red; font-size: 20px;">
             <li>XLE: The Energy Select Sector SPDR Fund - 25%</li>
             <li>XLU: The Utilities Select Sector SPDR Fund - 20%</li>
