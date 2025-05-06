@@ -95,44 +95,47 @@ def update_etf_yields(database_path):
     conn.close()
     print("ETF yields updated successfully.")
 
-def update_security_set_ytd_returns(database_path):
+def update_security_set_ytd_returns(database_path, start_date="2025-01-01"):
     """
-    Update the YTD returns for security sets in the database.
+    Update the YTD returns for security sets in the database using the security_set_prices table.
+    Only includes data from the specified start_date.
     """
     # Connect to SQLite database
     conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
 
-    # Calculate the return of each security set
+    # Fetch all security sets
     cursor.execute('SELECT id, name FROM security_sets')
     security_sets = cursor.fetchall()
     security_set_df = pd.DataFrame(columns=['SecuritySet', 'YTDPriceReturn'])
 
     for security_set_id, name in security_sets:
-        cursor.execute('SELECT etf_id, weight FROM security_sets_etfs WHERE security_set_id = ?', (security_set_id,))
-        etfs = cursor.fetchall()
+        # Fetch the cumulative percent change for the security set from the security_set_prices table
+        cursor.execute('''
+            SELECT SUM(percentChange)
+            FROM security_set_prices
+            WHERE security_set_id = ? AND Date >= ?
+        ''', (security_set_id, start_date))
+        total_percent_change = cursor.fetchone()[0]
 
-        total_return = 0
-        for etf_id, weight in etfs:
-            cursor.execute('SELECT YTDPriceReturn FROM etfs WHERE id = ?', (etf_id,))
-            ytd_price_return = cursor.fetchone()[0]
-            if ytd_price_return is not None:
-                total_return += weight * ytd_price_return
+        # If no data is found, set the return to 0
+        if total_percent_change is None:
+            total_percent_change = 0
 
         # Append the security set performance to the DataFrame
         security_set_df = pd.concat([security_set_df, pd.DataFrame({
             'SecuritySet': [name],
-            'YTDPriceReturn': [round(total_return, 2)]
+            'YTDPriceReturn': [round(total_percent_change, 2)]
         })], ignore_index=True)
 
-        # Update the security set's YTDPriceReturn in the database and also update the YTDPriceReturnDate
+        # Update the security set's YTDPriceReturn in the database
         cursor.execute('''
             UPDATE security_sets
-            SET YTDPriceReturn = ?
-            , YTDPriceReturnDate = ?
+            SET YTDPriceReturn = ?, YTDPriceReturnDate = ?
             WHERE id = ?
-        ''', (total_return, datetime.now().strftime('%Y-%m-%d'), security_set_id))
-        print(f"Security Set: {name}, YTD Price Return: {total_return}")
+        ''', (total_percent_change, datetime.now().strftime('%Y-%m-%d'), security_set_id))
+
+        print(f"Security Set: {name}, YTD Price Return: {total_percent_change}")
 
     conn.commit()
     conn.close()
@@ -184,3 +187,17 @@ def update_model_ytd_returns(database_path):
     conn.close()
     print("Model YTD returns updated successfully.")
     return model_df
+
+if __name__ == "__main__":
+    database_path = "foguth_etf_models.db"  # Replace with your database path
+    start_date = "2025-01-01"  # Set the start date to January 1, 2025
+
+    # Update security set YTD returns
+    print("Updating security set YTD returns...")
+    security_set_df = update_security_set_ytd_returns(database_path, start_date)
+
+    # Update model YTD returns
+    print("Updating model YTD returns...")
+    model_df = update_model_ytd_returns(database_path)
+
+    print("All updates completed successfully.")
