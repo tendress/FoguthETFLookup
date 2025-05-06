@@ -87,7 +87,7 @@ def display_model_performance():
     # Sidebar for benchmark YTD performance
     def get_ytd_price_return(ticker, database_path):
         """
-        Calculate the YTD price return for a given ticker using the etf_prices table.
+        Calculate the YTD time-weighted return (TWR) for a given ticker using the etf_prices table.
         """
         try:
             # Connect to the SQLite database
@@ -104,38 +104,39 @@ def display_model_performance():
 
             etf_id = etf_id[0]
 
-            # Fetch the first and most recent close prices for the current year
+            # Fetch all daily close prices for the current year
             cursor.execute('''
-                SELECT Close FROM etf_prices
-                WHERE etf_id = ? AND Date = (
-                    SELECT MIN(Date) FROM etf_prices
-                    WHERE etf_id = ? AND strftime('%Y', Date) = strftime('%Y', 'now')
-                )
-            ''', (etf_id, etf_id))
-            start_price = cursor.fetchone()
-
-            cursor.execute('''
-                SELECT Close FROM etf_prices
-                WHERE etf_id = ? AND Date = (
-                    SELECT MAX(Date) FROM etf_prices
-                    WHERE etf_id = ? AND strftime('%Y', Date) = strftime('%Y', 'now')
-                )
-            ''', (etf_id, etf_id))
-            end_price = cursor.fetchone()
+                SELECT Date, Close
+                FROM etf_prices
+                WHERE etf_id = ? AND strftime('%Y', Date) = strftime('%Y', 'now')
+                ORDER BY Date ASC
+            ''', (etf_id,))
+            price_data = cursor.fetchall()
 
             # Close the database connection
             conn.close()
 
-            # Calculate YTD return
-            if start_price and end_price:
-                start_price = start_price[0]
-                end_price = end_price[0]
-                ytd_price_return = ((end_price - start_price) / start_price) * 100 if start_price else None
-                return ytd_price_return
-            else:
+            # Ensure there is enough data to calculate TWR
+            if len(price_data) < 2:
+                st.warning(f"Not enough data to calculate TWR for {ticker}.")
                 return None
+
+            # Convert the data to a DataFrame
+            price_df = pd.DataFrame(price_data, columns=['Date', 'Close'])
+            price_df['Date'] = pd.to_datetime(price_df['Date'])
+            price_df.set_index('Date', inplace=True)
+
+            # Calculate daily returns
+            price_df['Daily Return'] = price_df['Close'].pct_change()
+
+            # Calculate the Time-Weighted Return (TWR)
+            twr = (1 + price_df['Daily Return']).prod() - 1  # Geometric mean of returns
+
+            # Convert TWR to a percentage
+            return twr * 100
+
         except Exception as e:
-            st.error(f"Error fetching YTD price return for {ticker}: {e}")
+            st.error(f"Error fetching YTD time-weighted return for {ticker}: {e}")
             return None
 
     # Display benchmark YTD performance in the sidebar
