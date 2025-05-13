@@ -128,6 +128,7 @@ def economic_indicators():
         if not vix_data.empty:
             most_recent_vix = vix_data.iloc[-1]['Close']
             st.write(f"Volatility Index (VIX): {most_recent_vix:.2f}")
+            
 
         # Separate data for Volatility Index (^VIX)
         other_data = df[df['symbol'] != 'Volatility Index']
@@ -140,6 +141,9 @@ def economic_indicators():
         st.plotly_chart(fig1, use_container_width=True)
 
         # Plot Volatility Index in its own chart
+        st.markdown(
+            "<span style='color:#FF3333; font-weight:bold;'>The VIX, or CBOE Volatility Index, measures market expectations of near-term volatility in the S&P 500, indicating investor fear or uncertainty. Higher VIX values suggest greater market instability, while lower imply calmer conditions, derived from demand for out-of-the-money S&P 500 options, which investors buy as protection against market uncertainty and potential downturns. </span>",
+            unsafe_allow_html=True)    
         fig2 = px.line(vix_data, x='Date', y='Close', color='symbol',
                     title='Volatility Index (VIX)')
         st.plotly_chart(fig2, use_container_width=True)
