@@ -4,6 +4,7 @@ from etflookup import etf_lookup
 from calculatebeta import calculate_beta_page
 from displaymodelgraphs import display_model_graphs
 from correlationmatrix import display_correlation_matrix
+from economicindicators import economic_indicators
 import sqlite3
 
 # Set the app title and logo
@@ -18,7 +19,8 @@ pages = {
     "Model Graphs": display_model_graphs,
     "ETF Lookup": etf_lookup,
     "Beta Calculator": calculate_beta_page,
-    "Correlation Matrix": display_correlation_matrix
+    "Correlation Matrix": display_correlation_matrix,
+    "Economic Indicators": economic_indicators
     
 }
 
@@ -46,9 +48,7 @@ if selected_page == "Home":
         )
     st.markdown(
         """
-        <h1 style="color: red; font-size: 32px;">Sector Rotation Rebalance: </h2>
-        <h2 style="color: red; font-size: 24px;">Qualified 5/2 (Complete)</h2>
-        <h2 style="color: red; font-size: 24px;">Non-Qualified 5/5 (Complete)</h2>
+        <h1 style="color: red; font-size: 32px;">Sector Rotation Rebalance: Qualified 5/2 (Complete), Non-Qualified 5/5</h1>
         <ul style="color: red; font-size: 20px;">
             <li>XLE: The Energy Select Sector SPDR Fund - 25%</li>
             <li>XLU: The Utilities Select Sector SPDR Fund - 20%</li>
