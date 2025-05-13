@@ -377,6 +377,16 @@ def economic_indicators():
         # Header for "U.S. Economy"
         st.header("U.S. Economy")
 
+        st.markdown(
+            "<span style='color:#006699; font-weight:bold;'>GDP, Gross Domestic Product, is the total monetary value of all goods and services produced within a country over a specific period, and it measures a nation's economic performance and health.</span>",
+            unsafe_allow_html=True)
+        st.markdown(
+            "<span style='color:#006699; font-weight:bold;'>M2 is a measure of the money supply that includes cash, checking deposits, and easily convertible near money like savings accounts and money market funds and helps gauge future inflation, economic growth and the effectiveness of monetary policy. </span>",
+            unsafe_allow_html=True)
+        st.markdown(
+            "<span style='color:#006699; font-weight:bold;'>The Producer Price Index, PPI, measures the average change over time in the selling prices received by domestic producers for their goods and services, and indicates inflation trends at the wholesale level and can signal future consumer price changes. </span>",
+            unsafe_allow_html=True)
+        
         for symbol, title in indicators.items():
             # Fetch data for the current indicator
             query = f"""
