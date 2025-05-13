@@ -181,8 +181,11 @@ def economic_indicators():
         st.header("International Market Indicators")
 
         st.markdown(
-            "<span style='color:blue; font-weight:bold;'>The Nikkei 225 is a price-weighted index of 225 top Japanese companies listed on the Tokyo Stock Exchange, reflects the performance of major Japanese businesses and serves as a key indicator of Japan's economic health and investor confidence in its equity market.</span>",
+            "<span style='color:#006699; font-weight:bold;'>The Nikkei 225 is a price-weighted index of 225 top Japanese companies listed on the Tokyo Stock Exchange, reflects the performance of major Japanese businesses and serves as a key indicator of Japan's economic health and investor confidence in its equity market.</span>",
             unsafe_allow_html=True)    
+        st.markdown(
+            "<span style='color:#0099CC; font-weight:bold;'>The FTSE 100 is an index of the 100 largest companies listed on teh London Stock Exchange by market capitalization, reflects the performance of major UK businesses and serves as s key indicator of the UK's economic health and investor confidence in its equity market. </span>",
+            unsafe_allow_html=True)
         for symbol, return_value in returns.items():
             st.write(f"{symbol}: {return_value:.2f}%")
 
