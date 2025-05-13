@@ -236,8 +236,22 @@ def economic_indicators():
         # Add a divider
         st.markdown("<hr>", unsafe_allow_html=True)
 
+
         # Header for "Bond Yields"
         st.header("Bond Yields")
+
+        st.markdown(
+        "<span style='color:#0066CC; font-weight:bold;'>The 3-Month Treasury Bill yield reflects short-term investor confidence and expectations for monetary policy. Higher yields often suggest tighter policy or economic optimism, while lower yields may indicate economic caution or expectations of rate cuts.</span>",
+        unsafe_allow_html=True)  
+        st.markdown(
+        "<span style='color:#6699FF; font-weight:bold;'>The 5-Year Treasury Note yield reflects intermediate-term investor expectations for economic growth and inflation, with higher yields suggesting confidence in moderate economic expansion but also concerns about persistent inflation or tighter monetary policy</span>",
+        unsafe_allow_html=True)
+        st.markdown(
+        "<span style='color:#6699FF; font-weight:bold;'>The 10-Year Treasury Note yield indicates long-term investor expectations for the U.S. economy, with elevated yields suggesting cautious optimism for growth but also concerns about persistent inflation, trade policy uncertainties, and rising federal debt levels.</span>",
+        unsafe_allow_html=True)
+        st.markdown(
+        "<span style='color:#6699FF; font-weight:bold;'>The 30-Year Treasury Bond yield indicates long-term investor expectations for the U.S. economy, higher yields indicating anticipation of sustained economic growth or rising inflation, but also signaling concerns about long-term fiscal challenges, such as increasing federal debt and potential trade disruptions.</span>",
+        unsafe_allow_html=True)
 
         # Plot Bond Yields Over Time (excluding 10-Year Minus 2-Year Treasury Yield)
         bond_yields_df = df[df['symbol'] != '10-Year Minus 2-Year Treasury Yield']
