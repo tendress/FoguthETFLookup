@@ -294,6 +294,10 @@ def economic_indicators():
         selected_date_data['symbol'] = pd.Categorical(selected_date_data['symbol'], categories=order, ordered=True)
         selected_date_data = selected_date_data.sort_values('symbol')
 
+        st.markdown(
+            "<span style='color:#0066CC; font-weight:bold;'>A normal yield curve is upward-sloping, where longer-term Treasury yields are higher than shorter-term yields, reflecting investor expectations of economic growth and moderate inflation, with higher returns demanded for locking in funds over longer periods.</span>",
+            unsafe_allow_html=True)
+        
         # Create a line chart for the selected date
         fig_selected_date = px.line(selected_date_data, x='symbol', y='Close', markers=True,
                                     title=f'Bond Yields for {selected_date}')
