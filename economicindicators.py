@@ -142,7 +142,7 @@ def economic_indicators():
 
         # Plot Volatility Index in its own chart
         st.markdown(
-            "<span style='color:#FF3333; font-weight:bold;'>The VIX, or CBOE Volatility Index, measures market expectations of near-term volatility in the S&P 500, indicating investor fear or uncertainty. Higher VIX values suggest greater market instability, while lower imply calmer conditions, derived from demand for out-of-the-money S&P 500 options, which investors buy as protection against market uncertainty and potential downturns. A normal VIX value ranges between 12 and 20. </span>",
+            "<span style='color:blue; font-weight:bold;'>The VIX, or CBOE Volatility Index, measures market expectations of near-term volatility in the S&P 500, indicating investor fear or uncertainty. Higher VIX values suggest greater market instability, while lower imply calmer conditions, derived from demand for out-of-the-money S&P 500 options, which investors buy as protection against market uncertainty and potential downturns. A normal VIX value ranges between 12 and 20. </span>",
             unsafe_allow_html=True)    
         fig2 = px.line(vix_data, x='Date', y='Close', color='symbol',
                     title='Volatility Index (VIX)')
