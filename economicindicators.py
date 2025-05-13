@@ -233,7 +233,7 @@ def economic_indicators():
 
         df2['symbol'] = df2['symbol'].replace({'T10Y2Y': '10-Year Minus 2-Year Treasury Yield'})
 
-        # Add a divider
+        # Adding a divider
         st.markdown("<hr>", unsafe_allow_html=True)
 
 
@@ -275,7 +275,9 @@ def economic_indicators():
         if not df2.empty:
             most_recent_t10y2y = df2.iloc[-1]['Close']
             st.write(f"10-Year Minus 2-Year Treasury Yield: {most_recent_t10y2y:.2f}%")
-
+            st.markdown(
+            "<span style='color:#0066CC; font-weight:bold;'>The difference between the 10-year and the 2-year Treasury yields, known as the Yield Curve Spread, indicates investor expectations about future economic growth and monetary policy. A positive spread suggests cautious optimism for economic expansion while a negative spread (inverted yield curve) often signals recession risk.</span>",
+            unsafe_allow_html=True)
 
         # User selects a specific date
         st.subheader("Select a Date to View Bond Yields")
