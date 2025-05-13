@@ -102,10 +102,11 @@ def economic_indicators():
         # Header for "Stock Market Indicators"
         st.header("Stock Market Indicators")
         
-        st.markdown(
+        
         st.markdown(
         "<span style='color:#0066CC; font-weight:bold;'>The Dow Jones Industrial Average measures 30 major U.S. companies, providing insight into the health of established industries and overall economic stability.</span>",
         unsafe_allow_html=True)  
+        st.markdown(
         "<span style='color:#6699FF; font-weight:bold;'>The S&P 500 tracks the performance of the 500 large U.S. companies across various sectors, reflecting broad market trends and investor confidence in the U.S. Economy</span>",
         unsafe_allow_html=True)    
         st.markdown(
