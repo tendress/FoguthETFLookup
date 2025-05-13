@@ -180,8 +180,9 @@ def economic_indicators():
         # Header for "International Market Indicators"
         st.header("International Market Indicators")
 
-        # Display returns
-        st.subheader("International Market Returns")
+        st.markdown(
+            "<span style='color:blue; font-weight:bold;'>The Nikkei 225 is a price-weighted index of 225 top Japanese companies listed on the Tokyo Stock Exchange, reflects the performance of major Japanese businesses and serves as a key indicator of Japan's economic health and investor confidence in its equity market.</span>",
+            unsafe_allow_html=True)    
         for symbol, return_value in returns.items():
             st.write(f"{symbol}: {return_value:.2f}%")
 
@@ -284,7 +285,7 @@ def economic_indicators():
         # User selects a specific date
         st.subheader("Select a Date to View Bond Yields")
         st.markdown(
-            "<span style='color:#0066CC; font-weight:bold;'>A normal yield curve is upward-sloping, where longer-term Treasury yields are higher than shorter-term yields, reflecting investor expectations of economic growth and moderate inflation, with higher returns demanded for locking in funds over longer periods.</span>",
+            "<span style='color:blue; font-weight:bold;'>A normal yield curve is upward-sloping, where longer-term Treasury yields are higher than shorter-term yields, reflecting investor expectations of economic growth and moderate inflation, with higher returns demanded for locking in funds over longer periods.</span>",
             unsafe_allow_html=True)
         unique_dates = bond_yields_df['Date'].dt.date.unique()
         selected_date = st.date_input("Select a Date", value=unique_dates[-1], min_value=min(unique_dates), max_value=max(unique_dates))
