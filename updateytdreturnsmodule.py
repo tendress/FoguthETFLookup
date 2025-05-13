@@ -181,6 +181,21 @@ def update_model_ytd_returns(database_path):
             WHERE id = ?
         ''', (total_return, datetime.now().strftime('%Y-%m-%d'), model_id))
 
+        # fix the dates of rebalance
+        cursor.execute('''
+            UPDATE security_set_prices
+            SET percentChange = 0
+            WHERE security_set_id = 12
+            AND Date = '2025-01-02 00:00:00'
+            ''')
+        
+        cursor.execute('''
+            UPDATE security_set_prices
+            SET percentChange = 0
+            WHERE security_set_id = 6
+            AND Date = '2025-05-02 00:00:00'
+            ''')
+        
         print(f"Model: {name}, YTD Price Return: {total_return}")
 
     conn.commit()
@@ -188,10 +203,82 @@ def update_model_ytd_returns(database_path):
     print("Model YTD returns updated successfully.")
     return model_df
 
+
+def calculate_security_set_prices(database_path):
+    """
+    Calculate the weighted daily price of each security set based on the ETFs it contains
+    and calculate the percent change from day to day.
+    """
+    # Connect to the SQLite database
+    conn = sqlite3.connect(database_path)
+
+    # Fetch security sets, ETFs, and their weights
+    query = """
+        SELECT 
+            sse.security_set_id,
+            sse.etf_id,
+            sse.weight,
+            sse.startDate,
+            sse.endDate,
+            ep.Date,
+            ep.Close AS etf_price
+        FROM security_sets_etfs sse
+        JOIN etf_prices ep ON sse.etf_id = ep.etf_id
+        WHERE ep.Date BETWEEN sse.startDate AND IFNULL(sse.endDate, ep.Date)
+        ORDER BY sse.security_set_id, ep.Date
+    """
+    data = pd.read_sql_query(query, conn)
+    
+    # Close the database connection
+    conn.close()
+
+    if data.empty:
+        print("No data found for the given query.")
+        return
+
+    # Convert Date to datetime for easier manipulation
+    data['Date'] = pd.to_datetime(data['Date'])
+
+    # Calculate the weighted price for each ETF in the security set
+    data['weighted_price'] = data['weight'] * data['etf_price']
+
+    # Group by security_set_id and Date to calculate the total weighted price for each security set
+    security_set_prices = (
+        data.groupby(['security_set_id', 'Date'])['weighted_price']
+        .sum()
+        .reset_index()
+        .rename(columns={'weighted_price': 'security_set_price'})
+    )
+
+    # Calculate the percent change from day to day for each security set
+    security_set_prices['percentChange'] = (
+        security_set_prices.groupby('security_set_id')['security_set_price']
+        .pct_change() * 100
+    )
+
+    # Output the result
+    print(security_set_prices)
+
+    # Save the results to the security_set_prices table in the database
+    conn = sqlite3.connect(database_path)
+    security_set_prices.to_sql('security_set_prices', conn, if_exists='replace', index=False)
+    conn.close()
+
+    print("Security set prices and percent changes have been calculated and saved to the 'security_set_prices' table.")
+
+
 if __name__ == "__main__":
     database_path = "foguth_etf_models.db"  # Replace with your database path
     start_date = "2025-01-01"  # Set the start date to January 1, 2025
 
+    # Update ETF YTD returns
+    print("Updating ETF YTD returns...")
+    update_etf_ytd_returns(database_path)
+    
+    # Calculate security set prices
+    print("Calculating security set prices...")
+    calculate_security_set_prices(database_path)
+    
     # Update security set YTD returns
     print("Updating security set YTD returns...")
     security_set_df = update_security_set_ytd_returns(database_path, start_date)
