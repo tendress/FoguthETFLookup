@@ -103,7 +103,7 @@ def economic_indicators():
         st.header("Stock Market Indicators")
         
         st.markdown(
-        "<span style='color:blue; font-weight:bold;'>The <span style='font-weight:bold;'S&P 500 tracks the performance of the 500 large U.S. companies across various sectors, reflecting broad market trends and investor confidence in the U.S. Economy.</span>",
+        "<span style='color:blue; font-weight:bold;'>The S&P 500 tracks the performance of the 500 large U.S. companies across various sectors, reflecting broad market trends and investor confidence in the U.S. Economy</span>",
         unsafe_allow_html=True)    # Display the most recent value for each stock market index
         
         # Display returns
