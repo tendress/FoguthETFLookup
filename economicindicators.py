@@ -324,7 +324,20 @@ def economic_indicators():
 
         # Header for "Federal Reserve"
         st.header("Federal Reserve")
-
+        st.markdown(
+            "<span style='color:#006699; font-weight:bold;'>The Federal Funds rate is the interest rate at which banks lend to each other overnight, set by the Federal Reserve, and it's critical because it influences borrowing costs, economic activity, and inflation across the U.S. economy.</span>",
+            unsafe_allow_html=True)
+        st.markdown(
+            "<span style='color:#006699; font-weight:bold;'>The Unemployment rate measures the percentage of the labor force that is jobless and actively seeking work.</span>",
+            unsafe_allow_html=True)
+        st.markdown(
+            "<span style='color:#006699; font-weight:bold;'>The 10-Year Breakeven Inflation rate, derived from the difference between the 10-year Treasury Note yield and the 10-Year Treasury Inflation-Protected Securities (TIPS) yield, reflects market expectations for average annual inflation over the next decade.</span>",
+            unsafe_allow_html=True)
+        st.markdown(
+            "<span style='color:#006699; font-weight:bold;'>Core Sticky CPI measures the inflation rate of less volatile consumer price components (excluding food and energy and focusing on prices that change slowly), provides a stable, long-term view of underlying inflation trends, helping policy-makers and investors gauge persistent inflationary pressures in the U.S. economy. </span>",
+            unsafe_allow_html=True)
+        
+        
         for symbol, title in indicators.items():
             # Fetch data for the current indicator
             query = f"""
