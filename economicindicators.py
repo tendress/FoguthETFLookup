@@ -104,7 +104,14 @@ def economic_indicators():
         
         st.markdown(
         "<span style='color:blue; font-weight:bold;'>The S&P 500 tracks the performance of the 500 large U.S. companies across various sectors, reflecting broad market trends and investor confidence in the U.S. Economy</span>",
-        unsafe_allow_html=True)    # Display the most recent value for each stock market index
+        unsafe_allow_html=True)    
+        st.markdown(
+        "<span style='color:orange; font-weight:bold;'>The NASDAQ focuses on technology and growth-oriented companies, indicating investor sentiment toward innovation and high-growth sectors.</span>",
+        unsafe_allow_html=True)    
+        
+        
+        
+        # Display the most recent value for each stock market index
         
         # Display returns
         st.subheader("Stock Market Returns")
