@@ -108,8 +108,9 @@ def economic_indicators():
         st.markdown(
         "<span style='color:#0066CC; font-weight:bold;'>The NASDAQ focuses on technology and growth-oriented companies, indicating investor sentiment toward innovation and high-growth sectors.</span>",
         unsafe_allow_html=True)    
+        st.markdown(
         "<span style='color:#FF3333; font-weight:bold;'>The Dow Jones Industrial Average measures 30 major U.S. companies, providing insight into the health of established industries and overall economic stability.</span>",
-        unsafe_allow_html=True)    
+        unsafe_allow_html=True)   
         
         
         
