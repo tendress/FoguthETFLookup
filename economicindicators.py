@@ -415,47 +415,6 @@ def economic_indicators():
         # Close the database connection
         conn.close()
 
-    def plot_us_consumer(db_path, start_date, end_date):
-        # Connect to the database
-        conn = sqlite3.connect(db_path)
-
-        # List of U.S. Consumer indicators to graph
-        indicators = {
-            'UMCSENT': 'University of Michigan Consumer Sentiment Index',
-            'MRTSSM44X72USS': 'Retail Sales (Excluding Food Services)',
-            'MORTGAGE30US': '30-Year Fixed Mortgage Rate',
-            'PAYEMS': 'Total Nonfarm Payrolls'
-        }
-
-        # Header for "U.S. Consumer"
-        st.header("U.S. Consumer")
-
-        for symbol, title in indicators.items():
-            # Fetch data for the current indicator
-            query = f"""
-            SELECT Date, economic_value AS Close
-            FROM economic_indicators
-            WHERE symbol = '{symbol}'
-            ORDER BY Date
-            """
-            df = pd.read_sql_query(query, conn)
-
-            # Convert Date column to datetime and filter by date range
-            df['Date'] = pd.to_datetime(df['Date'])
-            df = df[(df['Date'] >= pd.Timestamp(start_date)) & (df['Date'] <= pd.Timestamp(end_date))]
-
-            # Plot the data if the DataFrame is not empty
-            if not df.empty:
-                fig = px.line(df, x='Date', y='Close', title=title)
-                fig.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=2))
-                fig.update_layout(xaxis_title="Date", yaxis_title="Value")
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.write(f"No data available for {title} in the selected date range.")
-
-        # Close the database connection
-        conn.close()
-
     def plot_custom_chart(db_path, start_date, end_date):
         # Connect to the database
         conn = sqlite3.connect(db_path)
@@ -590,16 +549,13 @@ def economic_indicators():
         plot_bond_yields(db_path, start_date, end_date)   
         
         # Plot Commodities
-        #plot_commodities(db_path, start_date, end_date)   
+        plot_commodities(db_path, start_date, end_date)   
         
         # Plot Federal Reserve Indicators
         plot_federal_reserve_indicators(db_path, start_date, end_date)
 
         # Plot U.S. Economy Indicators
         plot_us_economy(db_path, start_date, end_date)
-        
-        # Plot U.S. Consumer Indicators
-        plot_us_consumer(db_path, start_date, end_date)
         
         # Plot International Market Indicators
         plot_international_market_indicators(db_path, start_date, end_date)
