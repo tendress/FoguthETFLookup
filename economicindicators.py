@@ -433,6 +433,7 @@ def economic_indicators():
             SELECT Date, economic_value AS Close
             FROM economic_indicators
             WHERE symbol = '{symbol}'
+            ORDER BY Date
             """
             df = pd.read_sql_query(query, conn)
 
