@@ -75,7 +75,7 @@ def economic_indicators():
         conn = sqlite3.connect(db_path)
         query = """
         SELECT Date, symbol, Close
-        FROM etf_historical_prices
+        FROM etf_prices
         WHERE symbol IN ('^DJI', '^GSPC', '^IXIC', '^VIX')
         """
         df = pd.read_sql_query(query, conn)
@@ -153,7 +153,7 @@ def economic_indicators():
         conn = sqlite3.connect(db_path)
         query = """
         SELECT Date, symbol, Close
-        FROM etf_historical_prices
+        FROM etf_prices
         WHERE symbol IN ('^N225', '^FTSE', '^DJSH')
         """
         df = pd.read_sql_query(query, conn)
@@ -202,7 +202,7 @@ def economic_indicators():
         conn = sqlite3.connect(db_path)
         query = """
         SELECT Date, symbol, Close
-        FROM etf_historical_prices
+        FROM etf_prices
         WHERE symbol IN ('^IRX', '^FVX', '^TNX', '^TYX')
         """
         df = pd.read_sql_query(query, conn)
@@ -455,7 +455,7 @@ def economic_indicators():
                 WHERE symbol = '{symbol}'
                 UNION
                 SELECT Date, Close, '{symbol}' AS symbol
-                FROM etf_historical_prices
+                FROM etf_prices
                 WHERE symbol = '{symbol}'
                 """
                 df = pd.read_sql_query(query, conn)

@@ -115,7 +115,7 @@ def economic_indicators():
             # Fetch data for the current commodity
             query = f"""
             SELECT Date, Close
-            FROM etf_historical_prices
+            FROM etf__prices
             WHERE symbol = '{symbol}'
             ORDER BY Date
             """
