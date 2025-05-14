@@ -546,10 +546,7 @@ def economic_indicators():
         plot_stock_market_indicators(db_path, start_date, end_date)
 
         # Plot Bond Yields
-        plot_bond_yields(db_path, start_date, end_date)
-
-        # Plot International Market Indicators
-        plot_international_market_indicators(db_path, start_date, end_date)
+        plot_bond_yields(db_path, start_date, end_date)      
         
         # Plot Federal Reserve Indicators
         plot_federal_reserve_indicators(db_path, start_date, end_date)
@@ -559,6 +556,9 @@ def economic_indicators():
         
         # Plot U.S. Consumer Indicators
         plot_us_consumer(db_path, start_date, end_date)
+        
+        # Plot International Market Indicators
+        plot_international_market_indicators(db_path, start_date, end_date)
         
         # Plot Custom Chart
         plot_custom_chart(db_path, start_date, end_date)
