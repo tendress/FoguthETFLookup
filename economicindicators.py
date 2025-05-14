@@ -228,6 +228,7 @@ def economic_indicators():
         SELECT Date, symbol, economic_value AS Close
         FROM economic_indicators
         WHERE symbol = 'T10Y2Y'
+        ORDER BY Date
         """
         df2 = pd.read_sql_query(query, conn)
         conn.close()
@@ -344,6 +345,7 @@ def economic_indicators():
             SELECT Date, economic_value AS Close
             FROM economic_indicators
             WHERE symbol = '{symbol}'
+            ORDER BY Date
             """
             df = pd.read_sql_query(query, conn)
 
@@ -393,6 +395,7 @@ def economic_indicators():
             SELECT Date, economic_value AS Close
             FROM economic_indicators
             WHERE symbol = '{symbol}'
+            ORDER BY Date
             """
             df = pd.read_sql_query(query, conn)
 
