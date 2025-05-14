@@ -97,11 +97,53 @@ def economic_indicators():
         # Close the database connection
         conn.close()
         
-        
+    def plot_commodities(db_path, start_date, end_date):
+        # Connect to the database
+        conn = sqlite3.connect(db_path)
+
+        # List of commodities to graph
+        commodities = {
+            'GC=F': 'Gold Futures',
+            'CL=F': 'Crude Oil Futures',
+            'HG=F': 'Copper Futures'
+        }
+
+        # Header for "Commodities"
+        st.header("Commodities")
+
+        for symbol, title in commodities.items():
+            # Fetch data for the current commodity
+            query = f"""
+            SELECT Date, Close
+            FROM etf_historical_prices
+            WHERE symbol = '{symbol}'
+            ORDER BY Date
+            """
+            df = pd.read_sql_query(query, conn)
+
+            # Convert Date column to datetime and filter by date range
+            df['Date'] = pd.to_datetime(df['Date'])
+            df = df[(df['Date'] >= pd.Timestamp(start_date)) & (df['Date'] <= pd.Timestamp(end_date))]
+
+            # Plot the data if the DataFrame is not empty
+            if not df.empty:
+                fig = px.line(df, x='Date', y='Close', title=title)
+                fig.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=2))
+                fig.update_layout(xaxis_title="Date", yaxis_title="Value")
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.write(f"No data available for {title} in the selected date range.")
+
+        # Close the database connection
+        conn.close()
         
     try:  
         # Plot U.S. Consumer Indicators
         plot_us_consumer(db_path, start_date, end_date)
+        
+        # Plot Commodities
+        plot_commodities(db_path, start_date, end_date)  
+        
     except Exception as e:
         st.error(f"An error occurred: {e}")
         
