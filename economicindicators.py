@@ -462,8 +462,9 @@ def economic_indicators():
 
         # Fetch available symbols and their names from the database
         query = """
-        SELECT symbol, name
+        SELECT DISTINCT name, symbol
         FROM economic_indicators
+        WHERE name IS NOT NULL
         UNION
         SELECT symbol, name
         FROM etfs
