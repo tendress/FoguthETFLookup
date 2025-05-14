@@ -468,6 +468,7 @@ def economic_indicators():
         UNION
         SELECT symbol, name
         FROM etfs
+        WHERE name IS NOT NULL
         """
         symbols_df = pd.read_sql_query(query, conn)
 
