@@ -590,7 +590,7 @@ def economic_indicators():
         plot_bond_yields(db_path, start_date, end_date)   
         
         # Plot Commodities
-        plot_commodities(db_path, start_date, end_date)   
+        #plot_commodities(db_path, start_date, end_date)   
         
         # Plot Federal Reserve Indicators
         plot_federal_reserve_indicators(db_path, start_date, end_date)
