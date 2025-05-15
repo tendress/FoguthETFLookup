@@ -77,6 +77,7 @@ def economic_indicators():
         SELECT Date, symbol, Close
         FROM etf_prices
         WHERE symbol IN ('^DJI', '^GSPC', '^IXIC', '^VIX')
+        ORDER BY Date
         """
         df = pd.read_sql_query(query, conn)
         conn.close()
@@ -155,6 +156,7 @@ def economic_indicators():
         SELECT Date, symbol, Close
         FROM etf_prices
         WHERE symbol IN ('^N225', '^FTSE', '^DJSH')
+        ORDER BY Date
         """
         df = pd.read_sql_query(query, conn)
         conn.close()
@@ -204,6 +206,7 @@ def economic_indicators():
         SELECT Date, symbol, Close
         FROM etf_prices
         WHERE symbol IN ('^IRX', '^FVX', '^TNX', '^TYX')
+        ORDER BY Date
         """
         df = pd.read_sql_query(query, conn)
         conn.close()
