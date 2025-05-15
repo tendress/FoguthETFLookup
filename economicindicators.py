@@ -523,10 +523,7 @@ def economic_indicators():
 
         # Plot U.S. Economy Indicators
         plot_us_economy(db_path, start_date, end_date)
-        
-        # Plot International Market Indicators
-        plot_international_market_indicators(db_path, start_date, end_date)
-        
+                
         # Plot Custom Chart
         plot_custom_chart(db_path, start_date, end_date)
     except Exception as e:
