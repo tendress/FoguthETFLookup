@@ -149,18 +149,4 @@ def display_model_performance():
     st.sidebar.write(f"Nasdaq YTD: {qqqm_ytd_return:.2f}%" if qqqm_ytd_return is not None else "QQQM data not available")
     st.sidebar.write(f"Dow Jones YTD: {dia_ytd_return:.2f}%" if dia_ytd_return is not None else "DIA data not available")
 
-    # Add a button to update the data in the database
-    if st.button("Update Data"):
-        st.write("Updating ETF YTD returns...")
-        update_etf_ytd_returns(database_path)
-        st.write("ETF YTD returns updated successfully!")
-
-        st.write("Updating Security Set YTD returns...")
-        update_security_set_ytd_returns(database_path)
-        st.write("Security Set YTD returns updated successfully!")
-
-        st.write("Updating Model YTD returns...")
-        update_model_ytd_returns(database_path)
-        st.write("Model YTD returns updated successfully!")
-
-        st.success("All data updated successfully! Refresh the page to see the latest data.")
+    
