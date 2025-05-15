@@ -487,45 +487,45 @@ def calculate_security_set_prices(database_path):
     
     
 if __name__ == "__main__":
-    while True:
-        database_path = 'foguth_etf_models.db'
-        fred_api_key = '43370c0e912250381f6728328dfff294'
-        start_date = "2025-01-01"
+    
+    database_path = 'foguth_etf_models.db'
+    fred_api_key = '43370c0e912250381f6728328dfff294'
+    start_date = "2025-01-01"
 
-        # Update ETF historical prices
-        update_historical_prices(database_path)
-        update_latest_prices(database_path)
-        update_etf_expense_ratios(database_path)
+    # Update ETF historical prices
+    update_historical_prices(database_path)
+    update_latest_prices(database_path)
+    update_etf_expense_ratios(database_path)
 
-        # Update ETF info table
-        stock_info = StockInfo(database_path)
-        stock_info.fetch_and_store_etf_info()
+    # Update ETF info table
+    stock_info = StockInfo(database_path)
+    stock_info.fetch_and_store_etf_info()
 
-        # Fetch and update ETF data
-        etf_data = fetch_etf_data(database_path)
-        print("ETF Data:")
-        print(etf_data)
+    # Fetch and update ETF data
+    etf_data = fetch_etf_data(database_path)
+    print("ETF Data:")
+    print(etf_data)
 
-        # Update FRED economic indicators
-        update_fred_economic_indicators(database_path, fred_api_key)
-        
-        # Update ETF YTD returns
-        print("Updating ETF YTD returns...")
-        update_etf_ytd_returns(database_path)
+    # Update FRED economic indicators
+    update_fred_economic_indicators(database_path, fred_api_key)
+    
+    # Update ETF YTD returns
+    print("Updating ETF YTD returns...")
+    update_etf_ytd_returns(database_path)
 
-        # Calculate security set prices
-        print("Calculating security set prices...")
-        calculate_security_set_prices(database_path)
-        
-        # Update security set YTD returns
-        print("Updating security set YTD returns...")
-        security_set_df = update_security_set_ytd_returns(database_path, start_date)
+    # Calculate security set prices
+    print("Calculating security set prices...")
+    calculate_security_set_prices(database_path)
+    
+    # Update security set YTD returns
+    print("Updating security set YTD returns...")
+    security_set_df = update_security_set_ytd_returns(database_path, start_date)
 
-        # Update model YTD returns
-        print("Updating model YTD returns...")
-        model_df = update_model_ytd_returns(database_path)
+    # Update model YTD returns
+    print("Updating model YTD returns...")
+    model_df = update_model_ytd_returns(database_path)
 
-        print("All updates completed successfully.")
+    print("All updates completed successfully.")
 
-        #print("Sleeping for 30 minutes before rerunning...")
-        #time.sleep(1800)  # Sleep for 1800 seconds (30 minutes)
+    #print("Sleeping for 30 minutes before rerunning...")
+    #time.sleep(1800)  # Sleep for 1800 seconds (30 minutes)

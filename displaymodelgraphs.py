@@ -130,7 +130,8 @@ def display_model_graphs():
     overlay_option = st.sidebar.selectbox(
         "Select a single Economic Indicator or ETF to Overlay",
         options=overlay_options,
-        index=0
+        index=0,
+        key="overlay_selectbox"
     )
     overlay_symbol = None
     overlay_name = None
@@ -138,73 +139,74 @@ def display_model_graphs():
         overlay_symbol = overlay_option.split(" - ")[0]
         overlay_name = overlay_option.split(" - ", 1)[1]
 
-    # Display a button to initiate the calculation
-    if st.button("Run Model Graphs"):
-        # Calculate daily returns for each model and store them in a dictionary
-        daily_returns_dict = {}
-        for model_name in models_df['name']:
-            daily_returns_dict[model_name] = calculate_model_daily_returns(model_name)
+    # Automatically update the graph when overlay_option changes (no button needed)
+    # Remove the "Run Model Graphs" button and always show the graph
 
-        # Convert the dictionary to a DataFrame
-        daily_returns_df = pd.DataFrame(daily_returns_dict)
+    # Calculate daily returns for each model and store them in a dictionary
+    daily_returns_dict = {}
+    for model_name in models_df['name']:
+        daily_returns_dict[model_name] = calculate_model_daily_returns(model_name)
 
-        # Filter to only include dates from 2025-01-01 onward
-        daily_returns_df = daily_returns_df[daily_returns_df.index >= pd.to_datetime("2025-01-01")]
+    # Convert the dictionary to a DataFrame
+    daily_returns_df = pd.DataFrame(daily_returns_dict)
 
-        # Create an interactive Plotly graph
-        fig = go.Figure()
-        # Plot selected models
-        for model_name in selected_models:
-            if model_name in daily_returns_df.columns:
-                model_data = daily_returns_df[model_name]
-                # Calculate cumulative returns as a percentage
-                cumulative_returns_pct = np.cumsum(model_data) * 100
+    # Filter to only include dates from 2025-01-01 onward
+    daily_returns_df = daily_returns_df[daily_returns_df.index >= pd.to_datetime("2025-01-01")]
+
+    # Create an interactive Plotly graph
+    fig = go.Figure()
+    # Plot selected models
+    for model_name in selected_models:
+        if model_name in daily_returns_df.columns:
+            model_data = daily_returns_df[model_name]
+            # Calculate cumulative returns as a percentage
+            cumulative_returns_pct = np.cumsum(model_data) * 100
+            fig.add_trace(go.Scatter(
+                x=model_data.index,
+                y=cumulative_returns_pct,
+                mode='lines',
+                name=f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)"
+            ))
+
+    # Overlay the selected ETF or economic indicator
+    if overlay_symbol:
+        conn = sqlite3.connect(database_path)
+        query = f"""
+        SELECT Date, economic_value AS Close
+        FROM economic_indicators
+        WHERE symbol = '{overlay_symbol}'
+        UNION
+        SELECT Date, Close
+        FROM etf_prices
+        WHERE symbol = '{overlay_symbol}'
+        """
+        df = pd.read_sql_query(query, conn)
+        if not df.empty:
+            df['Date'] = pd.to_datetime(df['Date'])
+            df = df[df['Date'] >= pd.to_datetime("2025-01-01")]
+            df = df.sort_values('Date')
+            # Normalize to start at 0% for overlay (percent change from first value)
+            df = df.set_index('Date')
+            df = df[~df.index.duplicated(keep='first')]
+            if len(df) > 0:
+                norm = (df['Close'] / df['Close'].iloc[0] - 1) * 100
                 fig.add_trace(go.Scatter(
-                    x=model_data.index,
-                    y=cumulative_returns_pct,
+                    x=norm.index,
+                    y=norm.values,
                     mode='lines',
-                    name=f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)"
+                    name=f"{overlay_symbol} - {overlay_name} (Overlay, % Chg)"
                 ))
+        conn.close()
 
-        # Overlay the selected ETF or economic indicator
-        if overlay_symbol:
-            conn = sqlite3.connect(database_path)
-            query = f"""
-            SELECT Date, economic_value AS Close
-            FROM economic_indicators
-            WHERE symbol = '{overlay_symbol}'
-            UNION
-            SELECT Date, Close
-            FROM etf_prices
-            WHERE symbol = '{overlay_symbol}'
-            """
-            df = pd.read_sql_query(query, conn)
-            if not df.empty:
-                df['Date'] = pd.to_datetime(df['Date'])
-                df = df[df['Date'] >= pd.to_datetime("2025-01-01")]
-                df = df.sort_values('Date')
-                # Normalize to start at 0% for overlay (percent change from first value)
-                df = df.set_index('Date')
-                df = df[~df.index.duplicated(keep='first')]
-                if len(df) > 0:
-                    norm = (df['Close'] / df['Close'].iloc[0] - 1) * 100
-                    fig.add_trace(go.Scatter(
-                        x=norm.index,
-                        y=norm.values,
-                        mode='lines',
-                        name=f"{overlay_symbol} - {overlay_name} (Overlay, % Chg)"
-                    ))
-            conn.close()
+    # Customize the layout
+    fig.update_layout(
+        title=f"{selected_group} - Cumulative YTD Returns (with Overlay)",
+        xaxis_title="Date",
+        yaxis_title="Cumulative Returns / Overlay (%)",
+        legend_title="Models & Overlays",
+        template="plotly_white",
+        yaxis_tickformat=".2f"
+    )
 
-        # Customize the layout
-        fig.update_layout(
-            title=f"{selected_group} - Cumulative YTD Returns (with Overlay)",
-            xaxis_title="Date",
-            yaxis_title="Cumulative Returns / Overlay (%)",
-            legend_title="Models & Overlays",
-            template="plotly_white",
-            yaxis_tickformat=".2f"
-        )
-
-        # Display the interactive Plotly graph in Streamlit
-        st.plotly_chart(fig, use_container_width=True)
+    # Display the interactive Plotly graph in Streamlit
+    st.plotly_chart(fig, use_container_width=True)
