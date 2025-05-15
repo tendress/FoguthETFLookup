@@ -103,6 +103,7 @@ def economic_indicators():
         # Header for "Stock Market Indicators"
         st.header("Stock Market Indicators")
         
+        
         st.markdown(
         "<span style='color:#0066CC; font-weight:bold;'>The Dow Jones Industrial Average measures 30 major U.S. companies, providing insight into the health of established industries and overall economic stability.</span>",
         unsafe_allow_html=True)  
@@ -112,7 +113,12 @@ def economic_indicators():
         st.markdown(
         "<span style='color:#FF3333; font-weight:bold;'>The NASDAQ focuses on technology and growth-oriented companies, indicating investor sentiment toward innovation and high-growth sectors.</span>",
         unsafe_allow_html=True)    
-
+         
+        
+        
+        
+        # Display the most recent value for each stock market index
+        
         # Display returns
         st.subheader("Stock Market Returns")
         for symbol, return_value in returns.items():
@@ -124,26 +130,16 @@ def economic_indicators():
             most_recent_vix = vix_data.iloc[-1]['Close']
             st.write(f"Volatility Index (VIX): {most_recent_vix:.2f}")
             
-        # Normalize returns for each index (excluding VIX)
-        other_data = df[df['symbol'] != 'Volatility Index'].copy()
-        normalized_data = []
-        for symbol in other_data['symbol'].unique():
-            symbol_df = other_data[other_data['symbol'] == symbol].copy()
-            if not symbol_df.empty:
-                first_close = symbol_df.iloc[0]['Close']
-                symbol_df['Normalized'] = (symbol_df['Close'] / first_close) * 100  # Start at 100
-                normalized_data.append(symbol_df)
-        if normalized_data:
-            normalized_df = pd.concat(normalized_data)
-            fig1 = px.line(
-                normalized_df,
-                x='Date',
-                y='Normalized',
-                color='symbol',
-                title='Normalized Stock Market Indicators: Dow Jones, S&P 500, NASDAQ (Start = 100)'
-            )
-            fig1.update_layout(yaxis_title="Normalized Value (Start = 100)")
-            st.plotly_chart(fig1, use_container_width=True)
+
+        # Separate data for Volatility Index (^VIX)
+        other_data = df[df['symbol'] != 'Volatility Index']
+
+
+
+        # Plot SP500, DJIA, NASDAQ in one chart
+        fig1 = px.line(other_data, x='Date', y='Close', color='symbol',
+                    title='Stock Market Indicators: Dow Jones, S&P 500, NASDAQ')
+        st.plotly_chart(fig1, use_container_width=True)
 
         # Plot Volatility Index in its own chart
         st.markdown(
@@ -426,7 +422,7 @@ def economic_indicators():
         # Connect to the database
         conn = sqlite3.connect(db_path)
 
-        # Fetch available symbols and their names from the database (economic indicators and ETFs)
+        # Fetch available symbols and their names from the database
         query = """
         SELECT DISTINCT symbol, name
         FROM economic_indicators
@@ -437,11 +433,6 @@ def economic_indicators():
         WHERE name IS NOT NULL
         """
         symbols_df = pd.read_sql_query(query, conn)
-
-        # Fetch DISTINCT model names from the models table
-        model_query = "SELECT DISTINCT name FROM models"
-        models_df = pd.read_sql_query(model_query, conn)
-        model_names = models_df['name'].tolist()
 
         # Create a dictionary mapping symbols to their names for display
         symbol_name_mapping = dict(zip(symbols_df['symbol'], symbols_df['name']))
@@ -454,122 +445,60 @@ def economic_indicators():
             default=[]
         )
 
-        # Sidebar selectbox for models
-        selected_model = st.sidebar.selectbox(
-            "Select a Model to Plot (optional)",
-            options=["None"] + model_names,
-            index=0
-        )
-
         # Map selected names back to their symbols
         selected_symbols = [symbol for symbol, name in symbol_name_mapping.items() if name in selected_names]
 
-        data_frames = []
-
         # Fetch data for the selected symbols
-        for symbol in selected_symbols:
-            query = f"""
-            SELECT Date, economic_value AS Close, '{symbol}' AS symbol
-            FROM economic_indicators
-            WHERE symbol = '{symbol}'
-            UNION
-            SELECT Date, Close, '{symbol}' AS symbol
-            FROM etf_prices
-            WHERE symbol = '{symbol}'
-            """
-            df = pd.read_sql_query(query, conn)
-            df['Date'] = pd.to_datetime(df['Date'])
-            df = df[(df['Date'] >= pd.Timestamp(start_date)) & (df['Date'] <= pd.Timestamp(end_date))]
-            data_frames.append(df)
+        if selected_symbols:
+            data_frames = []
+            for symbol in selected_symbols:
+                query = f"""
+                SELECT Date, economic_value AS Close, '{symbol}' AS symbol
+                FROM economic_indicators
+                WHERE symbol = '{symbol}'
+                UNION
+                SELECT Date, Close, '{symbol}' AS symbol
+                FROM etf_prices
+                WHERE symbol = '{symbol}'
+                """
+                df = pd.read_sql_query(query, conn)
+                df['Date'] = pd.to_datetime(df['Date'])
+                df = df[(df['Date'] >= pd.Timestamp(start_date)) & (df['Date'] <= pd.Timestamp(end_date))]
+                data_frames.append(df)
 
-        # If a model is selected, fetch and calculate its daily returns
-        if selected_model and selected_model != "None":
-            # Get security set IDs and their weights for the model
-            query = """
-                SELECT ss.id AS security_set_id, ms.weight AS model_weight
-                FROM models m
-                JOIN model_security_set ms ON m.id = ms.model_id
-                JOIN security_sets ss ON ms.security_set_id = ss.id
-                WHERE m.name = ?
-            """
-            cursor = conn.cursor()
-            cursor.execute(query, (selected_model,))
-            security_sets = cursor.fetchall()
+            # Combine all data into a single DataFrame
+            if data_frames:
+                combined_df = pd.concat(data_frames)
 
-            if security_sets:
-                ss_weights_df = pd.DataFrame(security_sets, columns=['security_set_id', 'model_weight'])
-
-                # Fetch daily percent changes for each security set from security_set_prices
-                ss_data = {}
-                for ss_id in ss_weights_df['security_set_id']:
-                    query = """
-                        SELECT Date, percentChange
-                        FROM security_set_prices
-                        WHERE security_set_id = ?
-                        ORDER BY Date
-                    """
-                    df = pd.read_sql_query(query, conn, params=(ss_id,))
-                    if not df.empty:
-                        df['Date'] = pd.to_datetime(df['Date'])
-                        df.set_index('Date', inplace=True)
-                        ss_data[ss_id] = df['percentChange'] / 100.0  # Convert to decimal
-
-                if ss_data:
-                    ss_returns = pd.DataFrame(ss_data)
-                    ss_weights_df.set_index('security_set_id', inplace=True)
-                    weighted_returns = ss_returns.mul(ss_weights_df['model_weight'], axis=1).sum(axis=1)
-                    weighted_returns = weighted_returns[(weighted_returns.index >= pd.to_datetime(start_date)) & (weighted_returns.index <= pd.to_datetime(end_date))]
-                    model_df = pd.DataFrame({
-                        'Date': weighted_returns.index,
-                        'Close': weighted_returns.values,
-                        'symbol': selected_model
-                    })
-                    data_frames.append(model_df)
-
-        # Combine all data into a single DataFrame
-        if data_frames:
-            combined_df = pd.concat(data_frames)
-
-            # If the model is selected, plot its cumulative return as a percent
-            fig = make_subplots(specs=[[{"secondary_y": True}]])
-            for i, symbol in enumerate(combined_df['symbol'].unique()):
-                symbol_data = combined_df[combined_df['symbol'] == symbol]
-                if symbol == selected_model:
-                    # Cumulative percent return for the model
-                    cum_return = (symbol_data['Close'] + 1).cumprod() - 1
-                    fig.add_trace(
-                        go.Scatter(
-                            x=symbol_data['Date'],
-                            y=cum_return * 100,
-                            mode='lines+markers',
-                            name=f"{symbol} (Cumulative % Return)"
-                        ),
-                        secondary_y=False
-                    )
-                else:
+                # Create a subplot with secondary Y-axes
+                fig = make_subplots(specs=[[{"secondary_y": True}]])
+                for i, symbol in enumerate(selected_symbols):
+                    symbol_data = combined_df[combined_df['symbol'] == symbol]
                     fig.add_trace(
                         go.Scatter(
                             x=symbol_data['Date'],
                             y=symbol_data['Close'],
                             mode='lines+markers',
-                            name=symbol_name_mapping.get(symbol, symbol)
+                            name=symbol_name_mapping[symbol]  # Use the name for the legend
                         ),
-                        secondary_y=(i % 2 == 1)
+                        secondary_y=(i % 2 == 1)  # Alternate Y-axes
                     )
 
-            # Update layout
-            fig.update_layout(
-                title_text="Custom Chart: Selected Economic Indicators, ETFs, and Model Performance",
-                xaxis_title="Date",
-                yaxis_title="Primary Y-Axis / Model Cumulative Return (%)",
-                yaxis2_title="Secondary Y-Axis",
-                legend_title="Symbols",
-                showlegend=True
-            )
-            fig.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=2))
-            st.plotly_chart(fig, use_container_width=True)
+                # Update layout
+                fig.update_layout(
+                    title_text="Custom Chart: Selected Economic Indicators and ETFs",
+                    xaxis_title="Date",
+                    yaxis_title="Primary Y-Axis",
+                    yaxis2_title="Secondary Y-Axis",
+                    legend_title="Symbols",
+                    showlegend=True
+                )
+                fig.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=2))
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.write("No data available for the selected symbols in the chosen timeframe.")
         else:
-            st.write("Select symbols or a model from the sidebar to plot a custom chart.")
+            st.write("Select symbols from the sidebar to plot a custom chart.")
 
         # Close the database connection
         conn.close()
