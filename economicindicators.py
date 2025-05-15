@@ -103,7 +103,6 @@ def economic_indicators():
         # Header for "Stock Market Indicators"
         st.header("Stock Market Indicators")
         
-        
         st.markdown(
         "<span style='color:#0066CC; font-weight:bold;'>The Dow Jones Industrial Average measures 30 major U.S. companies, providing insight into the health of established industries and overall economic stability.</span>",
         unsafe_allow_html=True)  
@@ -113,12 +112,7 @@ def economic_indicators():
         st.markdown(
         "<span style='color:#FF3333; font-weight:bold;'>The NASDAQ focuses on technology and growth-oriented companies, indicating investor sentiment toward innovation and high-growth sectors.</span>",
         unsafe_allow_html=True)    
-         
-        
-        
-        
-        # Display the most recent value for each stock market index
-        
+
         # Display returns
         st.subheader("Stock Market Returns")
         for symbol, return_value in returns.items():
@@ -130,16 +124,26 @@ def economic_indicators():
             most_recent_vix = vix_data.iloc[-1]['Close']
             st.write(f"Volatility Index (VIX): {most_recent_vix:.2f}")
             
-
-        # Separate data for Volatility Index (^VIX)
-        other_data = df[df['symbol'] != 'Volatility Index']
-
-
-
-        # Plot SP500, DJIA, NASDAQ in one chart
-        fig1 = px.line(other_data, x='Date', y='Close', color='symbol',
-                    title='Stock Market Indicators: Dow Jones, S&P 500, NASDAQ')
-        st.plotly_chart(fig1, use_container_width=True)
+        # Normalize returns for each index (excluding VIX)
+        other_data = df[df['symbol'] != 'Volatility Index'].copy()
+        normalized_data = []
+        for symbol in other_data['symbol'].unique():
+            symbol_df = other_data[other_data['symbol'] == symbol].copy()
+            if not symbol_df.empty:
+                first_close = symbol_df.iloc[0]['Close']
+                symbol_df['Normalized'] = (symbol_df['Close'] / first_close) * 100  # Start at 100
+                normalized_data.append(symbol_df)
+        if normalized_data:
+            normalized_df = pd.concat(normalized_data)
+            fig1 = px.line(
+                normalized_df,
+                x='Date',
+                y='Normalized',
+                color='symbol',
+                title='Normalized Stock Market Indicators: Dow Jones, S&P 500, NASDAQ (Start = 100)'
+            )
+            fig1.update_layout(yaxis_title="Normalized Value (Start = 100)")
+            st.plotly_chart(fig1, use_container_width=True)
 
         # Plot Volatility Index in its own chart
         st.markdown(
