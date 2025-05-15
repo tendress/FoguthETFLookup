@@ -122,14 +122,20 @@ def display_model_graphs():
     # Create a dictionary mapping symbols to their names for display
     symbol_name_mapping = dict(zip(symbols_df['symbol'], symbols_df['name']))
 
-    # Sidebar for selecting overlays
+    # Sidebar for selecting a single overlay
     st.sidebar.header("Overlay ETFs or Economic Indicators")
-    selected_names = st.sidebar.multiselect(
-        "Select Economic Indicators or ETFs to Overlay",
-        options=symbols_df['name'].tolist(),
-        default=[]
+    overlay_option = st.sidebar.selectbox(
+        "Select a single Economic Indicator or ETF to Overlay",
+        options=["None"] + symbols_df['name'].tolist(),
+        index=0
     )
-    selected_symbols = [symbol for symbol, name in symbol_name_mapping.items() if name in selected_names]
+    overlay_symbol = None
+    if overlay_option != "None":
+        # Find the symbol for the selected overlay name
+        for symbol, name in symbol_name_mapping.items():
+            if name == overlay_option:
+                overlay_symbol = symbol
+                break
 
     # Display a button to initiate the calculation
     if st.button("Run Model Graphs"):
@@ -159,36 +165,34 @@ def display_model_graphs():
                     name=f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)"
                 ))
 
-        # Overlay selected ETFs or economic indicators
-        if selected_symbols:
+        # Overlay the selected ETF or economic indicator
+        if overlay_symbol:
             conn = sqlite3.connect(database_path)
-            for symbol in selected_symbols:
-                # Try economic_indicators first
-                query = f"""
-                SELECT Date, economic_value AS Close
-                FROM economic_indicators
-                WHERE symbol = '{symbol}'
-                UNION
-                SELECT Date, Close
-                FROM etf_prices
-                WHERE symbol = '{symbol}'
-                """
-                df = pd.read_sql_query(query, conn)
-                if not df.empty:
-                    df['Date'] = pd.to_datetime(df['Date'])
-                    df = df[df['Date'] >= pd.to_datetime("2025-01-01")]
-                    df = df.sort_values('Date')
-                    # Normalize to start at 0% for overlay (percent change from first value)
-                    df = df.set_index('Date')
-                    df = df[~df.index.duplicated(keep='first')]
-                    if len(df) > 0:
-                        norm = (df['Close'] / df['Close'].iloc[0] - 1) * 100
-                        fig.add_trace(go.Scatter(
-                            x=norm.index,
-                            y=norm.values,
-                            mode='lines',
-                            name=f"{symbol_name_mapping[symbol]} (Overlay, % Chg)"
-                        ))
+            query = f"""
+            SELECT Date, economic_value AS Close
+            FROM economic_indicators
+            WHERE symbol = '{overlay_symbol}'
+            UNION
+            SELECT Date, Close
+            FROM etf_prices
+            WHERE symbol = '{overlay_symbol}'
+            """
+            df = pd.read_sql_query(query, conn)
+            if not df.empty:
+                df['Date'] = pd.to_datetime(df['Date'])
+                df = df[df['Date'] >= pd.to_datetime("2025-01-01")]
+                df = df.sort_values('Date')
+                # Normalize to start at 0% for overlay (percent change from first value)
+                df = df.set_index('Date')
+                df = df[~df.index.duplicated(keep='first')]
+                if len(df) > 0:
+                    norm = (df['Close'] / df['Close'].iloc[0] - 1) * 100
+                    fig.add_trace(go.Scatter(
+                        x=norm.index,
+                        y=norm.values,
+                        mode='lines',
+                        name=f"{overlay_option} (Overlay, % Chg)"
+                    ))
             conn.close()
 
         # Customize the layout
