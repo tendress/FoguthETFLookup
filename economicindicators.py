@@ -519,10 +519,10 @@ def economic_indicators():
          
         
         # Plot Federal Reserve Indicators
-        plot_federal_reserve_indicators(db_path, start_date, end_date)
+        #plot_federal_reserve_indicators(db_path, start_date, end_date)
 
         # Plot U.S. Economy Indicators
-        plot_us_economy(db_path, start_date, end_date)
+        #plot_us_economy(db_path, start_date, end_date)
                 
         # Plot Custom Chart
         plot_custom_chart(db_path, start_date, end_date)
