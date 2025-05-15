@@ -122,20 +122,21 @@ def display_model_graphs():
     # Create a dictionary mapping symbols to their names for display
     symbol_name_mapping = dict(zip(symbols_df['symbol'], symbols_df['name']))
 
+    # Create a list of options with symbol in front of the name
+    overlay_options = ["None"] + [f"{symbol} - {name}" for symbol, name in symbol_name_mapping.items()]
+
     # Sidebar for selecting a single overlay
     st.sidebar.header("Overlay ETFs or Economic Indicators")
     overlay_option = st.sidebar.selectbox(
         "Select a single Economic Indicator or ETF to Overlay",
-        options=["None"] + symbols_df['name'].tolist(),
+        options=overlay_options,
         index=0
     )
     overlay_symbol = None
+    overlay_name = None
     if overlay_option != "None":
-        # Find the symbol for the selected overlay name
-        for symbol, name in symbol_name_mapping.items():
-            if name == overlay_option:
-                overlay_symbol = symbol
-                break
+        overlay_symbol = overlay_option.split(" - ")[0]
+        overlay_name = overlay_option.split(" - ", 1)[1]
 
     # Display a button to initiate the calculation
     if st.button("Run Model Graphs"):
@@ -191,7 +192,7 @@ def display_model_graphs():
                         x=norm.index,
                         y=norm.values,
                         mode='lines',
-                        name=f"{overlay_option} (Overlay, % Chg)"
+                        name=f"{overlay_symbol} - {overlay_name} (Overlay, % Chg)"
                     ))
             conn.close()
 
