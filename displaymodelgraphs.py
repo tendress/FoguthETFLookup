@@ -13,7 +13,6 @@ def display_model_graphs():
     # Database connection
     database_path = 'foguth_etf_models.db'
 
-    # Remove @st.cache_data
     def fetch_models():
         """
         Fetch model names and YTD returns from the database.
@@ -27,7 +26,6 @@ def display_model_graphs():
         conn.close()
         return models
 
-    # Remove @st.cache_data
     def calculate_model_daily_returns(model_name):
         """
         Calculate daily price returns for a model using the security_set_prices table and model_security_set weights.
@@ -106,6 +104,33 @@ def display_model_graphs():
     group_index = group_mapping[selected_group]  # Map the selected group to its index
     selected_models = model_groups[group_index]
 
+    # --- Overlay selection ---
+    # Fetch available symbols and their names from the database
+    conn = sqlite3.connect(database_path)
+    query = """
+    SELECT DISTINCT symbol, name
+    FROM economic_indicators
+    WHERE name IS NOT NULL
+    UNION
+    SELECT symbol, name
+    FROM etfs
+    WHERE name IS NOT NULL
+    """
+    symbols_df = pd.read_sql_query(query, conn)
+    conn.close()
+
+    # Create a dictionary mapping symbols to their names for display
+    symbol_name_mapping = dict(zip(symbols_df['symbol'], symbols_df['name']))
+
+    # Sidebar for selecting overlays
+    st.sidebar.header("Overlay ETFs or Economic Indicators")
+    selected_names = st.sidebar.multiselect(
+        "Select Economic Indicators or ETFs to Overlay",
+        options=symbols_df['name'].tolist(),
+        default=[]
+    )
+    selected_symbols = [symbol for symbol, name in symbol_name_mapping.items() if name in selected_names]
+
     # Display a button to initiate the calculation
     if st.button("Run Model Graphs"):
         # Calculate daily returns for each model and store them in a dictionary
@@ -121,6 +146,7 @@ def display_model_graphs():
 
         # Create an interactive Plotly graph
         fig = go.Figure()
+        # Plot selected models
         for model_name in selected_models:
             if model_name in daily_returns_df.columns:
                 model_data = daily_returns_df[model_name]
@@ -133,12 +159,44 @@ def display_model_graphs():
                     name=f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)"
                 ))
 
+        # Overlay selected ETFs or economic indicators
+        if selected_symbols:
+            conn = sqlite3.connect(database_path)
+            for symbol in selected_symbols:
+                # Try economic_indicators first
+                query = f"""
+                SELECT Date, economic_value AS Close
+                FROM economic_indicators
+                WHERE symbol = '{symbol}'
+                UNION
+                SELECT Date, Close
+                FROM etf_prices
+                WHERE symbol = '{symbol}'
+                """
+                df = pd.read_sql_query(query, conn)
+                if not df.empty:
+                    df['Date'] = pd.to_datetime(df['Date'])
+                    df = df[df['Date'] >= pd.to_datetime("2025-01-01")]
+                    df = df.sort_values('Date')
+                    # Normalize to start at 0% for overlay (percent change from first value)
+                    df = df.set_index('Date')
+                    df = df[~df.index.duplicated(keep='first')]
+                    if len(df) > 0:
+                        norm = (df['Close'] / df['Close'].iloc[0] - 1) * 100
+                        fig.add_trace(go.Scatter(
+                            x=norm.index,
+                            y=norm.values,
+                            mode='lines',
+                            name=f"{symbol_name_mapping[symbol]} (Overlay, % Chg)"
+                        ))
+            conn.close()
+
         # Customize the layout
         fig.update_layout(
-            title=f"{selected_group} - Cumulative YTD Returns",
+            title=f"{selected_group} - Cumulative YTD Returns (with Overlay)",
             xaxis_title="Date",
-            yaxis_title="Cumulative Returns (%)",
-            legend_title="Models",
+            yaxis_title="Cumulative Returns / Overlay (%)",
+            legend_title="Models & Overlays",
             template="plotly_white",
             yaxis_tickformat=".2f"
         )
