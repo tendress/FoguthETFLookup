@@ -306,7 +306,7 @@ def economic_indicators():
 
         # Ensure the order of symbols is 3-Month, 5-Year, 10-Year, 30-Year
         order = ['3-Month Treasury Yield', '5-Year Treasury Yield', '10-Year Treasury Yield', '30-Year Treasury Yield']
-        selected_date_data['symbol'] = pd.Categorical(selected_date_data['symbol'], categories=order, ordered=True)
+        selected_date_data.loc[:, 'symbol'] = pd.Categorical(selected_date_data['symbol'], categories=order, ordered=True)
         selected_date_data = selected_date_data.sort_values('symbol')
 
         
