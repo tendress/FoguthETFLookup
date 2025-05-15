@@ -13,7 +13,7 @@ def display_model_graphs():
     # Database connection
     database_path = 'foguth_etf_models.db'
 
-    @st.cache_data
+    # Remove @st.cache_data
     def fetch_models():
         """
         Fetch model names and YTD returns from the database.
@@ -27,7 +27,7 @@ def display_model_graphs():
         conn.close()
         return models
 
-    @st.cache_data
+    # Remove @st.cache_data
     def calculate_model_daily_returns(model_name):
         """
         Calculate daily price returns for a model using YTD data from the etf_prices table.
