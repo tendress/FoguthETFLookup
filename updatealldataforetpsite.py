@@ -527,5 +527,5 @@ if __name__ == "__main__":
 
         print("All updates completed successfully.")
 
-        print("Sleeping for 30 minutes before rerunning...")
-        time.sleep(1800)  # Sleep for 1800 seconds (30 minutes)
+        #print("Sleeping for 30 minutes before rerunning...")
+        #time.sleep(1800)  # Sleep for 1800 seconds (30 minutes)
