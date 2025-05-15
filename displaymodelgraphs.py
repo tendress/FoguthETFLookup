@@ -124,20 +124,23 @@ def display_model_graphs():
         for model_name in selected_models:
             if model_name in daily_returns_df.columns:
                 model_data = daily_returns_df[model_name]
+                # Calculate cumulative returns as a percentage
+                cumulative_returns_pct = np.cumsum(model_data) * 100
                 fig.add_trace(go.Scatter(
                     x=model_data.index,
-                    y=np.cumsum(model_data),
+                    y=cumulative_returns_pct,
                     mode='lines',
-                    name=model_name
+                    name=f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)"
                 ))
 
         # Customize the layout
         fig.update_layout(
             title=f"{selected_group} - Cumulative YTD Returns",
             xaxis_title="Date",
-            yaxis_title="Cumulative Returns",
+            yaxis_title="Cumulative Returns (%)",
             legend_title="Models",
-            template="plotly_white"
+            template="plotly_white",
+            yaxis_tickformat=".2f"
         )
 
         # Display the interactive Plotly graph in Streamlit
