@@ -116,6 +116,9 @@ def display_model_graphs():
         # Convert the dictionary to a DataFrame
         daily_returns_df = pd.DataFrame(daily_returns_dict)
 
+        # Filter to only include dates from 2025-01-01 onward
+        daily_returns_df = daily_returns_df[daily_returns_df.index >= pd.to_datetime("2025-01-01")]
+
         # Create an interactive Plotly graph
         fig = go.Figure()
         for model_name in selected_models:
