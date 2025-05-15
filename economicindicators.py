@@ -242,12 +242,10 @@ def economic_indicators():
         df2['Date'] = pd.to_datetime(df2['Date'])
         df2 = df2[(df2['Date'] >= pd.Timestamp(start_date)) & (df2['Date'] <= pd.Timestamp(end_date))]
         df2['symbol'] = 'T10Y2Y'
-
         df2['symbol'] = df2['symbol'].replace({'T10Y2Y': '10-Year Minus 2-Year Treasury Yield'})
 
         # Adding a divider
         st.markdown("<hr>", unsafe_allow_html=True)
-
 
         # Header for "Bond Yields"
         st.header("Bond Yields")
@@ -265,10 +263,21 @@ def economic_indicators():
         "<span style='color:#0066CC; font-weight:bold;'>The 30-Year Treasury Bond yield indicates long-term investor expectations for the U.S. economy, higher yields indicating anticipation of sustained economic growth or rising inflation, but also signaling concerns about long-term fiscal challenges, such as increasing federal debt and potential trade disruptions.</span>",
         unsafe_allow_html=True)
 
+        # Ensure the order of symbols is 3-Month, 5-Year, 10-Year, 30-Year for both plot and legend
+        order = ['3-Month Treasury Yield', '5-Year Treasury Yield', '10-Year Treasury Yield', '30-Year Treasury Yield']
+        bond_yields_df = df[df['symbol'].isin(order)].copy()
+        bond_yields_df['symbol'] = pd.Categorical(bond_yields_df['symbol'], categories=order, ordered=True)
+        bond_yields_df = bond_yields_df.sort_values(['Date', 'symbol'])
+
         # Plot Bond Yields Over Time (excluding 10-Year Minus 2-Year Treasury Yield)
-        bond_yields_df = df[df['symbol'] != '10-Year Minus 2-Year Treasury Yield']
-        fig = px.line(bond_yields_df, x='Date', y='Close', color='symbol',
-                    title='Bond Yields: 3-Month, 5-Year, 10-Year, 30-Year')
+        fig = px.line(
+            bond_yields_df,
+            x='Date',
+            y='Close',
+            color='symbol',
+            category_orders={'symbol': order},
+            title='Bond Yields: 3-Month, 5-Year, 10-Year, 30-Year'
+        )
         st.plotly_chart(fig, use_container_width=True)
 
         # Display the most recent value for 10-Year Minus 2-Year Treasury Yield
@@ -291,8 +300,6 @@ def economic_indicators():
         fig2.update_layout(xaxis_title="Date", yaxis_title="Yield (%)")
         st.plotly_chart(fig2, use_container_width=True)
 
-        
-
         # User selects a specific date
         st.subheader("Select a Date to View Bond Yields")
         st.markdown(
@@ -302,18 +309,21 @@ def economic_indicators():
         selected_date = st.date_input("Select a Date", value=unique_dates[-1], min_value=min(unique_dates), max_value=max(unique_dates))
 
         # Filter data for the selected date
-        selected_date_data = bond_yields_df[bond_yields_df['Date'].dt.date == selected_date]
+        selected_date_data = bond_yields_df[bond_yields_df['Date'].dt.date == selected_date].copy()
 
-        # Ensure the order of symbols is 3-Month, 5-Year, 10-Year, 30-Year
-        order = ['3-Month Treasury Yield', '5-Year Treasury Yield', '10-Year Treasury Yield', '30-Year Treasury Yield']
+        # Ensure the order of symbols is 3-Month, 5-Year, 10-Year, 30-Year for the selected date
         selected_date_data.loc[:, 'symbol'] = pd.Categorical(selected_date_data['symbol'], categories=order, ordered=True)
         selected_date_data = selected_date_data.sort_values('symbol')
 
-        
-        
         # Create a line chart for the selected date
-        fig_selected_date = px.line(selected_date_data, x='symbol', y='Close', markers=True,
-                                    title=f'Bond Yields for {selected_date}')
+        fig_selected_date = px.line(
+            selected_date_data,
+            x='symbol',
+            y='Close',
+            markers=True,
+            category_orders={'symbol': order},
+            title=f'Bond Yields for {selected_date}'
+        )
         fig_selected_date.update_traces(mode='lines+markers', marker=dict(size=10))
         fig_selected_date.update_layout(xaxis_title="Bond Type", yaxis_title="Yield (%)")
         st.plotly_chart(fig_selected_date, use_container_width=True)
