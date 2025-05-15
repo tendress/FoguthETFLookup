@@ -30,55 +30,59 @@ def display_model_graphs():
     # Remove @st.cache_data
     def calculate_model_daily_returns(model_name):
         """
-        Calculate daily price returns for a model using YTD data from the etf_prices table.
+        Calculate daily price returns for a model using the security_set_prices table and model_security_set weights.
         """
         conn = sqlite3.connect(database_path)
+        # Get security set IDs and their weights for the model
         query = '''
             SELECT 
-                e.symbol AS ETF,
-                ms.weight * se.weight AS Weight
+                ss.id AS security_set_id,
+                ms.weight AS model_weight
             FROM models m
             JOIN model_security_set ms ON m.id = ms.model_id
-            JOIN security_sets_etfs se ON ms.security_set_id = se.security_set_id
-            JOIN etfs e ON se.etf_id = e.id
+            JOIN security_sets ss ON ms.security_set_id = ss.id
             WHERE m.name = ?
         '''
         cursor = conn.cursor()
         cursor.execute(query, (model_name,))
-        etf_weights = cursor.fetchall()
+        security_sets = cursor.fetchall()
         conn.close()
 
-        # Create a DataFrame for ETF weights
-        etf_weights_df = pd.DataFrame(etf_weights, columns=['ETF', 'Weight'])
+        if not security_sets:
+            return pd.Series(dtype=float)
 
-        # Fetch historical price data for the ETFs (YTD) from the database
-        etf_data = {}
-        start_date = dt.datetime(dt.datetime.now().year, 1, 1).strftime('%Y-%m-%d')  # Start from January 1st of the current year
+        # Create DataFrame for security set weights
+        ss_weights_df = pd.DataFrame(security_sets, columns=['security_set_id', 'model_weight'])
+
+        # Fetch daily percent changes for each security set from security_set_prices
         conn = sqlite3.connect(database_path)
-        for etf in etf_weights_df['ETF']:
+        ss_data = {}
+        for ss_id in ss_weights_df['security_set_id']:
             query = '''
-                SELECT Date, Close
-                FROM etf_prices
-                JOIN etfs ON etf_prices.etf_id = etfs.id
-                WHERE etfs.symbol = ? AND Date >= ?
+                SELECT Date, percentChange
+                FROM security_set_prices
+                WHERE security_set_id = ?
                 ORDER BY Date
             '''
-            df = pd.read_sql_query(query, conn, params=(etf, start_date))
+            df = pd.read_sql_query(query, conn, params=(ss_id,))
             if not df.empty:
                 df['Date'] = pd.to_datetime(df['Date'])
                 df.set_index('Date', inplace=True)
-                etf_data[etf] = df['Close']
+                # Convert percentChange to decimal returns
+                ss_data[ss_id] = df['percentChange'] / 100.0
         conn.close()
 
-        # Combine ETF price data into a single DataFrame
-        etf_prices = pd.DataFrame(etf_data)
+        if not ss_data:
+            return pd.Series(dtype=float)
 
-        # Calculate daily returns for each ETF
-        etf_daily_returns = etf_prices.pct_change(fill_method=None)
+        # Combine all security set returns into a DataFrame
+        ss_returns = pd.DataFrame(ss_data)
 
-        # Calculate the weighted daily returns for the model
-        etf_weights_df.set_index('ETF', inplace=True)
-        weighted_returns = etf_daily_returns.mul(etf_weights_df['Weight'], axis=1).sum(axis=1)
+        # Set weights index for multiplication
+        ss_weights_df.set_index('security_set_id', inplace=True)
+
+        # Calculate weighted daily returns for the model
+        weighted_returns = ss_returns.mul(ss_weights_df['model_weight'], axis=1).sum(axis=1)
 
         return weighted_returns
 
