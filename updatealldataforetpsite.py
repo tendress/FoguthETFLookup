@@ -4,7 +4,6 @@ import yfinance as yf
 from datetime import datetime
 import datetime as dt
 from fredapi import Fred
-import time
 
 # --- ETF Price and Info Update Functions ---
 
@@ -198,7 +197,7 @@ def update_fred_economic_indicators(database_path, api_key):
             data_df['Date'] = data_df['Date'].dt.strftime('%Y-%m-%d')
             for _, row in data_df.iterrows():
                 cursor.execute("""
-                    INSERT INTO economic_indicators (symbol, Date, economic_value)
+                    INSERT OR IGNORE INTO economic_indicators (symbol, Date, economic_value)
                     VALUES (?, ?, ?)
                 """, (symbol, row['Date'], row['economic_value']))
             print(f"Data for {symbol} inserted successfully.")
@@ -406,7 +405,11 @@ def calculate_security_set_prices(database_path):
     """
     Calculate the weighted daily price of each security set based on the ETFs it contains
     and calculate the percent change from day to day.
+    If there is no value for today's date, use the previous value in the table.
     """
+    import pandas as pd
+    from datetime import datetime
+
     # Connect to the SQLite database
     conn = sqlite3.connect(database_path)
 
@@ -435,10 +438,6 @@ def calculate_security_set_prices(database_path):
     # Convert Date to datetime for easier manipulation
     data['Date'] = pd.to_datetime(data['Date'])
 
-    # Optional: Check for duplicate rows
-    print("Sample of joined data:")
-    print(data.head())
-
     # Calculate the weighted price for each ETF in the security set
     data['weighted_price'] = data['weight'] * data['etf_price']
 
@@ -450,7 +449,25 @@ def calculate_security_set_prices(database_path):
         .rename(columns={'weighted_price': 'security_set_price'})
     )
 
-    # Sort by security_set_id and Date before percent change calculation
+    # Ensure we have a row for today's date for each security_set_id
+    today = pd.to_datetime(datetime.now().strftime('%Y-%m-%d'))
+    all_sets = security_set_prices['security_set_id'].unique()
+    result_rows = []
+
+    for set_id in all_sets:
+        set_prices = security_set_prices[security_set_prices['security_set_id'] == set_id].copy()
+        set_prices = set_prices.sort_values('Date')
+        # If today's date is missing, forward fill
+        if today not in set_prices['Date'].values:
+            prev_row = set_prices.iloc[-1]
+            new_row = prev_row.copy()
+            new_row['Date'] = today
+            result_rows.append(new_row)
+            print(f"[Info] No value for {today.date()} in security_set_id {set_id}. Using previous value from {prev_row['Date'].date()}.")
+        result_rows.append(set_prices)
+
+    # Combine all sets back together
+    security_set_prices = pd.concat(result_rows, ignore_index=True)
     security_set_prices = security_set_prices.sort_values(['security_set_id', 'Date'])
 
     # Calculate the percent change from day to day for each security set
@@ -459,9 +476,12 @@ def calculate_security_set_prices(database_path):
         .pct_change() * 100
     )
 
-    print("Sample of calculated security set prices:")
-    print(security_set_prices.head(20))
+    # Save the results to the security_set_prices table in the database
+    conn = sqlite3.connect(database_path)
+    security_set_prices.to_sql('security_set_prices', conn, if_exists='replace', index=False)
+    conn.close()
 
+    print("Security set prices and percent changes have been calculated and saved to the 'security_set_prices' table.")
     # Save the results to the security_set_prices table in the database
     conn = sqlite3.connect(database_path)
     security_set_prices.to_sql('security_set_prices', conn, if_exists='replace', index=False)
@@ -486,8 +506,9 @@ def calculate_security_set_prices(database_path):
     conn.close()
     
     
+# --- Main Execution ---
+
 if __name__ == "__main__":
-    
     database_path = 'foguth_etf_models.db'
     fred_api_key = '43370c0e912250381f6728328dfff294'
     start_date = "2025-01-01"
@@ -509,7 +530,7 @@ if __name__ == "__main__":
     # Update FRED economic indicators
     update_fred_economic_indicators(database_path, fred_api_key)
     
-    # Update ETF YTD returns
+        # Update ETF YTD returns
     print("Updating ETF YTD returns...")
     update_etf_ytd_returns(database_path)
 
@@ -526,6 +547,3 @@ if __name__ == "__main__":
     model_df = update_model_ytd_returns(database_path)
 
     print("All updates completed successfully.")
-
-    #print("Sleeping for 30 minutes before rerunning...")
-    #time.sleep(1800)  # Sleep for 1800 seconds (30 minutes)
