@@ -301,7 +301,7 @@ def economic_indicators():
         st.plotly_chart(fig2, use_container_width=True)
 
         # User selects a specific date
-        st.subheader("Select a Date to View Bond Yields")
+        st.subheader("The Yield Curve")
         st.markdown(
             "<span style='color:blue; font-weight:bold;'>A normal yield curve is upward-sloping, where longer-term Treasury yields are higher than shorter-term yields, reflecting investor expectations of economic growth and moderate inflation, with higher returns demanded for locking in funds over longer periods.</span>",
             unsafe_allow_html=True)
