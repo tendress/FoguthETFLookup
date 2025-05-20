@@ -56,6 +56,7 @@ def etf_lookup():
             JOIN etfs ON security_sets_etfs.etf_id = etfs.id
             JOIN models ON model_security_set.model_id = models.id
             WHERE models.name = ?
+            AND security_sets_etfs.endDate IS NULL
             ORDER BY etf_weight DESC
         '''
         cursor.execute(query, (selected_model,))
