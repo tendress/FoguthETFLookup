@@ -163,56 +163,7 @@ def economic_indicators():
                     title='Volatility Index (VIX)')
         st.plotly_chart(fig2, use_container_width=True)
 
-    # Function to Plot International Market Indicators
-    def plot_international_market_indicators(db_path, start_date, end_date):
-        conn = sqlite3.connect(db_path)
-        query = """
-        SELECT Date, symbol, Close
-        FROM etf_prices
-        WHERE symbol IN ('^N225', '^FTSE', '^DJSH')
-        ORDER BY Date
-        """
-        df = pd.read_sql_query(query, conn)
-        conn.close()
-
-        df['Date'] = pd.to_datetime(df['Date'])
-
-        # Map symbols to their full names
-        symbol_mapping = {
-            '^N225': 'Nikkei 225',
-            '^FTSE': 'FTSE 100',
-            '^DJSH': 'Dow Jones Shanghai'
-        }
-        df['symbol'] = df['symbol'].map(symbol_mapping)
-
-        # Filter data based on user-selected date range
-        df = df[(df['Date'] >= pd.Timestamp(start_date)) & (df['Date'] <= pd.Timestamp(end_date))]
-
-        # Calculate returns
-        returns = calculate_returns(df)
-
-        # Add a divider
-        st.markdown("<hr>", unsafe_allow_html=True)
-        # Header for "International Market Indicators"
-        st.header("International Market Indicators")
-
-        st.markdown(
-            "<span style='color:#006699; font-weight:bold;'>The Nikkei 225 is a price-weighted index of 225 top Japanese companies listed on the Tokyo Stock Exchange, reflects the performance of major Japanese businesses and serves as a key indicator of Japan's economic health and investor confidence in its equity market.</span>",
-            unsafe_allow_html=True)    
-        st.markdown(
-            "<span style='color:#0099CC; font-weight:bold;'>The FTSE 100 is an index of the 100 largest companies listed on teh London Stock Exchange by market capitalization, reflects the performance of major UK businesses and serves as s key indicator of the UK's economic health and investor confidence in its equity market. </span>",
-            unsafe_allow_html=True)
-        for symbol, return_value in returns.items():
-            st.write(f"{symbol}: {return_value:.2f}%")
-
-        
-        st.markdown(
-        "<span style='color:red; font-weight:bold;'>Dow Jones Shanghai Index currently Not Reporting Data.</span>",
-        unsafe_allow_html=True)    # Plot International Market Indicators
-        fig = px.line(df, x='Date', y='Close', color='symbol',
-                    title='International Market Indicators: Nikkei 225, FTSE 100, Dow Jones Shanghai')
-        st.plotly_chart(fig, use_container_width=True)
-
+    
 
     def plot_bond_yields(db_path, start_date, end_date):
         conn = sqlite3.connect(db_path)
@@ -338,109 +289,7 @@ def economic_indicators():
         fig_selected_date.update_layout(xaxis_title="Bond Type", yaxis_title="Yield (%)")
         st.plotly_chart(fig_selected_date, use_container_width=True)
 
-    def plot_federal_reserve_indicators(db_path, start_date, end_date):
-        # Connect to the database
-        conn = sqlite3.connect(db_path)
-
-        # List of Federal Reserve indicators to graph
-        indicators = {
-            'FEDFUNDS': 'Federal Funds Rate',
-            'UNRATE': 'Unemployment Rate',
-            'T10YIE': '10-Year Breakeven Inflation Rate',  # Added T10YIE
-            'CORESTICKM159SFRBATL': 'Core Sticky CPI'
-        }
-
-        # Header for "Federal Reserve"
-        st.header("Federal Reserve")
-        st.markdown(
-            "<span style='color:#006699; font-weight:bold;'>The Federal Funds rate is the interest rate at which banks lend to each other overnight, set by the Federal Reserve, and it's critical because it influences borrowing costs, economic activity, and inflation across the U.S. economy.</span>",
-            unsafe_allow_html=True)
-        st.markdown(
-            "<span style='color:#006699; font-weight:bold;'>The Unemployment rate measures the percentage of the labor force that is jobless and actively seeking work.</span>",
-            unsafe_allow_html=True)
-        st.markdown(
-            "<span style='color:#006699; font-weight:bold;'>The 10-Year Breakeven Inflation rate, derived from the difference between the 10-year Treasury Note yield and the 10-Year Treasury Inflation-Protected Securities (TIPS) yield, reflects market expectations for average annual inflation over the next decade.</span>",
-            unsafe_allow_html=True)
-        st.markdown(
-            "<span style='color:#006699; font-weight:bold;'>Core Sticky CPI measures the inflation rate of less volatile consumer price components (excluding food and energy and focusing on prices that change slowly), provides a stable, long-term view of underlying inflation trends, helping policy-makers and investors gauge persistent inflationary pressures in the U.S. economy. </span>",
-            unsafe_allow_html=True)
-        
-        
-        for symbol, title in indicators.items():
-            # Fetch data for the current indicator
-            query = f"""
-            SELECT Date, economic_value AS Close
-            FROM economic_indicators
-            WHERE symbol = '{symbol}'
-            ORDER BY Date
-            """
-            df = pd.read_sql_query(query, conn)
-
-            # Convert Date column to datetime and filter by date range
-            df['Date'] = pd.to_datetime(df['Date'])
-            df = df[(df['Date'] >= pd.Timestamp(start_date)) & (df['Date'] <= pd.Timestamp(end_date))]
-
-            # Plot the data if the DataFrame is not empty
-            if not df.empty:
-                fig = px.line(df, x='Date', y='Close', title=title)
-                fig.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=2))
-                fig.update_layout(xaxis_title="Date", yaxis_title="Value")
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.write(f"No data available for {title} in the selected date range.")
-
-        # Close the database connection
-        conn.close()
-
-    def plot_us_economy(db_path, start_date, end_date):
-        # Connect to the database
-        conn = sqlite3.connect(db_path)
-
-        # List of U.S. Economy indicators to graph
-        indicators = {
-            'GDP': 'Gross Domestic Product (GDP)',
-            'WM2NS': 'M2 Money Stock',
-            'PPIACO': 'Producer Price Index (PPI)'
-        }
-
-        # Header for "U.S. Economy"
-        st.header("U.S. Economy")
-
-        st.markdown(
-            "<span style='color:#006699; font-weight:bold;'>GDP, Gross Domestic Product, is the total monetary value of all goods and services produced within a country over a specific period, and it measures a nation's economic performance and health.</span>",
-            unsafe_allow_html=True)
-        st.markdown(
-            "<span style='color:#006699; font-weight:bold;'>M2 is a measure of the money supply that includes cash, checking deposits, and easily convertible near money like savings accounts and money market funds and helps gauge future inflation, economic growth and the effectiveness of monetary policy. </span>",
-            unsafe_allow_html=True)
-        st.markdown(
-            "<span style='color:#006699; font-weight:bold;'>The Producer Price Index, PPI, measures the average change over time in the selling prices received by domestic producers for their goods and services, and indicates inflation trends at the wholesale level and can signal future consumer price changes. </span>",
-            unsafe_allow_html=True)
-        
-        for symbol, title in indicators.items():
-            # Fetch data for the current indicator
-            query = f"""
-            SELECT Date, economic_value AS Close
-            FROM economic_indicators
-            WHERE symbol = '{symbol}'
-            ORDER BY Date
-            """
-            df = pd.read_sql_query(query, conn)
-
-            # Convert Date column to datetime and filter by date range
-            df['Date'] = pd.to_datetime(df['Date'])
-            df = df[(df['Date'] >= pd.Timestamp(start_date)) & (df['Date'] <= pd.Timestamp(end_date))]
-
-            # Plot the data if the DataFrame is not empty
-            if not df.empty:
-                fig = px.line(df, x='Date', y='Close', title=title)
-                fig.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=2))
-                fig.update_layout(xaxis_title="Date", yaxis_title="Value")
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.write(f"No data available for {title} in the selected date range.")
-
-        # Close the database connection
-        conn.close()
+    
 
     def plot_custom_chart(db_path, start_date, end_date):
         # Connect to the database
@@ -538,11 +387,7 @@ def economic_indicators():
         plot_bond_yields(db_path, start_date, end_date)   
          
         
-        # Plot Federal Reserve Indicators
-        #plot_federal_reserve_indicators(db_path, start_date, end_date)
-
-        # Plot U.S. Economy Indicators
-        #plot_us_economy(db_path, start_date, end_date)
+        
                 
         # Plot Custom Chart
         plot_custom_chart(db_path, start_date, end_date)
