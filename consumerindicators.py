@@ -63,11 +63,15 @@ def economic_indicators():
         # List of U.S. Consumer indicators to graph
         indicators = {
             'UMCSENT': 'University of Michigan Consumer Sentiment Index',
-            'CORESTICKM159SFRBATL': 'Core Sticky CPI',  # <-- Added CPI here
+            'CORESTICKM159SFRBATL': 'Core Sticky CPI',
             'MRTSSM44X72USS': 'Retail Sales (Excluding Food Services)',
-            'MORTGAGE30US': '30-Year Fixed Mortgage Rate'
+            'MORTGAGE30US': '30-Year Fixed Mortgage Rate',
+            'GASREGCOVW': 'Average Price: Regular Gasoline, U.S. (Weekly)',
+            'MSPNHSUS': 'Median Sales Price of New Houses Sold in the U.S.',
+            'HSN1F': 'New One Family Houses Sold: United States',
+            'HNFSEPUSSA': 'New Privately-Owned Housing Units Started: Single-Family Units'
         }
-        
+
         # Header for "U.S. Consumer"
         st.header("U.S. Consumer")
 

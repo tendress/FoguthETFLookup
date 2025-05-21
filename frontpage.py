@@ -5,7 +5,10 @@ from calculatebeta import calculate_beta_page
 from displaymodelgraphs import display_model_graphs
 from correlationmatrix import display_correlation_matrix
 from economicindicators import economic_indicators
+from consumerindicators import consumer_indicators
+import pandas as pd
 import sqlite3
+
 
 # Set the app title and logo
 st.set_page_config(page_title="Foguth Financial Group", page_icon="🧮", layout="wide")
@@ -20,7 +23,8 @@ pages = {
     "ETF Lookup": etf_lookup,
     "Beta Calculator": calculate_beta_page,
     "Correlation Matrix": display_correlation_matrix,
-    "Economic Indicators": economic_indicators
+    "Economic Indicators": economic_indicators,
+    "Consumer Indicators": consumer_indicators
     
 }
 
