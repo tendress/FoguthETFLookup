@@ -122,13 +122,14 @@ def economic_indicators():
         vix_data = df[df['symbol'] == 'Volatility Index']
         if not vix_data.empty:
             most_recent_vix = vix_data.iloc[-1]['Close']
+            vix_color = "#FF3333" if most_recent_vix > 20 else "#000000"
             col1, col2, col3 = st.columns([2, 1, 2])
             with col3:
                 st.markdown(
                     f"""
                     <div style="background-color:#FFDD57;padding:20px;border-radius:10px;text-align:center;">
                         <span style="font-size:22px;font-weight:bold;color:#FF3333;">VIX (Volatility Index)</span><br>
-                        <span style="font-size:32px;font-weight:bold;color:#FF3333;">{most_recent_vix:.2f}</span>
+                        <span style="font-size:32px;font-weight:bold;color:{vix_color};">{most_recent_vix:.2f}</span>
                     </div>
                     """,
                     unsafe_allow_html=True
