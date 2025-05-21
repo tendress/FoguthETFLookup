@@ -118,12 +118,21 @@ def economic_indicators():
         for symbol, return_value in returns.items():
             st.write(f"{symbol}: {return_value:.2f}%")
 
-        # Display the most recent value for ^VIX
+        # Display the most recent value for ^VIX in a separate column on the right
         vix_data = df[df['symbol'] == 'Volatility Index']
         if not vix_data.empty:
             most_recent_vix = vix_data.iloc[-1]['Close']
-            st.write(f"Volatility Index (VIX): {most_recent_vix:.2f}")
-            
+            col1, col2, col3 = st.columns([2, 1, 2])
+            with col3:
+                st.markdown(
+                    f"""
+                    <div style="background-color:#FFDD57;padding:20px;border-radius:10px;text-align:center;">
+                        <span style="font-size:22px;font-weight:bold;color:#FF3333;">VIX (Volatility Index)</span><br>
+                        <span style="font-size:32px;font-weight:bold;color:#FF3333;">{most_recent_vix:.2f}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )    
         # Normalize returns for each index (excluding VIX)
         other_data = df[df['symbol'] != 'Volatility Index'].copy()
         normalized_data = []
