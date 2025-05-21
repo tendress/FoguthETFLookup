@@ -12,7 +12,7 @@ st.set_page_config(page_title="Economic Indicators Dashboard", layout="wide")
 
 def economic_indicators():
     # Streamlit App Title
-    st.title("Economic Indicators Dashboard")
+    st.title("Federal Reserve Dashboard")
 
     # Hardcoded database path
     db_path = "foguth_etf_models.db"
@@ -66,8 +66,9 @@ def economic_indicators():
         indicators = {
             'FEDFUNDS': 'Federal Funds Rate',
             'UNRATE': 'Unemployment Rate',
-            'T10YIE': '10-Year Breakeven Inflation Rate',  # Added T10YIE
-            'CORESTICKM159SFRBATL': 'Core Sticky CPI'
+            'T10YIE': '10-Year Breakeven Inflation Rate',
+            'CORESTICKM159SFRBATL': 'Core Sticky CPI',
+            'RRPONTSYD': 'Reverse Repo Operations (Overnight) Total Securities'  # <-- Added here
         }
 
         # Header for "Federal Reserve"
@@ -84,8 +85,10 @@ def economic_indicators():
         st.markdown(
             "<span style='color:#006699; font-weight:bold;'>Core Sticky CPI measures the inflation rate of less volatile consumer price components (excluding food and energy and focusing on prices that change slowly), provides a stable, long-term view of underlying inflation trends, helping policy-makers and investors gauge persistent inflationary pressures in the U.S. economy. </span>",
             unsafe_allow_html=True)
-        
-        
+        st.markdown(
+            "<span style='color:#006699; font-weight:bold;'>Reverse Repo Operations (RRPONTSYD) represent the total value of overnight securities sold by the Federal Reserve to eligible counterparties with an agreement to repurchase them the next day. This tool is used to help control short-term interest rates and manage liquidity in the financial system.</span>",
+            unsafe_allow_html=True)
+
         for symbol, title in indicators.items():
             # Fetch data for the current indicator
             query = f"""
@@ -162,7 +165,90 @@ def economic_indicators():
         # Close the database connection
         conn.close()
 
+    def plot_custom_chart(db_path, start_date, end_date):
+        # Connect to the database
+        conn = sqlite3.connect(db_path)
 
+        # Fetch available symbols and their names from the database
+        query = """
+        SELECT DISTINCT symbol, name
+        FROM economic_indicators
+        WHERE name IS NOT NULL
+        UNION
+        SELECT symbol, name
+        FROM etfs
+        WHERE name IS NOT NULL
+        """
+        symbols_df = pd.read_sql_query(query, conn)
+
+        # Create a dictionary mapping symbols to their names for display
+        symbol_name_mapping = dict(zip(symbols_df['symbol'], symbols_df['name']))
+
+        # Sidebar for selecting symbols to plot
+        st.sidebar.header("Custom Chart")
+        selected_names = st.sidebar.multiselect(
+            "Select Economic Indicators or ETFs to Plot",
+            options=symbols_df['name'].tolist(),
+            default=[]
+        )
+
+        # Map selected names back to their symbols
+        selected_symbols = [symbol for symbol, name in symbol_name_mapping.items() if name in selected_names]
+
+        # Fetch data for the selected symbols
+        if selected_symbols:
+            data_frames = []
+            for symbol in selected_symbols:
+                query = f"""
+                SELECT Date, economic_value AS Close, '{symbol}' AS symbol
+                FROM economic_indicators
+                WHERE symbol = '{symbol}'
+                UNION
+                SELECT Date, Close, '{symbol}' AS symbol
+                FROM etf_prices
+                WHERE symbol = '{symbol}'
+                """
+                df = pd.read_sql_query(query, conn)
+                df['Date'] = pd.to_datetime(df['Date'])
+                df = df[(df['Date'] >= pd.Timestamp(start_date)) & (df['Date'] <= pd.Timestamp(end_date))]
+                data_frames.append(df)
+
+            # Combine all data into a single DataFrame
+            if data_frames:
+                combined_df = pd.concat(data_frames)
+
+                # Create a subplot with secondary Y-axes
+                fig = make_subplots(specs=[[{"secondary_y": True}]])
+                for i, symbol in enumerate(selected_symbols):
+                    symbol_data = combined_df[combined_df['symbol'] == symbol]
+                    fig.add_trace(
+                        go.Scatter(
+                            x=symbol_data['Date'],
+                            y=symbol_data['Close'],
+                            mode='lines+markers',
+                            name=symbol_name_mapping[symbol]  # Use the name for the legend
+                        ),
+                        secondary_y=(i % 2 == 1)  # Alternate Y-axes
+                    )
+
+                # Update layout
+                fig.update_layout(
+                    title_text="Custom Chart: Selected Economic Indicators and ETFs",
+                    xaxis_title="Date",
+                    yaxis_title="Primary Y-Axis",
+                    yaxis2_title="Secondary Y-Axis",
+                    legend_title="Symbols",
+                    showlegend=True
+                )
+                fig.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=2))
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.write("No data available for the selected symbols in the chosen timeframe.")
+        else:
+            st.write("Select symbols from the sidebar to plot a custom chart.")
+
+        # Close the database connection
+        conn.close()
 
     # Run the Functions if the Database Path is Provided
     try:
@@ -174,6 +260,9 @@ def economic_indicators():
         # Plot U.S. Economy Indicators
         plot_us_economy(db_path, start_date, end_date)
 
+        # Plot Custom Chart
+        plot_custom_chart(db_path, start_date, end_date)
+        
     except Exception as e:
         st.error(f"An error occurred: {e}")
 
