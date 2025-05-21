@@ -1,4 +1,4 @@
-## Economic Indicators for the Financial Advisor ##
+## Consumer Indicators for the Financial Advisor ##
 import sqlite3
 import pandas as pd
 from datetime import datetime, date
@@ -151,6 +151,6 @@ def consumer_indicators():
         
 # Call the main function
 if __name__ == "__main__":
-    economic_indicators()
+    consumer_indicators()
         
         
