@@ -8,8 +8,6 @@ import plotly.graph_objects as go
 import streamlit as st
 
 
-# Set Streamlit page configuration to wide layout
-st.set_page_config(page_title="Economic Indicators Dashboard", layout="wide")
 
 def consumer_indicators():
     # Streamlit App Title
