@@ -11,7 +11,7 @@ import streamlit as st
 # Set Streamlit page configuration to wide layout
 st.set_page_config(page_title="Economic Indicators Dashboard", layout="wide")
 
-def economic_indicators():
+def consumer_indicators():
     # Streamlit App Title
     st.title("Economic Indicators Dashboard")
 
