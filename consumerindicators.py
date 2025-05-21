@@ -63,11 +63,11 @@ def economic_indicators():
         # List of U.S. Consumer indicators to graph
         indicators = {
             'UMCSENT': 'University of Michigan Consumer Sentiment Index',
+            'CORESTICKM159SFRBATL': 'Core Sticky CPI',  # <-- Added CPI here
             'MRTSSM44X72USS': 'Retail Sales (Excluding Food Services)',
-            'MORTGAGE30US': '30-Year Fixed Mortgage Rate',
-            'PAYEMS': 'Total Nonfarm Payrolls'
+            'MORTGAGE30US': '30-Year Fixed Mortgage Rate'
         }
-
+        
         # Header for "U.S. Consumer"
         st.header("U.S. Consumer")
 
@@ -115,7 +115,7 @@ def economic_indicators():
             # Fetch data for the current commodity
             query = f"""
             SELECT Date, Close
-            FROM etf__prices
+            FROM etf_prices
             WHERE symbol = '{symbol}'
             ORDER BY Date
             """
@@ -142,7 +142,7 @@ def economic_indicators():
         plot_us_consumer(db_path, start_date, end_date)
         
         # Plot Commodities
-        plot_commodities(db_path, start_date, end_date)  
+        #plot_commodities(db_path, start_date, end_date)  
         
     except Exception as e:
         st.error(f"An error occurred: {e}")
