@@ -127,7 +127,7 @@ def economic_indicators():
             with col3:
                 st.markdown(
                     f"""
-                    <div style="background-color:#FFDD57;padding:20px;border-radius:10px;text-align:center;">
+                    <div style="background-color:#FFFFF;padding:20px;border-radius:10px;text-align:center;">
                         <span style="font-size:22px;font-weight:bold;color:#FF3333;">VIX (Volatility Index)</span><br>
                         <span style="font-size:32px;font-weight:bold;color:{vix_color};">{most_recent_vix:.2f}</span>
                     </div>
