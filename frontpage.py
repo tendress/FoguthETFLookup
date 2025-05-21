@@ -28,38 +28,6 @@ selected_page = st.sidebar.radio("Go to", list(pages.keys()))
 
 # Display the selected page
 if selected_page == "Home":
-    st.title("Welcome to Foguth ETP Model Insights")
-    st.markdown(
-            """
-            This app provides tools for analyzing the Foguth ETP models, calculating betas, and visualizing model performance.
-            
-            Disclosure: The information provided in this app is for educational purposes only and should not be considered as financial advice. Performance results do not include advisory fees, which would reduce returns. Past performance is not indicative of future results. Performance reflects the CURRENT makeup of the model and does not reflect the active management of the model. 
-            
-            ETP "Exchange Traded Portfolios"
-            
-            **Features:**
-            - View model performance metrics.
-            - Lookup information on the individual ETFs.
-            - Calculate weighted beta for each models and customize the time frame.
-            - Visualize model graphs Year to Date.
-            
-            Use the navigation menu on the left to explore the app.
-            """
-        )
-    st.markdown(
-        """
-        <h1 style="color: red; font-size: 32px;">Sector Rotation Rebalance: Qualified 5/2 (Complete), Non-Qualified 5/5</h1>
-        <ul style="color: red; font-size: 20px;">
-            <li>XLE: The Energy Select Sector SPDR Fund - 25%</li>
-            <li>XLU: The Utilities Select Sector SPDR Fund - 20%</li>
-            <li>XLK: The Technology Select Sector SPDR Fund - 15%</li>
-            <li>XLRE: The Real Estate Select Sector SPDR Fund - 15%</li>
-            <li>XLF: The Financial Select Sector SPDR Fund - 15%</li>
-            <li>XLC: The Communication Services Select Sector SPDR ETF Fund - 10%</li>
-        </ul>
-        """,
-        unsafe_allow_html=True,
-    )
     # Database connection
     database_path = 'foguth_etf_models.db'
     conn = sqlite3.connect(database_path)
@@ -129,6 +97,40 @@ if selected_page == "Home":
 
     # Close the database connection
     conn.close()
+    
+    st.title("Welcome to Foguth ETP Model Insights")
+    st.markdown(
+            """
+            This app provides tools for analyzing the Foguth ETP models, calculating betas, and visualizing model performance.
+            
+            Disclosure: The information provided in this app is for educational purposes only and should not be considered as financial advice. Performance results do not include advisory fees, which would reduce returns. Past performance is not indicative of future results. Performance reflects the CURRENT makeup of the model and does not reflect the active management of the model. 
+            
+            ETP "Exchange Traded Portfolios"
+            
+            **Features:**
+            - View model performance metrics.
+            - Lookup information on the individual ETFs.
+            - Calculate weighted beta for each models and customize the time frame.
+            - Visualize model graphs Year to Date.
+            
+            Use the navigation menu on the left to explore the app.
+            """
+        )
+    st.markdown(
+        """
+        <h1 style="color: red; font-size: 32px;">Sector Rotation Rebalance: Qualified 5/2 (Complete), Non-Qualified 5/5</h1>
+        <ul style="color: red; font-size: 20px;">
+            <li>XLE: The Energy Select Sector SPDR Fund - 25%</li>
+            <li>XLU: The Utilities Select Sector SPDR Fund - 20%</li>
+            <li>XLK: The Technology Select Sector SPDR Fund - 15%</li>
+            <li>XLRE: The Real Estate Select Sector SPDR Fund - 15%</li>
+            <li>XLF: The Financial Select Sector SPDR Fund - 15%</li>
+            <li>XLC: The Communication Services Select Sector SPDR ETF Fund - 10%</li>
+        </ul>
+        """,
+        unsafe_allow_html=True,
+    )
+    
 else:
 # Run the selected page's function
     pages[selected_page]()
