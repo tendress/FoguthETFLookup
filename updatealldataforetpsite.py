@@ -197,7 +197,7 @@ def update_fred_economic_indicators(database_path, api_key):
             data_df['Date'] = data_df['Date'].dt.strftime('%Y-%m-%d')
             for _, row in data_df.iterrows():
                 cursor.execute("""
-                    INSERT OR IGNORE INTO economic_indicators (symbol, Date, economic_value)
+                    INSERT OR REPLACE INTO economic_indicators (symbol, Date, economic_value)
                     VALUES (?, ?, ?)
                 """, (symbol, row['Date'], row['economic_value']))
             print(f"Data for {symbol} inserted successfully.")
