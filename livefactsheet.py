@@ -26,6 +26,7 @@ def display_live_factsheet():
             SELECT 
                 etfs.symbol AS ETF, 
                 etfs.name AS Name,
+                etfs.yield AS Yield,
                 SUM(security_sets_etfs.weight * model_security_set.weight) AS ModelWeight
             FROM model_security_set
             JOIN security_sets ON model_security_set.security_set_id = security_sets.id
