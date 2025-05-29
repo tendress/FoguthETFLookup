@@ -203,6 +203,7 @@ def display_live_factsheet():
         key="model_filter"
     )
 
+    st.image("assets/fwmlogo.png", width=200)
     st.title("Foguth Wealth Management ETP Fact Sheet")
 
     # add a line below the title
