@@ -35,7 +35,7 @@ def display_live_factsheet():
             JOIN models ON model_security_set.model_id = models.id
             WHERE models.name = ?
             AND security_sets_etfs.endDate IS NULL
-            GROUP BY etfs.symbol, etfs.name
+            GROUP BY etfs.symbol, etfs.name, etfs.yield
             ORDER BY ModelWeight DESC
         '''
         conn = sqlite3.connect("foguth_etf_models.db")
