@@ -355,6 +355,8 @@ def display_live_factsheet():
                         
                         st.markdown("---")
                         st.markdown("<h2 style='color: #ffffff; background-color:#336699; padding-left:4pt;'>Disclosures</h2>", unsafe_allow_html=True)
+                        st.markdown("<p>Past performance is not indicative of future performance. Principal value and investment return will fluctuate. There are no implied guarantees or assurances that the target returns will be achieved or objectives will be met. Future returns may differ significantly from past returns due to many different factors. Investments involve risk and the possibility of loss of principal. The values and performance numbers represented in this report are inclusive of management fees. The values used in this report were obtained from sources believed to be reliable. Performance numbers were calculated by Foguth Wealth Management using publicly available data. Please consult your custodial statements for an official record of value.</p>", unsafe_allow_html=True)
+                        
                         
                     elif not filtered_model_returns_df.empty:
                         st.write("No S&P 500 (^GSPC) data found for comparison in the selected date range.")
