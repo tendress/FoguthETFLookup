@@ -95,7 +95,7 @@ if selected_page == "Home":
                     st.markdown(f"<div style='text-align:center'><b>{model}</b><br><span style='font-size:18px;color:#888;'>YTD: N/A</span></div>", unsafe_allow_html=True)
 
                 # Create a button for each model with a unique key
-                if st.button("Show/Hide", key=f"{model}_{group_index}"):
+                if st.button("Show/Hide Strategies", key=f"{model}_{group_index}"):
                     # Toggle the button state
                     st.session_state.open_buttons[model] = not st.session_state.open_buttons[model]
 
