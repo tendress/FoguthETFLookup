@@ -366,12 +366,12 @@ def display_live_factsheet():
                         imcol1, imcol2, imcol3 = st.columns([.3,.4,.3])
                         with imcol1:
                             st.markdown("---")
-                            st.markdown("<p style='text-align: center; font-size: 12px;'>Foguth Wealth Management<br>All rights reserved</p>", unsafe_allow_html=True)
+                            st.markdown("<p style='text-align: center; font-size: 12px; padding-right:100pt;'></p>", unsafe_allow_html=True)
                         with imcol2:
                             st.image("assets/fwmlogo.png", width=200, use_container_width=True)
                         with imcol3:
                             st.markdown("---")
-                            
+                            st.markdown("<p style='text-align: center; font-size: 12px;'>All rights reserved</p>", unsafe_allow_html=True)
                         
                     elif not filtered_model_returns_df.empty:
                         st.write("No S&P 500 (^GSPC) data found for comparison in the selected date range.")
