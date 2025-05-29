@@ -290,7 +290,10 @@ def update_etf_yields(database_path):
                 SET yield = ?
                 WHERE id = ?
             ''', (yield_info, etf_id))
-
+            cursor.execute('''
+                UPDATE etfs 
+                SET yield = .0231
+                WHERE symbol = 'NCLO';''')
             print(f"ETF: {ticker}, Yield: {yield_info}")
         except Exception as e:
             print(f"Error fetching yield for {ticker}: {e}")
