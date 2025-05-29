@@ -361,4 +361,4 @@ def display_live_factsheet():
         else:
             st.write("No ETFs found for the selected model.")
     else:
-        st.write("Select a model to view its associated ETFs.")
+        st.write("Select a model to view its Fact Sheet.")
