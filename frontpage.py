@@ -113,6 +113,10 @@ if selected_page == "Home":
                     else:
                         st.write(f"No security sets found for {model}.")
 
+        # Add space and a horizontal line between each row of models
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<hr>", unsafe_allow_html=True)
+
     # Close the database connection
     conn.close()
     
