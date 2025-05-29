@@ -373,6 +373,7 @@ def display_live_factsheet():
                             st.markdown("---")
                             st.markdown("<p style='text-align: center; font-size: 12px;'>All rights reserved</p>", unsafe_allow_html=True)
                         
+                        st.markdown("---")
                         st.markdown("<h2 style='text-align:center;'>Contact Us</h2>", unsafe_allow_html=True)
                         st.markdown("<h3 style='text-align:center;'><a>www.foguthfinancial.com</a> | (844)-4-FOGUTH</h3>", unsafe_allow_html=True)
                         
