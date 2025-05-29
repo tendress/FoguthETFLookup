@@ -203,7 +203,7 @@ def display_live_factsheet():
         key="model_filter"
     )
 
-    fscol1, fscol2 = st.columns([1, 3])
+    fscol1, fscol2 = st.columns(2)
     with fscol1:
         st.image("assets/fwmlogo.png", width=200, )
     with fscol2:
