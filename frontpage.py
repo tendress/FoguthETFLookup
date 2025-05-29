@@ -94,9 +94,17 @@ if selected_page == "Home":
                 else:
                     st.markdown(f"<div style='text-align:center'><b>{model}</b><br><span style='font-size:18px;color:#888;'>YTD: N/A</span></div>", unsafe_allow_html=True)
 
-                # Create a button for each model with a unique key
+                # Center the button and make the text smaller using HTML/CSS
+                button_html = f"""
+                <div style="display: flex; justify-content: center;">
+                    <button style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer;" onclick="window.dispatchEvent(new Event('streamlit:rerun'))">
+                        Show/Hide Strategies
+                    </button>
+                </div>
+                """
+                # Use st.markdown for the button appearance, but keep the logic with st.button for toggling
+                st.markdown(button_html, unsafe_allow_html=True)
                 if st.button("Show/Hide Strategies", key=f"{model}_{group_index}"):
-                    # Toggle the button state
                     st.session_state.open_buttons[model] = not st.session_state.open_buttons[model]
 
                 # Display security sets if the button is open
