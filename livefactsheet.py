@@ -4,7 +4,22 @@ import streamlit as st
 import plotly.express as px
 import datetime
 
-def display_live_factsheet(): 
+def display_live_factsheet():
+    st.markdown("""
+        <style>
+        @media print {
+            /* Hide the Streamlit sidebar when printing */
+            section[data-testid="stSidebar"] {
+                display: none !important;
+            }
+            /* Expand the main content to full width */
+            section[data-testid="stMain"] {
+                width: 100vw !important;
+            }
+        }
+        </style>
+    """, unsafe_allow_html=True)
+     
     @st.cache_data
     def load_etf_weights_for_model(selected_model):
         query = '''
