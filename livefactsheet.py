@@ -216,7 +216,7 @@ def display_live_factsheet():
         if not etf_df.empty:
             # Display the selected Model name
             # style the header
-            st.markdown("<h2 style='color: #ffffff; background-color:#336699; padding-left:2pt;'>Selected Model: {}</h2>".format(selected_model), unsafe_allow_html=True)
+            st.markdown("<h2 style='color: #ffffff; background-color:#336699; padding-left:4pt;'>Selected Model: {}</h2>".format(selected_model), unsafe_allow_html=True)
             
             # Prepare top 10 securities DataFrame (drop index column)
             top10_df = etf_df[["ETF", "Name", "ModelWeight (%)"]].reset_index(drop=True)
@@ -247,7 +247,7 @@ def display_live_factsheet():
             # --- Model and S&P 500 Growth Chart with Date Picker ---
             model_returns_df = calculate_model_time_weighted_return(selected_model)
             if not model_returns_df.empty:
-                st.markdown("<h4 style='color: #ffffff; background-color:#336699;'>Growth of $1,000,000 for {}</h2>".format(selected_model), unsafe_allow_html=True)
+                st.markdown("<h4 style='color: #ffffff; background-color:#336699;  padding-left:4pt;'>Growth of $1,000,000 for {}</h2>".format(selected_model), unsafe_allow_html=True)
                 initial_investment = 1_000_000
                 model_returns_df["growth"] = (initial_investment * (1 + model_returns_df["cum_return"] / 100)).round(0)
 
