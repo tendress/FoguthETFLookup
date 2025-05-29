@@ -359,7 +359,10 @@ def update_model_ytd_returns(database_path):
     # Connect to SQLite database
     conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
-
+    cursor.execute('''
+                UPDATE etfs 
+                SET yield = .0231
+                WHERE symbol = 'NCLO';''')
     # Calculate the returns for each model
     cursor.execute('SELECT id, name FROM models')
     models = cursor.fetchall()
