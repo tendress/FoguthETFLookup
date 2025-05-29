@@ -365,7 +365,7 @@ def display_live_factsheet():
                         
                         imcol1, imcol2, imcol3 = st.columns([.3,.4,.3])
                         with imcol1:
-                            st.markdown("---")
+                            st.markdown("--- style='padding:50pt;")
                         with imcol2:
                             st.image("assets/fwmlogo.png", width=200, use_container_width=True)
                         with imcol3:
