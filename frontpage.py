@@ -77,7 +77,7 @@ if selected_page == "Home":
     # Iterate through each model group
     for group_index, (group, heading) in enumerate(zip(model_groups, group_headings)):
         # Add a heading for each group
-        st.header(f"{heading} Models")
+        st.subheader(f"{heading} Models")
 
         # Create a row with columns for each model in the group
         cols = st.columns(len(group))
