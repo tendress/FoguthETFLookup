@@ -373,8 +373,8 @@ def display_live_factsheet():
                             st.markdown("---")
                             st.markdown("<p style='text-align: center; font-size: 12px;'>All rights reserved</p>", unsafe_allow_html=True)
                         
-                        st.markdown("<h2>Contact Us</h2>", unsafe_allow_html=True)
-                        st.markdown("<h3 style='text-justify:center;'><a>www.foguthfinancial.com</a> | (844)-4-FOGUTH</h3>", unsafe_allow_html=True)
+                        st.markdown("<h2 style='text-align:center;'>Contact Us</h2>", unsafe_allow_html=True)
+                        st.markdown("<h3 style='text-align:center;'><a>www.foguthfinancial.com</a> | (844)-4-FOGUTH</h3>", unsafe_allow_html=True)
                         
                     elif not filtered_model_returns_df.empty:
                         st.write("No S&P 500 (^GSPC) data found for comparison in the selected date range.")
