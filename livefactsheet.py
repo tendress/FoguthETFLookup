@@ -362,7 +362,7 @@ def display_live_factsheet():
                         st.markdown("<p style='padding-top:10pt;'>The S&P 500 Index is a market-cap weighted index composed of the common stock of 500 leading companies in leading industries of the U.S. economy. The benchmark presented represent an unmanaged portfolio whose charac¬teristics differ from the strategies; however, they tend to represent the investment environment existing during the time periods shown. The benchmark cannot be invested in directly. The returns of the benchmark do not include any transaction costs, management fees or other costs. The holdings of the client portfolios in the strategies may differ significantly from the securities that comprise the benchmark shown. The benchmark has been selected to represent what Foguth Wealth Management believes is an appropriate benchmark with which to compare the performance of the strategies</p>", unsafe_allow_html=True)
 
                         st.markdown("---")
-                        st.image("assets/fwmlogo.png", caption="Foguth Wealth Management", width=200)
+                        st.image("assets/fwmlogo.png", caption="Foguth Wealth Management", width=1000, use_container_width=True)
                         
                     elif not filtered_model_returns_df.empty:
                         st.write("No S&P 500 (^GSPC) data found for comparison in the selected date range.")
