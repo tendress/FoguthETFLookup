@@ -354,6 +354,9 @@ def display_live_factsheet():
                                 end_date
                             )
                         
+                        st.markdown("---")
+                        
+                        
                     elif not filtered_model_returns_df.empty:
                         st.write("No S&P 500 (^GSPC) data found for comparison in the selected date range.")
                     else:
