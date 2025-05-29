@@ -19,7 +19,7 @@ def display_live_factsheet():
         }
         </style>
     """, unsafe_allow_html=True)
-     
+    
     @st.cache_data
     def load_etf_weights_for_model(selected_model):
         query = '''
@@ -274,7 +274,7 @@ def display_live_factsheet():
                     col_start, col_end = st.columns(2)
                     with col_start:
                         start_date = st.date_input(
-                            "Select start date for chart",
+                            "Start Date",
                             value=min_date,
                             # set min value to Jan 1, 2025
                             min_value=min_date,
@@ -283,7 +283,7 @@ def display_live_factsheet():
                         )
                     with col_end:
                         end_date = st.date_input(
-                            "Select end date for chart",
+                            "End Date",
                             value=max_date,
                             min_value=min_date,
                             max_value=max_date,
