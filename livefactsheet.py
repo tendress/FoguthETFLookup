@@ -337,7 +337,6 @@ def display_live_factsheet():
                                 yaxis=dict(tickformat="$,.0f"),  # Format y-axis as currency with no decimal places
                                 title=dict(text=f"Growth of $1,000,000: {selected_model} vs S&P 500"),
                                 font=dict(size=12),
-                                title_font_color="black",
                                 margin=dict(t=60)  # Increase top margin for title
                             )
                             
@@ -355,7 +354,7 @@ def display_live_factsheet():
                             )
                         
                         st.markdown("---")
-                        
+                        st.markdown("<h2 style='color: #ffffff; background-color:#336699; padding-left:4pt;'>Disclosures</h2>", unsafe_allow_html=True)
                         
                     elif not filtered_model_returns_df.empty:
                         st.write("No S&P 500 (^GSPC) data found for comparison in the selected date range.")
