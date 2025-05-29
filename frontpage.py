@@ -44,7 +44,7 @@ if selected_page == "Home":
         ['Rising Dividend Conservative', 'Rising Dividend Balanced', 'Rising Dividend Bullish', 'Rising Dividend Aggressive', 'Rising Dividend Momentum']
     ]
 
-    # Fetch security sets and their weights for a given model
+        # Fetch security sets and their weights for a given model
     @st.cache_data
     def fetch_security_sets_for_model(model_name):
         query = '''
@@ -57,7 +57,11 @@ if selected_page == "Home":
         '''
         cursor.execute(query, (model_name,))
         results = cursor.fetchall()
-        return [{"name": row[0], "weight": row[1] *100} for row in results]
+        return [{"name": row[0], "weight": row[1] * 100} for row in results]
+
+    # Fetch YTDPriceReturn for all models and store in a dictionary
+    cursor.execute("SELECT name, YTDPriceReturn FROM models")
+    ytd_returns = {row[0]: row[1] for row in cursor.fetchall()}
 
     # Initialize session state for toggling buttons
     if "open_buttons" not in st.session_state:
@@ -83,8 +87,15 @@ if selected_page == "Home":
                 if model not in st.session_state.open_buttons:
                     st.session_state.open_buttons[model] = False
 
+                # Display model name and YTD return
+                ytd = ytd_returns.get(model, None)
+                if ytd is not None:
+                    st.markdown(f"<div style='text-align:center'><b>{model}</b><br><span style='font-size:18px;color:#0066CC;'>YTD: {ytd:.2f}%</span></div>", unsafe_allow_html=True)
+                else:
+                    st.markdown(f"<div style='text-align:center'><b>{model}</b><br><span style='font-size:18px;color:#888;'>YTD: N/A</span></div>", unsafe_allow_html=True)
+
                 # Create a button for each model with a unique key
-                if st.button(model, key=f"{model}_{group_index}"):
+                if st.button("Show/Hide", key=f"{model}_{group_index}"):
                     # Toggle the button state
                     st.session_state.open_buttons[model] = not st.session_state.open_buttons[model]
 
@@ -92,12 +103,10 @@ if selected_page == "Home":
                 if st.session_state.open_buttons[model]:
                     security_sets = fetch_security_sets_for_model(model)
                     if security_sets:
-
                         for security_set in security_sets:
                             st.write(f"{security_set['name']} ({security_set['weight']}%)")
                     else:
                         st.write(f"No security sets found for {model}.")
-
 
     # Close the database connection
     conn.close()
