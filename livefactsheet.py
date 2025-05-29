@@ -203,8 +203,11 @@ def display_live_factsheet():
         key="model_filter"
     )
 
-    st.image("assets/fwmlogo.png", width=200)
-    st.title("Foguth Wealth Management ETP Fact Sheet")
+    fscol1, fscol2 = st.columns([1, 3])
+    with fscol1:
+        st.image("assets/fwmlogo.png", width=200, )
+    with fscol2:
+        st.title("Foguth Wealth Management ETP Fact Sheet")
 
     # add a line below the title
     st.markdown("---")
