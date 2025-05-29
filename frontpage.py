@@ -6,6 +6,7 @@ from displaymodelgraphs import display_model_graphs
 from correlationmatrix import display_correlation_matrix
 from economicindicators import economic_indicators
 from consumerindicators import consumer_indicators
+from livefactsheet import display_live_factsheet
 import pandas as pd
 import sqlite3
 
@@ -20,6 +21,7 @@ pages = {
     "Home": "Welcome to Foguth ETP Model Insights",
     "Model Performance": display_model_performance,
     "Model Graphs": display_model_graphs,
+    "Live ETP Factsheet": display_live_factsheet,
     "ETF Lookup": etf_lookup,
     "Beta Calculator": calculate_beta_page,
     "Correlation Matrix": display_correlation_matrix,
