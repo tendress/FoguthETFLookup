@@ -216,7 +216,7 @@ def display_live_factsheet():
         if not etf_df.empty:
             # Display the selected Model name
             # style the header
-            st.markdown("<h2 style='color: #ffffff; background-color:#336699;'>Selected Model: {}</h2>".format(selected_model), unsafe_allow_html=True)
+            st.markdown("<h2 style='color: #ffffff; background-color:#336699;'> Selected Model: {}</h2>".format(selected_model), unsafe_allow_html=True)
             
             # Prepare top 10 securities DataFrame (drop index column)
             top10_df = etf_df[["ETF", "Name", "ModelWeight (%)"]].reset_index(drop=True)
