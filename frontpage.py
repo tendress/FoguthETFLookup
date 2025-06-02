@@ -71,7 +71,7 @@ if selected_page == "Home":
 
     # Display the model groups and their security sets
     st.title("ETP Model Menu")
-    st.write("Click on a model to view its associated security sets and their weights.")
+    st.write("YTD Performance is updated periodically. Check the Model Performance tab to see Last Updated Date.")
 
     # Define group headings
     group_headings = ["Growth", "Value", "Rising Dividend"]
