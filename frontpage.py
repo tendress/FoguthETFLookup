@@ -96,24 +96,7 @@ if selected_page == "Home":
                 else:
                     st.markdown(f"<div style='text-align:center'><b>{model}</b><br><span style='font-size:18px;color:#888;'>YTD: N/A</span></div>", unsafe_allow_html=True)
 
-                # Center the Streamlit button and make the text smaller
-                with st.container():
-                    st.markdown(
-                        "<div style='display: flex; justify-content: center;'>",
-                        unsafe_allow_html=True
-                    )
-                    if st.button("Show/Hide Strategies", key=f"{model}_{group_index}", help="Show or hide the strategies for this model."):
-                        st.session_state.open_buttons[model] = not st.session_state.open_buttons[model]
-                    st.markdown("</div>", unsafe_allow_html=True)
-
-                # Display security sets if the button is open
-                if st.session_state.open_buttons[model]:
-                    security_sets = fetch_security_sets_for_model(model)
-                    if security_sets:
-                        for security_set in security_sets:
-                            st.write(f"{security_set['name']} ({security_set['weight']}%)")
-                    else:
-                        st.write(f"No security sets found for {model}.")
+                
 
         # Add space and a horizontal line between each row of models
         st.markdown("<br>", unsafe_allow_html=True)
