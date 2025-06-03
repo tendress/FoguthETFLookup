@@ -110,7 +110,7 @@ if selected_page == "Home":
             """
             This app provides tools for analyzing the Foguth ETP models, calculating betas, and visualizing model performance.
             
-            Disclosure: The information provided in this app is for educational purposes only and should not be considered as financial advice. Performance results do not include advisory fees, which would reduce returns. Past performance is not indicative of future results. Performance reflects the CURRENT makeup of the model and does not reflect the active management of the model. 
+            Disclosure: The information provided in this app is for educational purposes only and should not be considered as financial advice. Performance results do not include advisory fees, which would reduce returns. Past performance is not indicative of future results. 
             
             ETP "Exchange Traded Portfolios"
             
