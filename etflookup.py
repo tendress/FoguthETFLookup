@@ -118,8 +118,8 @@ def etf_lookup():
         st.header(f"Model: {selected_model}")
         st.write("This model includes the following security sets and ETFs:")
     else:
-        st.header("All ETFs")
-        st.write("Displaying all available ETFs.")
+        st.header("Pick a Model to see its Strategies and ETFs")
+        
 
     # Display the selected ETF in the main content
     st.sidebar.subheader("Selected ETF")
