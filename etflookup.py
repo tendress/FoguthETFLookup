@@ -74,7 +74,8 @@ def etf_lookup():
     selected_etf = st.sidebar.selectbox(
         "Select an ETF",
         all_etfs,
-        key="etf_selectbox"
+        key="etf_selectbox",
+        placeholder="Select an ETF"
     )
 
     # Sidebar: Filters
@@ -84,7 +85,8 @@ def etf_lookup():
     selected_model = st.sidebar.selectbox(
         "Filter by Model",
         ["All Models"] + models,
-        key="model_filter"
+        key="model_filter",
+        
     )
 
 
