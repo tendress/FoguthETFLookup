@@ -7,8 +7,7 @@ import plotly.express as px
 
 
 def etf_lookup():
-    st.title("ETF Lookup")
-    st.write("This page allows you to look up ETF details.")
+    st.title("Model & ETF Lookup")
 
     # Database connection
     database_path = 'foguth_etf_models.db'
@@ -86,7 +85,7 @@ def etf_lookup():
         selected_etf_option = selected_etf_option.split(" - ")[0]
         # ...display ETF details using selected_etf...
     else:
-        st.write("Please select an ETF from the dropdown.")
+        st.write("")
     
     # Sidebar: Filters
     st.sidebar.title("Filters")
@@ -127,7 +126,6 @@ def etf_lookup():
 # Main Content, first display the Selected Model name, it's strategies and ETFs
     if selected_model != "All Models":
         st.header(f"Model: {selected_model}")
-        st.write("This model includes the following security sets and ETFs:")
     else:
         st.header("Pick a Model to see its Strategies and ETFs")
     # Display the selected model's security sets and ETFs
@@ -156,7 +154,7 @@ def etf_lookup():
         st.write(f"**Net Expense Ratio:** {etf_info.get('netExpenseRatio', 'No expense ratio available')}%")
         st.write(f"**Summary:** {etf_info.get('longBusinessSummary', 'No summary available.')}")
     else:
-        st.write("No details available for the selected ETF.")
+        st.write(" ")
 
     # Display Top Holdings
     st.header("Top 10 Holdings")
@@ -168,10 +166,10 @@ def etf_lookup():
             top_holdings['Holding Percent'] = top_holdings['Holding Percent'].apply(lambda x: f"{x:.2f}")
             st.write(top_holdings)
         except Exception as e:
-            st.write("Unable to display top holdings.")
+            st.write(" ")
             st.write(f"Error: {e}")
     else:
-        st.write("No top holdings data available for this ETF.")
+        st.write(" ")
 
     # Performance Graph
     st.header("Performance Graph")
@@ -224,7 +222,7 @@ def etf_lookup():
         )
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.write("No price data available for the selected date range.")
+        st.write(" ")
 
     
 
