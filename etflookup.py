@@ -82,7 +82,7 @@ def etf_lookup():
     )
     
     # Sidebar: ETF selection (show full list of ETFs with their names)
-    st.sidebar.title("Select an ETF")
+    st.sidebar.subheader("Select an ETF")
     selected_etf_option = st.sidebar.selectbox(
         "Select an ETF",
         etf_options,
