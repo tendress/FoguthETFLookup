@@ -65,18 +65,23 @@ def etf_lookup():
 
     # Load all ETFs
     all_etfs = load_all_etfs()
-
-    # Load models and security sets
-    models, security_sets = load_models_and_security_sets()
+    etf_options = ["Select an ETF"] + all_etfs  # Add placeholder as first option
 
     # Sidebar: ETF selection (always show full list of ETFs)
     st.sidebar.title("Select an ETF")
     selected_etf = st.sidebar.selectbox(
         "Select an ETF",
-        all_etfs,
+        etf_options,
         key="etf_selectbox",
-        placeholder="Select an ETF"
+        index=0  # Default to the placeholder
     )
+
+    # Only show ETF details if a real ETF is selected
+    if selected_etf != "Select an ETF":
+        # ...display ETF details...
+        pass
+    else:
+        st.write("Please select an ETF from the dropdown.")
 
     # Sidebar: Filters
     st.sidebar.title("Filters")
