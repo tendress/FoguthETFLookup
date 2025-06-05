@@ -83,7 +83,7 @@ def etf_lookup():
 
     # Extract the symbol from the selected option
     if selected_etf_option != "Select an ETF":
-        selected_etf = selected_etf_option.split(" - ")[0]
+        selected_etf_option = selected_etf_option.split(" - ")[0]
         # ...display ETF details using selected_etf...
     else:
         st.write("Please select an ETF from the dropdown.")
@@ -141,15 +141,15 @@ def etf_lookup():
 
 
 # Main content: Display selected ETF information
-    st.header(f"Details for Selected ETF: {selected_etf}")
-    cursor.execute('SELECT * FROM etf_infos WHERE symbol = ?', (selected_etf,))
+    st.header(f"Details for Selected ETF: {selected_etf_option}")
+    cursor.execute('SELECT * FROM etf_infos WHERE symbol = ?', (selected_etf_option,))
     result = cursor.fetchone()
     if result:
         # Get column names dynamically
         columns = [description[0] for description in cursor.description]
         etf_info = dict(zip(columns, result))
 
-        st.markdown(f"### **{selected_etf} - {etf_info.get('longName', 'No name available')}**")
+        st.markdown(f"### **{selected_etf_option} - {etf_info.get('longName', 'No name available')}**")
         st.write(f"**Category:** {etf_info.get('category', 'No category available')}")
         st.write(f"**Fund Manager:** {etf_info.get('fundFamily', 'No fund family available')}")
         st.write(f"**Dividend Yield:** {etf_info.get('dividendYield', 'No dividend yield available')}%")
@@ -187,7 +187,7 @@ def etf_lookup():
         WHERE symbol = ? AND Date BETWEEN ? AND ?
         ORDER BY Date ASC
     '''
-    price_data = pd.read_sql_query(query, conn, params=(selected_etf, start_date, end_date))
+    price_data = pd.read_sql_query(query, conn, params=(selected_etf_option, start_date, end_date))
 
     # Calculate Time-Weighted Return (TWR)
     twr = None
@@ -213,7 +213,7 @@ def etf_lookup():
             price_data,
             x='Date',
             y='Close',
-            title=f"{selected_etf} Performance",
+            title=f"{selected_etf_option} Performance",
             labels={'Close': 'Closing Price', 'Date': 'Date'},
             template='plotly_white'
         )
