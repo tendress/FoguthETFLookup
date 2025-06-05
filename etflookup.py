@@ -75,7 +75,7 @@ def etf_lookup():
     st.sidebar.title("Select an ETF")
     selected_etf = st.sidebar.selectbox(
         "Select an ETF",
-        all_etfs,
+        etf_options,
         key="etf_selectbox",
         index=0  # Default to the first option (placeholder)
     )
