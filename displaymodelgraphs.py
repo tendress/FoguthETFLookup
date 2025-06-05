@@ -89,8 +89,8 @@ def display_model_graphs():
 
     # Define the model groups
     model_groups = [
-        ['Conservative Growth', 'Balanced Growth', 'Bullish Growth', 'Aggressive', 'Momentum'],
-        ['Conservative Value', 'Balanced Value', 'Bullish Value', 'Aggressive', 'Momentum'],
+        ['Conservative Growth', 'Balanced Growth', 'Bullish Growth', 'Velocity', 'Opportunistic'],
+        ['Conservative Value', 'Balanced Value', 'Bullish Value', 'Velocity', 'Opportunistic'],
         ['Rising Dividend Conservative', 'Rising Dividend Balanced', 'Rising Dividend Bullish', 'Rising Dividend Aggressive', 'Rising Dividend Momentum']
     ]
 
