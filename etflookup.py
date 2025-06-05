@@ -15,11 +15,11 @@ def etf_lookup():
     conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
 
-    # Fetch all ETFs
+    # Fetch all ETFs with their names
     @st.cache_data
-    def load_all_etfs():
-        cursor.execute('SELECT symbol FROM etfs')
-        return [row[0] for row in cursor.fetchall()]
+    def load_all_etfs_with_names():
+        cursor.execute('SELECT symbol, name FROM etfs')
+        return cursor.fetchall()  # List of (symbol, name)
 
     # Fetch models and security sets
     @st.cache_data
@@ -63,27 +63,28 @@ def etf_lookup():
         results = cursor.fetchall()
         return pd.DataFrame(results, columns=["Security Set", "Security Set Weight", "ETF", "ETF Weight"])
 
-    # Load all ETFs
-    all_etfs = load_all_etfs()
-    etf_options = ["Select an ETF"] + all_etfs  # Add placeholder as first option
+    # Load all ETFs with names
+    all_etfs_with_names = load_all_etfs_with_names()
+    # Create options as "SYMBOL - Name"
+    etf_options = ["Select an ETF"] + [f"{symbol} - {name}" for symbol, name in all_etfs_with_names]
 
 
     # Load models and security sets
     models, security_sets = load_models_and_security_sets()
 
-    # Sidebar: ETF selection (always show full list of ETFs with their names)
+    # Sidebar: ETF selection (show full list of ETFs with their names)
     st.sidebar.title("Select an ETF")
-    selected_etf = st.sidebar.selectbox(
+    selected_etf_option = st.sidebar.selectbox(
         "Select an ETF",
         etf_options,
         key="etf_selectbox",
-        index=0  # Default to the first option (placeholder)
+        index=0
     )
 
-    # Only show ETF details if a real ETF is selected
-    if selected_etf != "Select an ETF":
-        # ...display ETF details...
-        pass
+    # Extract the symbol from the selected option
+    if selected_etf_option != "Select an ETF":
+        selected_etf = selected_etf_option.split(" - ")[0]
+        # ...display ETF details using selected_etf...
     else:
         st.write("Please select an ETF from the dropdown.")
     
