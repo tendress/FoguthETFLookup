@@ -71,7 +71,7 @@ def etf_lookup():
     # Load models and security sets
     models, security_sets = load_models_and_security_sets()
 
-    # Sidebar: ETF selection (always show full list of ETFs)
+    # Sidebar: ETF selection (always show full list of ETFs with their names)
     st.sidebar.title("Select an ETF")
     selected_etf = st.sidebar.selectbox(
         "Select an ETF",
@@ -94,8 +94,7 @@ def etf_lookup():
     selected_model = st.sidebar.selectbox(
         "Filter by Model",
         ["All Models"] + models,
-        key="model_filter",
-        
+        key="model_filter"
     )
 
 
