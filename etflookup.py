@@ -113,6 +113,18 @@ def etf_lookup():
     else:
         st.sidebar.write("Select a model to view its associated security sets and ETFs.")
 
+# Main Content, first display the Selected Model name, it's strategies and ETFs
+    if selected_model != "All Models":
+        st.header(f"Model: {selected_model}")
+        st.write("This model includes the following security sets and ETFs:")
+    else:
+        st.header("All ETFs")
+        st.write("Displaying all available ETFs.")
+
+    # Display the selected ETF in the main content
+    st.sidebar.subheader("Selected ETF")
+    st.sidebar.write(selected_etf)
+
 # Main content: Display selected ETF information
     st.header(f"Details for Selected ETF: {selected_etf}")
     cursor.execute('SELECT * FROM etf_infos WHERE symbol = ?', (selected_etf,))
