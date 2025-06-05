@@ -119,11 +119,15 @@ def etf_lookup():
         st.write("This model includes the following security sets and ETFs:")
     else:
         st.header("Pick a Model to see its Strategies and ETFs")
-        
+    # Display the selected model's security sets and ETFs
+    if selected_model != "All Models":
+        security_sets_and_etfs = load_security_sets_and_etfs_for_model(selected_model)
+        if not security_sets_and_etfs.empty:
+            st.write(security_sets_and_etfs)
+        else:
+            st.write("No security sets or ETFs found for the selected model.")
 
-    # Display the selected ETF in the main content
-    st.sidebar.subheader("Selected ETF")
-    st.sidebar.write(selected_etf)
+
 
 # Main content: Display selected ETF information
     st.header(f"Details for Selected ETF: {selected_etf}")
