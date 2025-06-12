@@ -5,7 +5,7 @@ from datetime import datetime
 import datetime as dt
 from fredapi import Fred
 
-# --- ETF Price and Info Update Functions ---
+# --- ETF Price and Info Update Functions --- # 
 
 def update_historical_prices(database_path, enddate=None):
     """
