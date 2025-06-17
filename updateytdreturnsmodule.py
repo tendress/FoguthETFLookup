@@ -60,40 +60,6 @@ def update_etf_ytd_returns(database_path):
     print("ETF YTD returns updated successfully.")
     return ytd_price_return
 
-def update_etf_yields(database_path):
-    """
-    Update the yields for ETFs in the database.
-    """
-    # Connect to SQLite database
-    conn = sqlite3.connect(database_path)
-    cursor = conn.cursor()
-
-    # Fetch the list of tickers
-    cursor.execute('SELECT id, symbol FROM etfs')
-    etf_data = cursor.fetchall()  # Fetch all rows as a list of tuples
-    print("List of tickers fetched from the etfs table:")
-    print(etf_data)
-
-    # Loop through each ETF and update the yield
-    for etf_id, ticker in etf_data:
-        try:
-            # Fetch yield information from yfinance
-            yield_info = yf.Ticker(ticker).info.get('yield', None)
-
-            # Update the yield in the database
-            cursor.execute('''
-                UPDATE etfs
-                SET yield = ?
-                WHERE id = ?
-            ''', (yield_info, etf_id))
-
-            print(f"ETF: {ticker}, Yield: {yield_info}")
-        except Exception as e:
-            print(f"Error fetching yield for {ticker}: {e}")
-
-    conn.commit()
-    conn.close()
-    print("ETF yields updated successfully.")
 
 def update_security_set_ytd_returns(database_path, start_date="2025-01-01"):
     """
