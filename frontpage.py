@@ -58,7 +58,7 @@ def get_last_updated_date():
 # Display the last updated date in the sidebar
 last_updated_date = get_last_updated_date()
 if last_updated_date:
-    st.sidebar.markdown(f"**Last Updated:** {last_updated_date.strftime('%B %d, %Y')}")
+    st.sidebar.markdown(f"**Last Updated:** {last_updated_date.strftime('%m, %d, %Y %H:%M:%S')}")
     
 
 # Display the selected page
