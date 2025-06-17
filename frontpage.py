@@ -77,7 +77,7 @@ if selected_page == "Home":
     
     last_updated = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")  # Default to current time if no data is available
     # display last_updated date and time -6 hours
-    last_updated = datetime.datetime.now() - datetime.timedelta(hours=6)
+    last_updated = datetime.datetime.now() - datetime.timedelta(hours=4)
     last_updated = last_updated.strftime("%m/%d/%Y, %H:%M:%S")  # Format the date and time
         
     
