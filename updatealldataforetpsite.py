@@ -511,7 +511,20 @@ def calculate_security_set_prices(database_path):
     conn.commit()
     conn.close()
     
-    
+def update_web_log(database_path):
+    """
+    Update web log with current date and time.
+    """
+    conn = sqlite3.connect(database_path)
+    cursor = conn.cursor()
+    update_date_time = dt.now().strftime('%d-%m-%Y %H:%M:%S')
+    update_date_time = dt.datetime.now() - dt.timedelta(hours=4)
+    cursor.execute('''
+        INSERT INTO ffgwebUpdateLog (
+            updateDateTime, updateType
+        ) VALUES (?, ?)
+        ''', (update_date_time, 'Full Update'))
+
 # --- Main Execution ---
 
 if __name__ == "__main__":
@@ -553,3 +566,8 @@ if __name__ == "__main__":
     model_df = update_model_ytd_returns(database_path)
 
     print("All updates completed successfully.")
+    
+    # Update the web log
+    print("Updating web log...")
+    update_web_log(database_path)
+    print("Web log updated successfully.")

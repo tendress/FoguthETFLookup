@@ -73,17 +73,8 @@ if selected_page == "Home":
     if "open_buttons" not in st.session_state:
         st.session_state.open_buttons = {}
 
-    # Fetch last updated date and time for model performance
     
-    last_updated = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")  # Default to current time if no data is available
-    # display last_updated date and time -6 hours
-    last_updated = datetime.datetime.now() - datetime.timedelta(hours=4)
-    last_updated = last_updated.strftime("%m/%d/%Y, %H:%M:%S")  # Format the date and time
         
-    
-    # Display last updated date and time
-    st.sidebar.markdown(f"**Last Updated:** {last_updated}")
-    
     # Display the model groups and their security sets
     st.title("ETP Model Menu")
     st.write("YTD Performance is updated periodically. Check the Model Performance tab to see Last Updated Date.")
