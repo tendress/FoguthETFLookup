@@ -9,6 +9,7 @@ from consumerindicators import consumer_indicators
 from livefactsheet import display_live_factsheet
 import pandas as pd
 import sqlite3
+import datetime
 
 
 # Set the app title and logo
@@ -77,7 +78,7 @@ if selected_page == "Home":
     last_updated = cursor.fetchone()[0]
     if last_updated:
         # convert epoch time to datetime
-        last_updated = pd.to_datetime(last_updated, unit='s').strftime('%Y-%m-%d %H:%M:%S')
+        last_updated = datetime.datetime.fromtimestamp(last_updated).strftime('%Y-%m-%d %H:%M:%S')
     else:
         last_updated = "N/A"  
         
