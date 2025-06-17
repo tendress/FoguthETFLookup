@@ -36,6 +36,31 @@ pages = {
 
 selected_page = st.sidebar.radio("Go to", list(pages.keys()))
 
+# Display the last updated date
+def get_last_updated_date():
+    # Connect to the database
+    database_path = 'foguth_etf_models.db'
+    conn = sqlite3.connect(database_path)
+    cursor = conn.cursor()
+
+    # Fetch the last updated date from the database
+    cursor.execute("SELECT MAX(updateDateTime) FROM ffgwebUpdateLog")
+    last_updated = cursor.fetchone()[0]
+
+    # Close the database connection
+    conn.close()
+
+    if last_updated:
+        return datetime.datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S").date()
+    else:
+        return None
+    
+# Display the last updated date in the sidebar
+last_updated_date = get_last_updated_date()
+if last_updated_date:
+    st.sidebar.markdown(f"**Last Updated:** {last_updated_date.strftime('%B %d, %Y')}")
+    
+
 # Display the selected page
 if selected_page == "Home":
     # Database connection
