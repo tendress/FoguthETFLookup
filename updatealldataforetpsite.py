@@ -517,7 +517,7 @@ def update_web_log(database_path):
     """
     conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
-    update_date_time = dt.now().strftime('%d-%m-%Y %H:%M:%S')
+    update_date_time = dt.datetime.now().strftime('%d-%m-%Y %H:%M:%S')
     update_date_time = dt.datetime.now() - dt.timedelta(hours=4)
     cursor.execute('''
         INSERT INTO ffgwebUpdateLog (
