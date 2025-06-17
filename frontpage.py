@@ -51,7 +51,10 @@ def get_last_updated_date():
     conn.close()
 
     if last_updated:
-        return datetime.datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S").date()
+        # Convert the last updated date to a datetime object
+        last_updated_date = datetime.datetime.strptime(last_updated, '%Y-%m-%d %H:%M:%S')
+        # Format the date with a time 
+        return last_updated_date.strftime('%Y-%m-%d %H:%M:%S')
     else:
         return None
     
