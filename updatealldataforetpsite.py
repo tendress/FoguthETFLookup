@@ -517,14 +517,18 @@ def update_web_log(database_path):
     """
     conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
-    update_date_time = dt.datetime.now().strftime('%d-%m-%Y %H:%M:%S')
-    update_date_time = dt.datetime.now() - dt.timedelta(hours=4)
+    val1 = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    val2 = 'Update'
+    
+    val3 = 'All data for ETP site updated successfully.'
     cursor.execute('''
-        INSERT INTO ffgwebUpdateLog (
-            updateDateTime, updateType
-        ) VALUES (?, ?)
-        ''', (update_date_time, 'Full Update'))
-
+        INSERT INTO ffgwebUpdateLog (updateDateTime, updateType, updateDetails)
+        VALUES (?, ?, ?)
+    ''', (val1, val2, val3))
+    conn.commit()
+    conn.close()
+    
+    print("Web log updated successfully with current date and time.") 
 # --- Main Execution ---
 
 if __name__ == "__main__":
