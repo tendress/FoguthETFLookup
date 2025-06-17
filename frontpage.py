@@ -73,7 +73,7 @@ if selected_page == "Home":
         st.session_state.open_buttons = {}
 
     # Fetch last updated date and time for model performance
-    cursor.execute("SELECT MAX(YTDPriceReturnDate) FROM models")
+    cursor.execute("SELECT MAX(regularMarketTime) FROM etf_details")
     last_updated = cursor.fetchone()[0]
     if last_updated:
         last_updated = pd.to_datetime(last_updated).strftime('%Y-%m-%d %H:%M:%S')
