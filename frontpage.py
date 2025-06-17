@@ -76,9 +76,11 @@ if selected_page == "Home":
     cursor.execute("SELECT MAX(regularMarketTime) FROM etf_details")
     last_updated = cursor.fetchone()[0]
     if last_updated:
-        last_updated = pd.to_datetime(last_updated).strftime('%Y-%m-%d %H:%M:%S')
+        # convert epoch time to datetime
+        last_updated = pd.to_datetime(last_updated, unit='s').strftime('%Y-%m-%d %H:%M:%S')
     else:
-        last_updated = "N/A"
+        last_updated = "N/A"  
+        
     
     # Display last updated date and time
     st.sidebar.markdown(f"**Last Updated:** {last_updated}")
