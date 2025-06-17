@@ -15,6 +15,9 @@ import sqlite3
 st.set_page_config(page_title="Foguth Financial Group", page_icon="🧮", layout="wide")
 st.sidebar.image("assets/logo.png", use_container_width=True)
 
+
+
+
 # Sidebar navigation
 st.sidebar.title("Navigation")
 pages = {
@@ -69,9 +72,18 @@ if selected_page == "Home":
     if "open_buttons" not in st.session_state:
         st.session_state.open_buttons = {}
 
+    # Fetch last updated date and time for model performance
+    cursor.execute("SELECT MAX(YTDPriceReturnDate) FROM models")
+    last_updated = cursor.fetchone()[0]
+    if last_updated:
+        last_updated = pd.to_datetime(last_updated).strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        last_updated = "N/A"
+    
     # Display the model groups and their security sets
     st.title("ETP Model Menu")
     st.write("YTD Performance is updated periodically. Check the Model Performance tab to see Last Updated Date.")
+    
 
     # Define group headings
     group_headings = ["Growth", "Value", "Rising Dividend"]
