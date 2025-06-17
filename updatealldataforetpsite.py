@@ -438,6 +438,10 @@ def calculate_security_set_prices(database_path):
 
     conn.commit()
     conn.close()
+
+
+
+
     
 def update_web_log(database_path):
     """
