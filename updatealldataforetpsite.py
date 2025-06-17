@@ -145,40 +145,6 @@ class StockInfo:
             {", ".join([f"{key} = excluded.{key}" for key in etf_info.keys()])}
         ''', values)
 
-def fetch_etf_data(database_path):
-    """
-    Fetch a list of symbols from the etfs table and retrieve the current price and yield for each ETF.
-    """
-    conn = sqlite3.connect(database_path)
-    cursor = conn.cursor()
-    cursor.execute('SELECT symbol FROM etfs')
-    symbols = [row[0] for row in cursor.fetchall()]
-    etf_data = pd.DataFrame(columns=['Symbol', 'Current Price', 'Yield', 'Name'])
-    now = datetime.now()
-    for symbol in symbols:
-        try:
-            etf = yf.Ticker(symbol)
-            price = etf.history(period='1d')['Close'].iloc[-1] if not etf.history(period='1d').empty else None
-            yield_info = etf.info.get('yield', None)
-            etf_name = etf.info.get('longName', None)
-            etf_data = pd.concat([etf_data, pd.DataFrame({
-                'Symbol': [symbol],
-                'Current Price': [price],
-                'Yield': [yield_info],
-                'Name': [etf_name]
-            })], ignore_index=True)
-        except Exception as e:
-            print(f"Error fetching data for {symbol}: {e}")
-    for index, row in etf_data.iterrows():
-        cursor.execute('''
-            UPDATE etfs
-            SET name = ?, price = ?, yield = ?, price_date = ?
-            WHERE symbol = ?
-        ''', (row['Name'], row['Current Price'], row['Yield'], now, row['Symbol']))
-    conn.commit()
-    conn.close()
-    return etf_data
-
 
 # --- FRED Economic Indicators Update ---
 
@@ -263,44 +229,6 @@ def update_etf_ytd_returns(database_path):
     conn.close()
     print("ETF YTD returns updated successfully.")
     return ytd_price_return
-
-def update_etf_yields(database_path):
-    """
-    Update the yields for ETFs in the database.
-    """
-    # Connect to SQLite database
-    conn = sqlite3.connect(database_path)
-    cursor = conn.cursor()
-
-    # Fetch the list of tickers
-    cursor.execute('SELECT id, symbol FROM etfs')
-    etf_data = cursor.fetchall()  # Fetch all rows as a list of tuples
-    print("List of tickers fetched from the etfs table:")
-    print(etf_data)
-
-    # Loop through each ETF and update the yield
-    for etf_id, ticker in etf_data:
-        try:
-            # Fetch yield information from yfinance
-            yield_info = yf.Ticker(ticker).info.get('yield', None)
-
-            # Update the yield in the database
-            cursor.execute('''
-                UPDATE etfs
-                SET yield = ?
-                WHERE id = ?
-            ''', (yield_info, etf_id))
-            cursor.execute('''
-                UPDATE etfs 
-                SET yield = .0231
-                WHERE symbol = 'NCLO';''')
-            print(f"ETF: {ticker}, Yield: {yield_info}")
-        except Exception as e:
-            print(f"Error fetching yield for {ticker}: {e}")
-
-    conn.commit()
-    conn.close()
-    print("ETF yields updated successfully.")
 
 
 
@@ -544,11 +472,6 @@ if __name__ == "__main__":
     # Update ETF info table
     stock_info = StockInfo(database_path)
     stock_info.fetch_and_store_etf_info()
-
-    # Fetch and update ETF data
-    etf_data = fetch_etf_data(database_path)
-    print("ETF Data:")
-    print(etf_data)
 
     # Update FRED economic indicators
     update_fred_economic_indicators(database_path, fred_api_key)
