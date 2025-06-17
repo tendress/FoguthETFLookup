@@ -75,7 +75,7 @@ if selected_page == "Home":
 
     # Fetch last updated date and time for model performance
     
-    last_updated = datetime.datetime.now()  # Default to current time if no data is available
+    last_updated = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")  # Default to current time if no data is available
         
     
     # Display last updated date and time
