@@ -74,16 +74,8 @@ if selected_page == "Home":
         st.session_state.open_buttons = {}
 
     # Fetch last updated date and time for model performance
-    cursor.execute("SELECT MAX(regularMarketTime) FROM etf_details")
-    last_updated = cursor.fetchone()[0]
     
-    
-    
-    if last_updated:
-        # convert epoch time to datetime
-        last_updated = datetime.datetime.fromtimestamp(last_updated)
-    else:
-        last_updated = "N/A"  
+    last_updated = datetime.datetime.now()  # Default to current time if no data is available
         
     
     # Display last updated date and time
