@@ -80,6 +80,9 @@ if selected_page == "Home":
     else:
         last_updated = "N/A"
     
+    # Display last updated date and time
+    st.sidebar.markdown(f"**Last Updated:** {last_updated}")
+    
     # Display the model groups and their security sets
     st.title("ETP Model Menu")
     st.write("YTD Performance is updated periodically. Check the Model Performance tab to see Last Updated Date.")
