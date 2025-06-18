@@ -391,6 +391,13 @@ def calculate_security_set_prices(database_path):
 
 
 
+def update_yields_models_and_security_sets(database_path):
+    """Using the etf_infos table, update the yields for each security
+
+    Args:
+        database_path (_type_): _description_
+    """
+
 
     
 def update_web_log(database_path):
