@@ -24,7 +24,6 @@ st.sidebar.title("Navigation")
 pages = {
     "Home": "Welcome to Foguth ETP Model Insights",
     "Model Performance": display_model_performance,
-    "Model Graphs": display_model_graphs,
     "Live ETP Factsheet": display_live_factsheet,
     "ETF Lookup": etf_lookup,
     "Beta Calculator": calculate_beta_page,
