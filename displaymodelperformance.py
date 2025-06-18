@@ -132,9 +132,9 @@ def display_model_performance():
 
     # Display benchmark YTD performance in the sidebar
     st.sidebar.title("Benchmarks")
-    spy_ytd_return = get_ytd_price_return('SPY', database_path)
-    qqqm_ytd_return = get_ytd_price_return('QQQM', database_path)
-    dia_ytd_return = get_ytd_price_return('DIA', database_path)
+    spy_ytd_return = get_ytd_price_return('^GSPC', database_path)
+    qqqm_ytd_return = get_ytd_price_return('^IXIC', database_path)
+    dia_ytd_return = get_ytd_price_return('^DJI', database_path)
 
     st.sidebar.write(f"S&P 500 YTD: {spy_ytd_return:.2f}%" if spy_ytd_return is not None else "SPY data not available")
     st.sidebar.write(f"Nasdaq YTD: {qqqm_ytd_return:.2f}%" if qqqm_ytd_return is not None else "QQQM data not available")
