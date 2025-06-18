@@ -455,7 +455,7 @@ def update_yields_models_and_security_sets(database_path):
         total_weight = 0
 
         for etf_id, weight in etfs:
-            cursor.execute('SELECT yield FROM etf_infos WHERE symbol = (SELECT symbol FROM etfs WHERE id = ?)', (etf_id,))
+            cursor.execute('SELECT dividendYield FROM etf_infos WHERE symbol = (SELECT symbol FROM etfs WHERE id = ?)', (etf_id,))
             yield_value = cursor.fetchone()
             if yield_value and yield_value[0] is not None:
                 total_yield += yield_value[0] * weight
