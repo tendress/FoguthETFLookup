@@ -7,6 +7,8 @@ from fredapi import Fred
 
 # --- ETF Price and Info Update Functions --- # 
 
+## This function updates the historical daily price data for all tickers in the etfs table and inserts a new daily close price into the etf_prices table.
+
 def update_historical_prices(database_path, enddate=None):
     """
     Fetch historical daily price data for all tickers and store it in the etf_prices table.
@@ -45,61 +47,10 @@ def update_historical_prices(database_path, enddate=None):
     conn.close()
     print("Daily close price data has been stored in the etf_prices table.")
 
-def update_latest_prices(database_path):
-    """
-    Fetch the most recent price for all tickers and update or overwrite the current value for this date in the etf_prices table.
-    """
-    conn = sqlite3.connect(database_path)
-    cursor = conn.cursor()
-    cursor.execute('SELECT id, symbol FROM etfs')
-    etf_data = cursor.fetchall()
-    ticker_to_etf_id = {ticker: etf_id for etf_id, ticker in etf_data}
-    tickers = list(ticker_to_etf_id.keys())
-    try:
-        for ticker in tickers:
-            ticker_data = yf.Ticker(ticker).history(period="1d", interval="1m")
-            if ticker_data.empty:
-                print(f"No data returned for {ticker}. Skipping...")
-                continue
-            latest_row = ticker_data.iloc[-1]
-            latest_price = latest_row['Close']
-            latest_date = dt.datetime.now().strftime('%Y-%m-%d')
-            cursor.execute('''
-                INSERT INTO etf_prices (Date, etf_id, symbol, Close)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(Date, etf_id) DO UPDATE SET
-                    symbol = excluded.symbol,
-                    Close = excluded.Close
-            ''', (latest_date, ticker_to_etf_id[ticker], ticker, latest_price))
-            print(f"Updated the most recent price for {ticker} in the etf_prices table.")
-    except Exception as e:
-        print(f"Error fetching data: {e}")
-    conn.commit()
-    conn.close()
-    print("Most recent price data has been updated in the etf_prices table.")
 
-def update_etf_expense_ratios(database_path):
-    """
-    Fetch the expense ratio for each ETF in the etfs table and update the table.
-    """
-    conn = sqlite3.connect(database_path)
-    cursor = conn.cursor()
-    cursor.execute('SELECT symbol FROM etfs')
-    etf_symbols = [row[0] for row in cursor.fetchall()]
-    for symbol in etf_symbols:
-        try:
-            etf = yf.Ticker(symbol)
-            expense_ratio = etf.info.get('netExpenseRatio')
-            if expense_ratio is not None:
-                cursor.execute('UPDATE etfs SET expense_ratio = ? WHERE symbol = ?', (expense_ratio, symbol))
-                print(f"Updated expense ratio for {symbol}: {expense_ratio}")
-            else:
-                print(f"No expense ratio found for {symbol}")
-        except Exception as e:
-            print(f"Error fetching data for {symbol}: {e}")
-    conn.commit()
-    conn.close()
-    print("Expense ratios updated successfully.")
+# --- ETF Info Update Class --- #
+## This one is important because it gets fills the etf_infos table with the latest information about each ETF, including its symbol, name, and other details.
+
 
 class StockInfo:
     def __init__(self, database_path):
@@ -173,6 +124,8 @@ def update_fred_economic_indicators(database_path, api_key):
     conn.close()
 
 
+## Update ETF YTD Returns ##
+
 def update_etf_ytd_returns(database_path):
     """
     Update the YTD returns for ETFs in the database using the etf_prices table.
@@ -231,6 +184,7 @@ def update_etf_ytd_returns(database_path):
     return ytd_price_return
 
 
+## Update Security Set YTD Returns ##
 
 def update_security_set_ytd_returns(database_path, start_date="2025-01-01"):
     """
@@ -287,10 +241,7 @@ def update_model_ytd_returns(database_path):
     # Connect to SQLite database
     conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
-    cursor.execute('''
-                UPDATE etfs 
-                SET yield = .0231
-                WHERE symbol = 'NCLO';''')
+
     # Calculate the returns for each model
     cursor.execute('SELECT id, name FROM models')
     models = cursor.fetchall()
@@ -470,8 +421,6 @@ if __name__ == "__main__":
 
     # Update ETF historical prices
     update_historical_prices(database_path)
-    update_latest_prices(database_path)
-    update_etf_expense_ratios(database_path)
 
     # Update ETF info table
     stock_info = StockInfo(database_path)
