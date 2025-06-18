@@ -1,7 +1,6 @@
 import sqlite3
 import pandas as pd
 import streamlit as st
-from updateytdreturnsmodule import update_etf_ytd_returns, update_security_set_ytd_returns, update_model_ytd_returns
 
 def display_model_performance():
     st.title("Model Performance")
