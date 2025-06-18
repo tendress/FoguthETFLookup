@@ -447,7 +447,7 @@ def update_yields_models_and_security_sets(database_path):
     for security_set_id, name in security_sets:
         # Fetch the ETFs in the security set
         cursor.execute('''
-            SELECT etf_id, weight FROM security_sets_etfs WHERE security_set_id = ? AND endDate IS NOT NULL
+            SELECT etf_id, weight FROM security_sets_etfs WHERE security_set_id = ? AND endDate IS NULL
         ''', (security_set_id,))
         etfs = cursor.fetchall()
 
@@ -458,7 +458,7 @@ def update_yields_models_and_security_sets(database_path):
             cursor.execute('SELECT dividendYield FROM etf_infos WHERE symbol = (SELECT symbol FROM etfs WHERE id = ?)', (etf_id,))
             yield_value = cursor.fetchone()
             if yield_value and yield_value[0] is not None:
-                total_yield += yield_value[0] * weight
+                total_yield += float(yield_value[0]) * weight
                 total_weight += weight
 
         if total_weight > 0:
@@ -545,6 +545,9 @@ if __name__ == "__main__":
 
     # Update FRED economic indicators
     update_fred_economic_indicators(database_path, fred_api_key)
+    
+    # Update yields for security sets and models
+    update_yields_models_and_security_sets(database_path)
     
     # Update ETF prices with latest daily close prices
     update_etf_prices_with_market_price(database_path)
