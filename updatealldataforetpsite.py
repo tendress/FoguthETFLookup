@@ -250,11 +250,9 @@ def update_model_ytd_returns(database_path):
     
     
     for model_id, name in models:
-        
-        
+        # Fetch the security sets and their weights for the current model
         cursor.execute('SELECT security_set_id, weight FROM model_security_set WHERE model_id = ?', (model_id,))
         security_sets = cursor.fetchall()
-
         total_return = 0
         for security_set_id, weight in security_sets:
             cursor.execute('SELECT YTDPriceReturn FROM security_sets WHERE id = ?', (security_set_id,))
@@ -360,7 +358,8 @@ def calculate_security_set_prices(database_path):
         security_set_prices.groupby('security_set_id')['security_set_price']
         .pct_change() * 100
     )
-
+   
+    
     # Save the results to the security_set_prices table in the database
     conn = sqlite3.connect(database_path)
     security_set_prices.to_sql('security_set_prices', conn, if_exists='replace', index=False)
