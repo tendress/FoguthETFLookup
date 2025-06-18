@@ -124,6 +124,58 @@ def update_fred_economic_indicators(database_path, api_key):
     conn.commit()
     conn.close()
 
+## Function that updates the etf_prices.Close column with the latest daily close prices from the etf_infos table for each ETF in the etfs table.
+def update_etf_prices(database_path):
+    """
+    Update the etf_prices table with the latest daily close prices from the etf_infos table for each ETF in the etfs table.
+    """
+    conn = sqlite3.connect(database_path)
+    cursor = conn.cursor()
+
+    # Fetch all ETFs from the etfs table
+    cursor.execute('SELECT id, symbol FROM etfs')
+    etfs = cursor.fetchall()
+
+    for etf_id, symbol in etfs:
+        try:
+            # Fetch the latest price from the etf_infos table
+            cursor.execute('''
+                SELECT regularMarketPrice FROM etf_infos
+                WHERE symbol = ?
+            ''', (symbol,))
+            latest_price = cursor.fetchone()
+            if latest_price is None:
+                print(f"No price found for {symbol} in etf_infos table. Skipping...")
+                continue
+            latest_price = latest_price[0]
+            # Fetch the latest date from the etf_infos table for this ETF
+            cursor.execute('''
+                SELECT regularMarketTime FROM etf_infos
+                WHERE symbol = ?
+            ''', (symbol,))
+            latest_date = cursor.fetchone()
+            if latest_date is None:
+                print(f"No date found for {symbol} in etf_infos table. Skipping...")
+                continue
+            latest_date = latest_date[0]
+            
+
+            # Insert or update the price in the etf_prices table
+            cursor.execute('''
+                INSERT INTO etf_prices (Date, etf_id, symbol, Close)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(Date, etf_id) DO UPDATE SET Close = ?
+            ''', (latest_date, etf_id, symbol, latest_price, latest_price))
+
+            print(f"Updated {symbol} with price {latest_price} on {latest_date}")
+
+        except Exception as e:
+            print(f"Error updating {symbol}: {e}")
+
+    conn.commit()
+    conn.close()
+
+
 
 ## Update ETF YTD Returns ##
 
@@ -436,7 +488,10 @@ if __name__ == "__main__":
     # Update FRED economic indicators
     update_fred_economic_indicators(database_path, fred_api_key)
     
-        # Update ETF YTD returns
+    # Update ETF prices with latest daily close prices
+    update_etf_prices(database_path)
+    
+    # Update ETF YTD returns
     print("Updating ETF YTD returns...")
     update_etf_ytd_returns(database_path)
 
