@@ -49,6 +49,19 @@ def display_live_factsheet():
             df.rename(columns={"ModelWeight": "ModelWeight (%)"}, inplace=True)
         return df
 
+    def parse_mixed_dates(val):
+        try:
+            # Try as Unix timestamp (int or float)
+            return pd.to_datetime(float(val), unit='s')
+        except (ValueError, TypeError):
+            try:
+                # Try as date string
+                return pd.to_datetime(val)
+            except Exception:
+                return pd.NaT
+    
+    
+    
     def load_models():
         conn = sqlite3.connect("foguth_etf_models.db")
         models = pd.read_sql_query("SELECT name FROM models", conn)["name"].tolist()
@@ -264,7 +277,8 @@ def display_live_factsheet():
                 )
                 conn.close()
                 if not sp500_df.empty:
-                    sp500_df["Date"] = pd.to_datetime(sp500_df["Date"], unit='s')  # Convert to datetime
+                    sp500_df["Date"] = pd.to_datetime(sp500_df["Date"])  # Convert to datetime
+                    sp500_df["Date"] = sp500_df["Date"].apply(parse_mixed_dates)  # Handle mixed date formats
                     sp500_df = sp500_df[sp500_df["Date"].isin(model_returns_df["Date"])]
                     sp500_df = sp500_df.sort_values("Date")
                     sp500_df["pct_change"] = sp500_df["Close"].pct_change().fillna(0)
