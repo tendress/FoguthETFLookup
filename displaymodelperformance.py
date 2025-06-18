@@ -73,17 +73,7 @@ def display_model_performance():
     else:
         st.warning("No data available in the models table.")
 
-    # Display the security_sets table
-    st.header("Year-To-Date Security Sets Performance")
-    if not security_sets_df.empty:
-        # Sort by YTDPriceReturn in descending order
-        if 'YTDReturn' in security_sets_df.columns:
-            security_sets_df = security_sets_df.sort_values(by='YTDReturn', ascending=False).reset_index(drop=True)
-
-        # Display the DataFrame
-        st.dataframe(security_sets_df, use_container_width=True, height=500, hide_index=True)
-    else:
-        st.warning("No data available in the security sets table.")
+    
 
     # Sidebar for benchmark YTD performance
     def get_ytd_price_return(ticker, database_path):
@@ -353,3 +343,16 @@ def display_model_performance():
 
     # Display the interactive Plotly graph in Streamlit
     st.plotly_chart(fig, use_container_width=True)
+
+    
+    # Display the security_sets table
+    st.header("Year-To-Date Security Sets Performance")
+    if not security_sets_df.empty:
+        # Sort by YTDPriceReturn in descending order
+        if 'YTDReturn' in security_sets_df.columns:
+            security_sets_df = security_sets_df.sort_values(by='YTDReturn', ascending=False).reset_index(drop=True)
+
+        # Display the DataFrame
+        st.dataframe(security_sets_df, use_container_width=True, height=500, hide_index=True)
+    else:
+        st.warning("No data available in the security sets table.")
