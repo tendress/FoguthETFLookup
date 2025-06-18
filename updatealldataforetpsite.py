@@ -435,13 +435,82 @@ def calculate_security_set_prices(database_path):
 
 def update_yields_models_and_security_sets(database_path):
     """Using the etf_infos table, update the yields for each security
-
-    Args:
-        database_path (_type_): _description_
-    """
-
-
+    set and model in the database."""
     
+    conn = sqlite3.connect(database_path)
+    cursor = conn.cursor()
+
+    # Fetch all security sets
+    cursor.execute('SELECT id, name FROM security_sets')
+    security_sets = cursor.fetchall()
+
+    for security_set_id, name in security_sets:
+        # Fetch the ETFs in the security set
+        cursor.execute('''
+            SELECT etf_id, weight FROM security_sets_etfs WHERE security_set_id = ? AND endDate IS NOT NULL
+        ''', (security_set_id,))
+        etfs = cursor.fetchall()
+
+        total_yield = 0
+        total_weight = 0
+
+        for etf_id, weight in etfs:
+            cursor.execute('SELECT yield FROM etf_infos WHERE symbol = (SELECT symbol FROM etfs WHERE id = ?)', (etf_id,))
+            yield_value = cursor.fetchone()
+            if yield_value and yield_value[0] is not None:
+                total_yield += yield_value[0] * weight
+                total_weight += weight
+
+        if total_weight > 0:
+            average_yield = total_yield / total_weight
+        else:
+            average_yield = 0
+
+        # Update the security set's yield in the database
+        cursor.execute('''
+            UPDATE security_sets
+            SET yield = ?
+            WHERE id = ?
+        ''', (average_yield, security_set_id))
+
+        print(f"Security Set: {name}, Yield: {average_yield}")
+
+    # Fetch all models
+    cursor.execute('SELECT id, name FROM models')
+    models = cursor.fetchall()
+
+    for model_id, name in models:
+        # Fetch the security sets and their weights for the current model
+        cursor.execute('SELECT security_set_id, weight FROM model_security_set WHERE model_id = ?', (model_id,))
+        security_sets = cursor.fetchall()
+
+        total_yield = 0
+        total_weight = 0
+
+        for security_set_id, weight in security_sets:
+            cursor.execute('SELECT yield FROM security_sets WHERE id = ?', (security_set_id,))
+            yield_value = cursor.fetchone()
+            if yield_value and yield_value[0] is not None:
+                total_yield += yield_value[0] * weight
+                total_weight += weight
+
+        if total_weight > 0:
+            average_yield = total_yield / total_weight
+        else:
+            average_yield = 0
+
+        # Update the model's yield in the database
+        cursor.execute('''
+            UPDATE models
+            SET yield = ?
+            WHERE id = ?
+        ''', (average_yield, model_id))
+        print(f"Model: {name}, Yield: {average_yield}")
+    conn.commit()
+    
+    conn.close()
+    
+# --- Web Log Update Function --- #    
 def update_web_log(database_path):
     """
     Update web log with current date and time.
