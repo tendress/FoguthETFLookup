@@ -106,8 +106,8 @@ if selected_page == "Home":
         
     # Display the model groups and their security sets
     st.title("ETP Model Menu")
-    st.header("The New York Stock Exchange and the Nasdaq Stock Market will be closed on June 19. They will reopen at their usual time, 9:30 a.m. Eastern, on Friday. The U.S. bond market and over-the-counter markets will also shutter Thursday before reopening at 8 a.m. and 9:30 a.m. on Friday, respectively.")
-    st.write("YTD Performance is updated periodically. Check the Model Performance tab to see Last Updated Date.")
+    st.write("The New York Stock Exchange and the Nasdaq Stock Market will be closed on June 19. They will reopen at their usual time, 9:30 a.m. Eastern, on Friday. The U.S. bond market and over-the-counter markets will also shutter Thursday before reopening at 8 a.m. and 9:30 a.m. on Friday, respectively.")
+    st.write("YTD Performance is updated periodically.")
     
 
     # Define group headings
