@@ -537,7 +537,8 @@ if __name__ == "__main__":
     start_date = "2025-01-01"
 
     # Update ETF historical prices
-    update_historical_prices(database_path)
+    # Comment this out normally, if you miss a day  or two, turn this back on for one run
+    #update_historical_prices(database_path)
 
     # Update ETF info table
     stock_info = StockInfo(database_path)
