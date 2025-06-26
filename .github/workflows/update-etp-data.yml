@@ -42,13 +42,5 @@ jobs:
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
 
-      - name: Upload updated database to Streamlit server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.STREAMLIT_HOST }}
-          username: ${{ secrets.STREAMLIT_USER }}
-          password: ${{ secrets.STREAMLIT_PASS }}
-          source: "foguth_etf_models.db"
-          target: "/foguth_etf_models.db"
 
 
