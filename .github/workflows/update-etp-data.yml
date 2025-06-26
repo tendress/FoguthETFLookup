@@ -34,9 +34,9 @@ jobs:
         run: |
           git add foguth_etf_models.db
           git commit -m "Update ETF data [skip ci]" || echo "No changes to commit"
-          git push
+          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Upload updated database to Streamlit server
         uses: appleboy/scp-action@v0.1.7
@@ -46,3 +46,5 @@ jobs:
           password: ${{ secrets.STREAMLIT_PASS }}
           source: "foguth_etf_models.db"
           target: "/foguth_etf_models.db"
+
+
