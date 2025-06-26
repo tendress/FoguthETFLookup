@@ -30,11 +30,15 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Set remote with PAT
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
+
       - name: Commit and push updated data
         run: |
           git add foguth_etf_models.db
           git commit -m "Update ETF data [skip ci]" || echo "No changes to commit"
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
+          git push origin HEAD:${{ github.ref_name }}
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
 
