@@ -30,6 +30,11 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Authenticate with PAT
+        run: |
+          echo "https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com" > $HOME/.git-credentials
+          git config --global credential.helper "store"
+
       - name: Set remote with PAT
         run: |
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
@@ -41,6 +46,3 @@ jobs:
           git push origin HEAD:${{ github.ref_name }}
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-
-
-
