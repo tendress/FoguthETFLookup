@@ -63,7 +63,7 @@ def get_last_updated_date():
 last_updated_date = get_last_updated_date()
 if last_updated_date:
     
-    st.sidebar.markdown(f"**Last Updated:** {last_updated_date} Eastern")
+    st.sidebar.markdown(f"**Last Updated:** {last_updated_date} EST")
     
 
 # Display the selected page
