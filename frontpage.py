@@ -50,8 +50,8 @@ def get_last_updated_date():
     conn.close()
 
     if last_updated:
-        # Convert the last updated date to a datetime object
-        last_updated_date = datetime.datetime.strptime(last_updated, '%Y-%m-%d %H:%M:%S')
+        # Convert the last updated date to a datetime object and subtract 4 hours
+        last_updated_date = datetime.datetime.strptime(last_updated, '%Y-%m-%d %H:%M:%S') - datetime.timedelta(hours=4)
         # Format the date with a time and AM/PM indicator
         formatted_date = last_updated_date.strftime('%B %d, %Y at %I:%M %p')
         return formatted_date
