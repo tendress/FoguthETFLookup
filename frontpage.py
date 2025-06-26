@@ -107,7 +107,7 @@ if selected_page == "Home":
         
     # Display the model groups and their security sets
     st.title("ETP Model Menu")
-    st.write("The financial markets are closed for Independence Day on Friday, July 4, 2025, and will close early on Thursday, July 3, 2025.")
+    st.write("The financial markets are closed for Independence Day on Friday, July 4, 2025, and will close early (1pm Equities, 2pm Fixed Income) on Thursday, July 3, 2025.")
     st.write("All markets will resume normal trading hours on Monday, July 7, 2025.")
     
     
