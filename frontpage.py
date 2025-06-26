@@ -106,6 +106,7 @@ if selected_page == "Home":
     
         
     # Display the model groups and their security sets
+    st.title("Welcome to Foguth ETP Model Insights")
     st.title("ETP Model Menu")
     st.write("The financial markets are closed for Independence Day on Friday, July 4, 2025, and will close early (1pm Equities, 2pm Fixed Income) on Thursday, July 3, 2025.")
     st.write("All markets will resume normal trading hours on Monday, July 7, 2025.")
@@ -144,7 +145,7 @@ if selected_page == "Home":
     # Close the database connection
     conn.close()
     
-    st.title("Welcome to Foguth ETP Model Insights")
+    
     st.markdown(
             """
             This app provides tools for analyzing the Foguth ETP models, calculating betas, and visualizing model performance.
@@ -162,20 +163,7 @@ if selected_page == "Home":
             Use the navigation menu on the left to explore the app.
             """
         )
-    st.markdown(
-        """
-        <h1 style="color: red; font-size: 32px;">Sector Rotation Rebalance: Qualified 5/2 (Complete), Non-Qualified 5/5 (Complete)</h1>
-        <ul style="color: red; font-size: 20px;">
-            <li>XLE: The Energy Select Sector SPDR Fund - 25%</li>
-            <li>XLU: The Utilities Select Sector SPDR Fund - 20%</li>
-            <li>XLK: The Technology Select Sector SPDR Fund - 15%</li>
-            <li>XLRE: The Real Estate Select Sector SPDR Fund - 15%</li>
-            <li>XLF: The Financial Select Sector SPDR Fund - 15%</li>
-            <li>XLC: The Communication Services Select Sector SPDR ETF Fund - 10%</li>
-        </ul>
-        """,
-        unsafe_allow_html=True,
-    )
+    
     
 else:
 # Run the selected page's function
