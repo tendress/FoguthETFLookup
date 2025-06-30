@@ -538,7 +538,7 @@ if __name__ == "__main__":
 
     # Update ETF historical prices
     # Comment this out normally, if you miss a day  or two, turn this back on for one run
-    #update_historical_prices(database_path)
+    update_historical_prices(database_path)
 
     # Update ETF info table
     stock_info = StockInfo(database_path)
