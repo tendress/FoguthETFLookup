@@ -53,4 +53,3 @@ if st.sidebar.button("Set to Last 10 Years"):
 # Functions: USD/EUR, USD/CAD, USD/JPY, USD/GBP, USD/BTC
 
 def plot_usd_eur(db_path, start_date, end_date):
-    
