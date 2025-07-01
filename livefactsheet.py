@@ -216,15 +216,8 @@ def display_live_factsheet():
         Returns a DataFrame with columns: ETF, Yield.
         """
         query = '''
-            SELECT  
-                SUM(etfs.yield) AS Yield
-            FROM model_security_set
-            JOIN security_sets ON model_security_set.security_set_id = security_sets.id
-            JOIN security_sets_etfs ON security_sets.id = security_sets_etfs.security_set_id
-            JOIN etfs ON security_sets_etfs.etf_id = etfs.id
-            JOIN models ON model_security_set.model_id = models.id
-            WHERE models.name = ?
-            AND security_sets_etfs.endDate IS NULL
+            SELECT yield AS Yield FROM models
+            WHERE name = ?
         '''
         conn = sqlite3.connect("foguth_etf_models.db")
         df = pd.read_sql_query(query, conn, params=(selected_model,))
