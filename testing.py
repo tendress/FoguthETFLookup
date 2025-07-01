@@ -44,3 +44,7 @@ def update_historical_prices(database_path, enddate=None):
 def main():
     database_path = 'foguth_etf_models.db'  # Replace with your actual database path
     update_historical_prices(database_path)
+    
+
+if __name__ == "__main__":
+    main()
