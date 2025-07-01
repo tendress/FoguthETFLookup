@@ -325,8 +325,6 @@ def display_live_factsheet():
                     benchmark_df['cum_return'] = ((1 + benchmark_df['daily_return']).cumprod() - 1) * 100
                     benchmark_df["growth"] = (initial_investment * (1 + benchmark_df["cum_return"] / 100)).round(0)
                     
-                    # Update the chart title and legend to reflect the benchmark used
-                    st.markdown(f"<h4 style='color: #ffffff; background-color:#336699; padding-left:4pt;'>Growth of $1,000,000 for {selected_model} vs {benchmark_name}</h4>", unsafe_allow_html=True)
 
                     # --- Date Picker and Filtering ---
                     min_date = datetime.datetime(2025, 1, 1)  # Set minimum date to Jan 1, 2025
