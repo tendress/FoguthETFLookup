@@ -216,9 +216,8 @@ def display_live_factsheet():
         Returns a DataFrame with columns: ETF, Yield.
         """
         query = '''
-            SELECT 
-                etfs.symbol AS ETF, 
-                etfs.yield AS Yield
+            SELECT  
+                SUM(etfs.yield) AS Yield
             FROM model_security_set
             JOIN security_sets ON model_security_set.security_set_id = security_sets.id
             JOIN security_sets_etfs ON security_sets.id = security_sets_etfs.security_set_id
