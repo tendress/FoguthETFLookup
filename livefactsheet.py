@@ -210,6 +210,28 @@ def display_live_factsheet():
 
         return model_returns[["Date", "cum_return"]]
 
+    def load_model_yield(selected_model):
+        """
+        Load the yield for the selected model by aggregating the yields of its ETFs.
+        Returns a DataFrame with columns: ETF, Yield.
+        """
+        query = '''
+            SELECT 
+                etfs.symbol AS ETF, 
+                etfs.yield AS Yield
+            FROM model_security_set
+            JOIN security_sets ON model_security_set.security_set_id = security_sets.id
+            JOIN security_sets_etfs ON security_sets.id = security_sets_etfs.security_set_id
+            JOIN etfs ON security_sets_etfs.etf_id = etfs.id
+            JOIN models ON model_security_set.model_id = models.id
+            WHERE models.name = ?
+            AND security_sets_etfs.endDate IS NULL
+        '''
+        conn = sqlite3.connect("foguth_etf_models.db")
+        df = pd.read_sql_query(query, conn, params=(selected_model,))
+        conn.close()
+        return df
+    
     models = load_models()
     selected_model = st.sidebar.selectbox(
         "Filter by Model",
@@ -262,6 +284,15 @@ def display_live_factsheet():
                 else:
                     st.write("No category data available for the selected model.")
 
+            # Load model yield data
+            model_yield_df = load_model_yield(selected_model)
+            if not model_yield_df.empty:
+                st.subheader("Model Yield")
+                st.dataframe(model_yield_df)
+            else:
+                st.write("No yield data available for the selected model.")
+            st.markdown("---")
+            
             # --- Model and S&P 500 Growth Chart with Date Picker ---
             model_returns_df = calculate_model_time_weighted_return(selected_model)
             if not model_returns_df.empty:
