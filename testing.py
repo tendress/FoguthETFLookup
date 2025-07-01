@@ -11,7 +11,7 @@ def update_historical_prices(database_path, enddate=None):
         enddate = dt.datetime.now().strftime('%Y-%m-%d')
     conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, symbol FROM etfs WHERE symbol LIKE '^%'")
+    cursor.execute("SELECT id, symbol FROM etfs WHERE symbol = '^SP5LHBN'")
     etf_data = cursor.fetchall()
     ticker_to_etf_id = {ticker: etf_id for etf_id, ticker in etf_data}
     tickers = list(ticker_to_etf_id.keys())

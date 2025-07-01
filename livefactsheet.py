@@ -302,21 +302,31 @@ def display_live_factsheet():
                 initial_investment = 1_000_000
                 model_returns_df["growth"] = (initial_investment * (1 + model_returns_df["cum_return"] / 100)).round(0)
 
-                # --- Get ^GSPC (S&P 500) returns and calculate growth ---
+                # --- Get benchmark returns and calculate growth ---
+                # Use SPHD for Rising Dividend models, otherwise use ^GSPC (S&P 500)
+                if "Rising Dividend" in selected_model:
+                    benchmark_symbol = "SPHD"
+                    benchmark_name = "SPHD"
+                else:
+                    benchmark_symbol = "^GSPC"
+                    benchmark_name = "S&P 500"
+
                 conn = sqlite3.connect("foguth_etf_models.db")
-                sp500_df = pd.read_sql_query(
-                    "SELECT Date, Close FROM etf_prices WHERE symbol = '^GSPC' ORDER BY Date ASC",
+                benchmark_df = pd.read_sql_query(
+                    f"SELECT Date, Close FROM etf_prices WHERE symbol = '{benchmark_symbol}' ORDER BY Date ASC",
                     conn
                 )
                 conn.close()
-                if not sp500_df.empty:
-                    sp500_df["Date"] = pd.to_datetime(sp500_df["Date"])  # Convert to datetime
-                    sp500_df["Date"] = sp500_df["Date"].apply(parse_mixed_dates)  # Handle mixed date formats
-                    sp500_df = sp500_df[sp500_df["Date"].isin(model_returns_df["Date"])]
-                    sp500_df = sp500_df.sort_values("Date")
-                    sp500_df["pct_change"] = sp500_df["Close"].pct_change().fillna(0)
-                    sp500_df["cum_return"] = (1 + sp500_df["pct_change"]).cumprod() - 1
-                    sp500_df["growth"] = (initial_investment * (1 + sp500_df["cum_return"])).round(0)
+
+                if not benchmark_df.empty:
+                    benchmark_df['Date'] = pd.to_datetime(benchmark_df['Date'])
+                    benchmark_df = benchmark_df.sort_values('Date')
+                    benchmark_df['daily_return'] = benchmark_df['Close'].pct_change()
+                    benchmark_df['cum_return'] = ((1 + benchmark_df['daily_return']).cumprod() - 1) * 100
+                    benchmark_df["growth"] = (initial_investment * (1 + benchmark_df["cum_return"] / 100)).round(0)
+                    
+                    # Update the chart title and legend to reflect the benchmark used
+                    st.markdown(f"<h4 style='color: #ffffff; background-color:#336699; padding-left:4pt;'>Growth of $1,000,000 for {selected_model} vs {benchmark_name}</h4>", unsafe_allow_html=True)
 
                     # --- Date Picker and Filtering ---
                     min_date = datetime.datetime(2025, 1, 1)  # Set minimum date to Jan 1, 2025
@@ -346,8 +356,8 @@ def display_live_factsheet():
                     mask = (model_returns_df["Date"] >= pd.to_datetime(start_date)) & (model_returns_df["Date"] <= pd.to_datetime(end_date))
                     filtered_model_returns_df = model_returns_df.loc[mask].copy()
 
-                    mask_sp = (sp500_df["Date"] >= pd.to_datetime(start_date)) & (sp500_df["Date"] <= pd.to_datetime(end_date))
-                    filtered_sp500_df = sp500_df.loc[mask_sp].copy()
+                    mask_sp = (benchmark_df["Date"] >= pd.to_datetime(start_date)) & (benchmark_df["Date"] <= pd.to_datetime(end_date))
+                    filtered_sp500_df = benchmark_df.loc[mask_sp].copy()
 
                     # Rebase both series to $1,000,000 at the selected start date
                     if not filtered_model_returns_df.empty and not filtered_sp500_df.empty:
@@ -395,7 +405,7 @@ def display_live_factsheet():
                         with chart_col2:
                             plot_ytd_and_range_bar_chart(
                                 model_returns_df,
-                                sp500_df,
+                                benchmark_df,
                                 selected_model,
                                 start_date,
                                 end_date
