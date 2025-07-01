@@ -212,17 +212,21 @@ def display_live_factsheet():
 
     def load_model_yield(selected_model):
         """
-        Load the yield for the selected model by aggregating the yields of its ETFs.
-        Returns a DataFrame with columns: ETF, Yield.
+        Load the yield for the selected model.
+        Returns the yield value as a number, not a DataFrame.
         """
         query = '''
-            SELECT yield AS Yield FROM models
+            SELECT yield FROM models
             WHERE name = ?
         '''
         conn = sqlite3.connect("foguth_etf_models.db")
-        df = pd.read_sql_query(query, conn, params=(selected_model,))
+        result = pd.read_sql_query(query, conn, params=(selected_model,))
         conn.close()
-        return df
+        
+        if not result.empty and result['yield'].iloc[0] is not None:
+            return result['yield'].iloc[0]
+        else:
+            return 0  # or None, depending on how you want to handle missing data
     
     models = load_models()
     selected_model = st.sidebar.selectbox(
@@ -277,13 +281,12 @@ def display_live_factsheet():
                     st.write("No category data available for the selected model.")
 
             # Load model yield data
-            model_yield_df = load_model_yield(selected_model)
-            if not model_yield_df.empty:
+            model_yield = load_model_yield(selected_model)
+            if model_yield:
                 st.subheader("Model Yield")
-                st.dataframe(model_yield_df)
+                st.write(f"{model_yield:.2f}%")  # Format as percentage with 2 decimal places
             else:
                 st.write("No yield data available for the selected model.")
-            st.markdown("---")
             
             # --- Model and S&P 500 Growth Chart with Date Picker ---
             model_returns_df = calculate_model_time_weighted_return(selected_model)
