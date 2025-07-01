@@ -36,7 +36,7 @@ def update_historical_prices(database_path, enddate=None):
                     ticker_data['Date'] = ticker_data['Date'].dt.strftime('%Y-%m-%d')
                     for _, row in ticker_data.iterrows():
                         cursor.execute('''
-                            INSERT OR IGNORE INTO etf_prices (Date, etf_id, symbol, Close)
+                            INSERT OR REPLACE INTO etf_prices (Date, etf_id, symbol, Close)
                             VALUES (?, ?, ?, ?)
                         ''', (row['Date'], row['etf_id'], row['symbol'], row['Close']))
                     print(f"Inserted new daily close price data for {ticker} into the etf_prices table.")
@@ -538,7 +538,7 @@ if __name__ == "__main__":
 
     # Update ETF historical prices
     # Comment this out normally, if you miss a day  or two, turn this back on for one run
-    #update_historical_prices(database_path)
+    update_historical_prices(database_path)
 
     # Update ETF info table
     stock_info = StockInfo(database_path)
