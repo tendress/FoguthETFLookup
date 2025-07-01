@@ -129,7 +129,7 @@ def display_live_factsheet():
         # --- Prepare DataFrame for Grouped Bar Plot ---
         bar_data = pd.DataFrame({
             "Period": ["YTD", "YTD", "Range", "Range"],
-            "Return Type": [selected_model, benchmark_name, selected_model, benchmark_name],
+            "Return Type": [selected_model, "S&P 500", selected_model, "S&P 500"],
             "Return (%)": [
                 round(model_ytd_return * 100, 2),
                 round(sp500_ytd_return * 100, 2),
@@ -381,8 +381,8 @@ def display_live_factsheet():
                             fig = px.line(
                                 plot_df,
                                 x="Date",
-                                y=[selected_model, benchmark_name],
-                                title=f"Growth of $1,000,000: {selected_model} vs {benchmark_name}",
+                                y=[selected_model, "S&P 500"],
+                                title=f"Growth of $1,000,000: {selected_model} vs S&P 500",
                                 labels={"value": "Portfolio Value ($)", "variable": "Investment"}
                             )
                             # round y-axis values to 0 decimal places
@@ -393,7 +393,7 @@ def display_live_factsheet():
                                 legend=dict(x=1, y=1, traceorder="normal"),
                                 xaxis=dict(tickformat="%Y-%m-%d"),
                                 yaxis=dict(tickformat="$,.0f"),  # Format y-axis as currency with no decimal places
-                                title=dict(text=f"Growth of $1,000,000: {selected_model} vs {benchmark_name}"),
+                                title=dict(text=f"Growth of $1,000,000: {selected_model} vs S&P 500"),
                                 font=dict(size=12),
                                 margin=dict(t=60)  # Increase top margin for title
                             )
