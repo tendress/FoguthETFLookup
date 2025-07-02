@@ -116,7 +116,7 @@ def display_live_factsheet():
         if not benchmark_ytd_df.empty:
             start_cum_return = benchmark_ytd_df["cum_return"].iloc[0]
             end_cum_return = benchmark_ytd_df["cum_return"].iloc[-1]
-            benchmark_ytd_return = end_cum_return - start_cum_return
+            benchmark_ytd_return = ((1 + end_cum_return/100) / (1 + start_cum_return/100) - 1) * 100
         else:
             benchmark_ytd_return = 0
 
@@ -133,7 +133,7 @@ def display_live_factsheet():
         if not benchmark_range_df.empty:
             start_cum_return = benchmark_range_df["cum_return"].iloc[0]
             end_cum_return = benchmark_range_df["cum_return"].iloc[-1]
-            benchmark_range_return = end_cum_return - start_cum_return
+            benchmark_range_return = ((1 + end_cum_return/100) / (1 + start_cum_return/100) - 1) * 100
         else:
             benchmark_range_return = 0
 
@@ -242,7 +242,7 @@ def display_live_factsheet():
 
     def calculate_benchmark_time_weighted_return(benchmark_symbol):
         """
-        Calculate benchmark time-weighted return using simple sum method to match updatealldataforetpsite.py.
+        Calculate benchmark time-weighted return using the same methodology as model returns.
         Returns a DataFrame with columns: Date, cum_return.
         """
         conn = sqlite3.connect("foguth_etf_models.db")
@@ -263,8 +263,9 @@ def display_live_factsheet():
         # Calculate daily percent change
         benchmark_df['daily_return'] = benchmark_df['Close'].pct_change() * 100
         
-        # Calculate cumulative return using simple sum method (to match updatealldataforetpsite.py)
-        benchmark_df['cum_return'] = benchmark_df['daily_return'].cumsum()
+        # Calculate cumulative return using the same methodology as model returns
+        benchmark_df['cum_return'] = (1 + benchmark_df['daily_return'] / 100).cumprod() - 1
+        benchmark_df['cum_return'] = benchmark_df['cum_return'] * 100  # as percentage
         
         return benchmark_df[["Date", "cum_return"]]
 
