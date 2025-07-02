@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import datetime
+from updateytdreturnsmodule import update_etf_ytd_returns, update_security_set_ytd_returns, update_model_ytd_returns
 
 def display_live_factsheet():
     st.markdown("""
@@ -82,59 +83,70 @@ def display_live_factsheet():
         return df
 
 
-    def plot_ytd_and_range_bar_chart(model_returns_df, sp500_df, selected_model, start_date, end_date):
+    def plot_ytd_and_range_bar_chart(model_returns_df, benchmark_returns_df, selected_model, benchmark_name, start_date, end_date):
         """
         Plots a grouped bar chart comparing:
-        - YTD return of the model vs S&P 500 (^GSPC)
-        - Selected date range return of the model vs S&P 500 (^GSPC)
+        - YTD return of the model vs benchmark
+        - Selected date range return of the model vs benchmark
+        Uses the corrected return calculation methodology.
         """
         import plotly.express as px
         import pandas as pd
 
         # Ensure dates are datetime
         model_returns_df["Date"] = pd.to_datetime(model_returns_df["Date"])
-        sp500_df["Date"] = pd.to_datetime(sp500_df["Date"])
+        benchmark_returns_df["Date"] = pd.to_datetime(benchmark_returns_df["Date"])
 
         # --- YTD Calculation ---
         ytd_start = pd.Timestamp(year=pd.Timestamp.today().year, month=1, day=1)
         ytd_end = model_returns_df["Date"].max()
 
-        # Model YTD
+        # Model YTD - find the cum_return at start and end of YTD period
         model_ytd_df = model_returns_df[(model_returns_df["Date"] >= ytd_start) & (model_returns_df["Date"] <= ytd_end)]
         if not model_ytd_df.empty:
-            model_ytd_return = (model_ytd_df["cum_return"].iloc[-1] - model_ytd_df["cum_return"].iloc[0]) / 100
+            # Get first and last cum_return values for YTD period
+            start_cum_return = model_ytd_df["cum_return"].iloc[0]
+            end_cum_return = model_ytd_df["cum_return"].iloc[-1]
+            # Calculate YTD return properly: (end_value / start_value - 1)
+            model_ytd_return = ((1 + end_cum_return/100) / (1 + start_cum_return/100) - 1) * 100
         else:
             model_ytd_return = 0
 
-        # S&P 500 YTD
-        sp500_ytd_df = sp500_df[(sp500_df["Date"] >= ytd_start) & (sp500_df["Date"] <= ytd_end)]
-        if not sp500_ytd_df.empty:
-            sp500_ytd_return = (sp500_ytd_df["cum_return"].iloc[-1] - sp500_ytd_df["cum_return"].iloc[0])
+        # Benchmark YTD
+        benchmark_ytd_df = benchmark_returns_df[(benchmark_returns_df["Date"] >= ytd_start) & (benchmark_returns_df["Date"] <= ytd_end)]
+        if not benchmark_ytd_df.empty:
+            start_cum_return = benchmark_ytd_df["cum_return"].iloc[0]
+            end_cum_return = benchmark_ytd_df["cum_return"].iloc[-1]
+            benchmark_ytd_return = ((1 + end_cum_return/100) / (1 + start_cum_return/100) - 1) * 100
         else:
-            sp500_ytd_return = 0
+            benchmark_ytd_return = 0
 
         # --- Selected Date Range Calculation ---
         model_range_df = model_returns_df[(model_returns_df["Date"] >= pd.to_datetime(start_date)) & (model_returns_df["Date"] <= pd.to_datetime(end_date))]
         if not model_range_df.empty:
-            model_range_return = (model_range_df["cum_return"].iloc[-1] - model_range_df["cum_return"].iloc[0]) / 100
+            start_cum_return = model_range_df["cum_return"].iloc[0]
+            end_cum_return = model_range_df["cum_return"].iloc[-1]
+            model_range_return = ((1 + end_cum_return/100) / (1 + start_cum_return/100) - 1) * 100
         else:
             model_range_return = 0
 
-        sp500_range_df = sp500_df[(sp500_df["Date"] >= pd.to_datetime(start_date)) & (sp500_df["Date"] <= pd.to_datetime(end_date))]
-        if not sp500_range_df.empty:
-            sp500_range_return = (sp500_range_df["cum_return"].iloc[-1] - sp500_range_df["cum_return"].iloc[0])
+        benchmark_range_df = benchmark_returns_df[(benchmark_returns_df["Date"] >= pd.to_datetime(start_date)) & (benchmark_returns_df["Date"] <= pd.to_datetime(end_date))]
+        if not benchmark_range_df.empty:
+            start_cum_return = benchmark_range_df["cum_return"].iloc[0]
+            end_cum_return = benchmark_range_df["cum_return"].iloc[-1]
+            benchmark_range_return = ((1 + end_cum_return/100) / (1 + start_cum_return/100) - 1) * 100
         else:
-            sp500_range_return = 0
+            benchmark_range_return = 0
 
         # --- Prepare DataFrame for Grouped Bar Plot ---
         bar_data = pd.DataFrame({
             "Period": ["YTD", "YTD", "Range", "Range"],
-            "Return Type": [selected_model, "S&P 500", selected_model, "S&P 500"],
+            "Return Type": [selected_model, benchmark_name, selected_model, benchmark_name],
             "Return (%)": [
-                round(model_ytd_return * 100, 2),
-                round(sp500_ytd_return * 100, 2),
-                round(model_range_return * 100, 2),
-                round(sp500_range_return * 100, 2)
+                round(model_ytd_return, 2),
+                round(benchmark_ytd_return, 2),
+                round(model_range_return, 2),
+                round(benchmark_range_return, 2)
             ]
         })
 
@@ -145,7 +157,7 @@ def display_live_factsheet():
             color="Return Type",
             barmode="group",
             text="Return (%)",
-            title=f"YTD and Selected Range Returns: {selected_model} vs S&P 500"
+            title=f"YTD and Selected Range Returns: {selected_model} vs {benchmark_name}"
         )
         fig.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
         # Give extra space at the top so text is not cut off
@@ -162,6 +174,7 @@ def display_live_factsheet():
         """
         Calculate the model's time-weighted return by aggregating the weighted returns
         of its security sets using model_security_set.weight and security_set_prices.percentChange.
+        Uses the same logic as updateytdreturnsmodule for consistency.
         Returns a DataFrame with columns: Date, cum_return.
         """
         conn = sqlite3.connect("foguth_etf_models.db")
@@ -204,11 +217,41 @@ def display_live_factsheet():
         model_returns["Date"] = pd.to_datetime(model_returns["Date"])
         model_returns = model_returns.sort_values("Date")
 
-        # Calculate cumulative time-weighted return (assuming percentChange is daily %)
+        # Calculate cumulative return using the proper time-weighted methodology
+        # Convert percentChange to decimal, calculate cumulative product, then back to percentage
         model_returns["cum_return"] = (1 + model_returns["model_return"] / 100).cumprod() - 1
         model_returns["cum_return"] = model_returns["cum_return"] * 100  # as percentage
 
         return model_returns[["Date", "cum_return"]]
+
+    def calculate_benchmark_time_weighted_return(benchmark_symbol):
+        """
+        Calculate benchmark time-weighted return using the same methodology as model returns.
+        Returns a DataFrame with columns: Date, cum_return.
+        """
+        conn = sqlite3.connect("foguth_etf_models.db")
+        
+        # Get benchmark price data
+        benchmark_df = pd.read_sql_query(
+            f"SELECT Date, Close FROM etf_prices WHERE symbol = '{benchmark_symbol}' ORDER BY Date ASC",
+            conn
+        )
+        conn.close()
+        
+        if benchmark_df.empty:
+            return pd.DataFrame(columns=["Date", "cum_return"])
+        
+        benchmark_df['Date'] = pd.to_datetime(benchmark_df['Date'])
+        benchmark_df = benchmark_df.sort_values('Date')
+        
+        # Calculate daily percent change
+        benchmark_df['daily_return'] = benchmark_df['Close'].pct_change() * 100
+        
+        # Calculate cumulative return using the same methodology as model returns
+        benchmark_df['cum_return'] = (1 + benchmark_df['daily_return'] / 100).cumprod() - 1
+        benchmark_df['cum_return'] = benchmark_df['cum_return'] * 100  # as percentage
+        
+        return benchmark_df[["Date", "cum_return"]]
 
     def load_model_yield(selected_model):
         """
@@ -311,19 +354,12 @@ def display_live_factsheet():
                     benchmark_symbol = "^GSPC"
                     benchmark_name = "S&P 500"
 
-                conn = sqlite3.connect("foguth_etf_models.db")
-                benchmark_df = pd.read_sql_query(
-                    f"SELECT Date, Close FROM etf_prices WHERE symbol = '{benchmark_symbol}' ORDER BY Date ASC",
-                    conn
-                )
-                conn.close()
-
-                if not benchmark_df.empty:
-                    benchmark_df['Date'] = pd.to_datetime(benchmark_df['Date'])
-                    benchmark_df = benchmark_df.sort_values('Date')
-                    benchmark_df['daily_return'] = benchmark_df['Close'].pct_change()
-                    benchmark_df['cum_return'] = ((1 + benchmark_df['daily_return']).cumprod() - 1) * 100
-                    benchmark_df["growth"] = (initial_investment * (1 + benchmark_df["cum_return"] / 100)).round(0)
+                # Calculate benchmark returns using the new function
+                benchmark_returns_df = calculate_benchmark_time_weighted_return(benchmark_symbol)
+                
+                if not benchmark_returns_df.empty:
+                    # Calculate growth for benchmark using the same methodology
+                    benchmark_returns_df["growth"] = (initial_investment * (1 + benchmark_returns_df["cum_return"] / 100)).round(0)
                     
 
                     # --- Date Picker and Filtering ---
@@ -354,8 +390,8 @@ def display_live_factsheet():
                     mask = (model_returns_df["Date"] >= pd.to_datetime(start_date)) & (model_returns_df["Date"] <= pd.to_datetime(end_date))
                     filtered_model_returns_df = model_returns_df.loc[mask].copy()
 
-                    mask_sp = (benchmark_df["Date"] >= pd.to_datetime(start_date)) & (benchmark_df["Date"] <= pd.to_datetime(end_date))
-                    filtered_sp500_df = benchmark_df.loc[mask_sp].copy()
+                    mask_sp = (benchmark_returns_df["Date"] >= pd.to_datetime(start_date)) & (benchmark_returns_df["Date"] <= pd.to_datetime(end_date))
+                    filtered_sp500_df = benchmark_returns_df.loc[mask_sp].copy()
 
                     # Rebase both series to $1,000,000 at the selected start date
                     if not filtered_model_returns_df.empty and not filtered_sp500_df.empty:
@@ -403,8 +439,9 @@ def display_live_factsheet():
                         with chart_col2:
                             plot_ytd_and_range_bar_chart(
                                 model_returns_df,
-                                benchmark_df,
+                                benchmark_returns_df,
                                 selected_model,
+                                benchmark_name,
                                 start_date,
                                 end_date
                             )
@@ -434,11 +471,11 @@ def display_live_factsheet():
                         st.markdown("<h3 style='text-align:center;'><a>www.foguthfinancial.com</a> | (844)-4-FOGUTH</h3>", unsafe_allow_html=True)
                         
                     elif not filtered_model_returns_df.empty:
-                        st.write("No S&P 500 (^GSPC) data found for comparison in the selected date range.")
+                        st.write(f"No {benchmark_name} data found for comparison in the selected date range.")
                     else:
                         st.write("No model return data found for the selected date range.")
                 else:
-                    st.write("No S&P 500 (^GSPC) data found for comparison.")
+                    st.write(f"No {benchmark_name} data found for comparison.")
             else:
                 st.write("No calculated model return data found for this model.")
         else:
