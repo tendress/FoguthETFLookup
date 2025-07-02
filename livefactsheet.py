@@ -379,8 +379,8 @@ def display_live_factsheet():
                             fig = px.line(
                                 plot_df,
                                 x="Date",
-                                y=[selected_model, "Benchmark"],
-                                title=f"Growth of $1,000,000: {selected_model} vs Benchmark",
+                                y=[selected_model, "S&P 500"],
+                                title=f"Growth of $1,000,000: {selected_model} vs S&P 500",
                                 labels={"value": "Portfolio Value ($)", "variable": "Investment"}
                             )
                             # round y-axis values to 0 decimal places
