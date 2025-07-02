@@ -104,11 +104,10 @@ def display_live_factsheet():
         # Model YTD - find the cum_return at start and end of YTD period
         model_ytd_df = model_returns_df[(model_returns_df["Date"] >= ytd_start) & (model_returns_df["Date"] <= ytd_end)]
         if not model_ytd_df.empty:
-            # Get first and last cum_return values for YTD period
+            # Use simple difference method to match updatealldataforetpsite.py
             start_cum_return = model_ytd_df["cum_return"].iloc[0]
             end_cum_return = model_ytd_df["cum_return"].iloc[-1]
-            # Calculate YTD return properly: (end_value / start_value - 1)
-            model_ytd_return = ((1 + end_cum_return/100) / (1 + start_cum_return/100) - 1) * 100
+            model_ytd_return = end_cum_return - start_cum_return
         else:
             model_ytd_return = 0
 
@@ -117,7 +116,7 @@ def display_live_factsheet():
         if not benchmark_ytd_df.empty:
             start_cum_return = benchmark_ytd_df["cum_return"].iloc[0]
             end_cum_return = benchmark_ytd_df["cum_return"].iloc[-1]
-            benchmark_ytd_return = ((1 + end_cum_return/100) / (1 + start_cum_return/100) - 1) * 100
+            benchmark_ytd_return = end_cum_return - start_cum_return
         else:
             benchmark_ytd_return = 0
 
@@ -126,7 +125,7 @@ def display_live_factsheet():
         if not model_range_df.empty:
             start_cum_return = model_range_df["cum_return"].iloc[0]
             end_cum_return = model_range_df["cum_return"].iloc[-1]
-            model_range_return = ((1 + end_cum_return/100) / (1 + start_cum_return/100) - 1) * 100
+            model_range_return = end_cum_return - start_cum_return
         else:
             model_range_return = 0
 
@@ -134,7 +133,7 @@ def display_live_factsheet():
         if not benchmark_range_df.empty:
             start_cum_return = benchmark_range_df["cum_return"].iloc[0]
             end_cum_return = benchmark_range_df["cum_return"].iloc[-1]
-            benchmark_range_return = ((1 + end_cum_return/100) / (1 + start_cum_return/100) - 1) * 100
+            benchmark_range_return = end_cum_return - start_cum_return
         else:
             benchmark_range_return = 0
 
@@ -174,7 +173,7 @@ def display_live_factsheet():
         """
         Calculate the model's time-weighted return by aggregating the weighted returns
         of its security sets using model_security_set.weight and security_set_prices.percentChange.
-        Uses the same logic as updateytdreturnsmodule for consistency.
+        Uses simple sum method to match updatealldataforetpsite.py for consistency.
         Returns a DataFrame with columns: Date, cum_return.
         """
         conn = sqlite3.connect("foguth_etf_models.db")
@@ -236,16 +235,14 @@ def display_live_factsheet():
         model_returns["Date"] = pd.to_datetime(model_returns["Date"])
         model_returns = model_returns.sort_values("Date")
 
-        # Calculate cumulative return using the proper time-weighted methodology
-        # Convert percentChange to decimal, calculate cumulative product, then back to percentage
-        model_returns["cum_return"] = (1 + model_returns["model_return"] / 100).cumprod() - 1
-        model_returns["cum_return"] = model_returns["cum_return"] * 100  # as percentage
+        # Calculate cumulative return using simple sum method (to match updatealldataforetpsite.py)
+        model_returns["cum_return"] = model_returns["model_return"].cumsum()
 
         return model_returns[["Date", "cum_return"]]
 
     def calculate_benchmark_time_weighted_return(benchmark_symbol):
         """
-        Calculate benchmark time-weighted return using the same methodology as model returns.
+        Calculate benchmark time-weighted return using simple sum method to match updatealldataforetpsite.py.
         Returns a DataFrame with columns: Date, cum_return.
         """
         conn = sqlite3.connect("foguth_etf_models.db")
@@ -266,9 +263,8 @@ def display_live_factsheet():
         # Calculate daily percent change
         benchmark_df['daily_return'] = benchmark_df['Close'].pct_change() * 100
         
-        # Calculate cumulative return using the same methodology as model returns
-        benchmark_df['cum_return'] = (1 + benchmark_df['daily_return'] / 100).cumprod() - 1
-        benchmark_df['cum_return'] = benchmark_df['cum_return'] * 100  # as percentage
+        # Calculate cumulative return using simple sum method (to match updatealldataforetpsite.py)
+        benchmark_df['cum_return'] = benchmark_df['daily_return'].cumsum()
         
         return benchmark_df[["Date", "cum_return"]]
 
