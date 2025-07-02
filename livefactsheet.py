@@ -178,6 +178,24 @@ def display_live_factsheet():
         Returns a DataFrame with columns: Date, cum_return.
         """
         conn = sqlite3.connect("foguth_etf_models.db")
+        cursor = conn.cursor()
+
+        # Fix the dates of rebalance
+        cursor.execute('''
+            UPDATE security_set_prices
+            SET percentChange = 0
+            WHERE security_set_id = 12
+            AND Date = '2025-01-02 00:00:00'
+            ''')
+        
+        cursor.execute('''
+            UPDATE security_set_prices
+            SET percentChange = 0
+            WHERE security_set_id = 6
+            AND Date = '2025-05-02 00:00:00'
+            ''')
+        
+        conn.commit()
 
         # Get security sets and their weights for the selected model
         query_sets = """
@@ -195,6 +213,7 @@ def display_live_factsheet():
         # Get all security set prices for these sets
         set_ids = sets_df["security_set_id"].tolist()
         placeholders = ','.join(['?'] * len(set_ids))
+       
         query_prices = f"""
             SELECT security_set_id, Date, percentChange
             FROM security_set_prices
