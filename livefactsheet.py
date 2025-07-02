@@ -331,6 +331,20 @@ def display_live_factsheet():
             with col1:
                 st.subheader("Security Target Weights")
                 st.dataframe(top10_df)
+                # Load model yield data
+                model_yield = load_model_yield(selected_model)
+                if model_yield:
+                    st.markdown(
+                        f"""
+                        <div style='background-color: #f0f2f6; padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0;'>
+                            <h3 style='color: #336699; margin-bottom: 10px;'>Model Yield</h3>
+                            <h1 style='color: #336699; font-size: 48px; font-weight: bold; margin: 0;'>{model_yield:.2f}%</h1>
+                        </div>
+                        """, 
+                        unsafe_allow_html=True
+                    )
+                else:
+                    st.write("No yield data available for the selected model.")
             with col2:
                 st.subheader("Asset Allocation")
                 if not pie_data.empty:
