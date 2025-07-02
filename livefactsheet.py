@@ -368,7 +368,7 @@ def display_live_factsheet():
                         # Merge for plotting
                         plot_df = pd.merge(
                             filtered_model_returns_df[["Date", "growth_rebased"]].rename(columns={"growth_rebased": selected_model}),
-                            filtered_sp500_df[["Date", "growth_rebased"]].rename(columns={"growth_rebased": "S&P 500"}),
+                            filtered_sp500_df[["Date", "growth_rebased"]].rename(columns={"growth_rebased": benchmark_name}),
                             on="Date",
                             how="inner"
                         )
@@ -379,8 +379,8 @@ def display_live_factsheet():
                             fig = px.line(
                                 plot_df,
                                 x="Date",
-                                y=[selected_model, "S&P 500"],
-                                title=f"Growth of $1,000,000: {selected_model} vs S&P 500",
+                                y=[selected_model, benchmark_name],
+                                title=f"Growth of $1,000,000: {selected_model} vs {benchmark_name}",
                                 labels={"value": "Portfolio Value ($)", "variable": "Investment"}
                             )
                             # round y-axis values to 0 decimal places
@@ -391,7 +391,7 @@ def display_live_factsheet():
                                 legend=dict(x=1, y=1, traceorder="normal"),
                                 xaxis=dict(tickformat="%Y-%m-%d"),
                                 yaxis=dict(tickformat="$,.0f"),  # Format y-axis as currency with no decimal places
-                                title=dict(text=f"Growth of $1,000,000: {selected_model} vs S&P 500"),
+                                title=dict(text=f"Growth of $1,000,000: {selected_model} vs {benchmark_name}"),
                                 font=dict(size=12),
                                 margin=dict(t=60)  # Increase top margin for title
                             )
