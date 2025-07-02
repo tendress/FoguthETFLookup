@@ -4,7 +4,7 @@ import yfinance as yf
 from datetime import datetime
 import datetime as dt
 from fredapi import Fred
-from updateytdreturnsmodule import update_etf_ytd_returns, update_security_set_ytd_returns, update_model_ytd_returns
+#from updateytdreturnsmodule import update_etf_ytd_returns, update_security_set_ytd_returns, update_model_ytd_returns
 
 # --- ETF Price and Info Update Functions --- # 
 
