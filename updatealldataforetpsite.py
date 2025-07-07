@@ -136,7 +136,7 @@ def update_etf_prices_with_market_price(database_path):
     # Get today's date in YYYY-MM-DD format
     today = datetime.date.today().strftime("%Y-%m-%d")
 
-    # Fetch all ETF symbols and their regularMarketPrice from etf_infos
+    # Fetch all ETF symbols and their regularMarketPrice from etf_infos 
     cursor.execute("SELECT symbol, regularMarketPrice FROM etf_infos WHERE regularMarketPrice IS NOT NULL")
     etf_prices = cursor.fetchall()
 
