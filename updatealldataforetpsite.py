@@ -141,7 +141,9 @@ def update_etf_prices_with_market_price(database_path):
     etf_prices = cursor.fetchall()
 
     for symbol, regularMarketPrice in etf_prices:
-        # Get etf_id from etfs table
+        # Get etf_id from etfs table, but exclude any symbols that have a ^ (caret) at the beginning
+        if symbol.startswith('^'):
+            continue
         cursor.execute("SELECT id FROM etfs WHERE symbol = ?", (symbol,))
         result = cursor.fetchone()
         if not result:
@@ -538,7 +540,7 @@ if __name__ == "__main__":
 
     # Update ETF historical prices
     # Comment this out normally, if you miss a day or two, turn this back on for one run
-    #update_historical_prices(database_path)
+    update_historical_prices(database_path)
 
     # Update ETF info table
     stock_info = StockInfo(database_path)
