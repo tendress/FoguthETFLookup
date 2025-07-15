@@ -16,7 +16,7 @@ def update_historical_prices(database_path, enddate=None):
     etf_data = cursor.fetchall()
     ticker_to_etf_id = {ticker: etf_id for etf_id, ticker in etf_data}
     #tickers = list(ticker_to_etf_id.keys())
-    tickers = ['^GSPC', '^IXIC', '^DJI']
+    tickers = ['^GSPC', '^IXIC', '^DJI', '^VIX', '^IRX', '^FVX', '^TNX', '^TYX']
     try:
         all_data = yf.download(tickers, start='1994-01-01', end=enddate, interval="1d", group_by="ticker")
         if all_data.empty:
