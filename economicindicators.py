@@ -1,3 +1,4 @@
+
 ## Economic Indicators for the Financial Advisor ##
 import sqlite3
 import pandas as pd
@@ -15,6 +16,7 @@ def economic_indicators():
     st.title("Economic Indicators Dashboard")
 
     # Hardcoded database path
+    
     db_path = "foguth_etf_models.db"
 
     # Sidebar for Date Range Selection
@@ -164,46 +166,51 @@ def economic_indicators():
         st.plotly_chart(fig2, use_container_width=True)
 
     
-
+    
     def plot_bond_yields(db_path, start_date, end_date):
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect("foguth_fred_indicators.db")
         query = """
-        SELECT Date, symbol, Close
-        FROM etf_prices
-        WHERE symbol IN ('^IRX', '^FVX', '^TNX', '^TYX')
-        ORDER BY Date
+        SELECT IV.date, EI.symbol, IV.value
+        FROM indicator_values IV
+        INNER JOIN economic_indicators EI ON IV.economic_indicator_id = EI.id
+        WHERE EI.symbol IN ('DGS3MO', 'DGS2', 'DGS5', 'DGS10', 'DGS30')
+        ORDER BY IV.date
         """
         df = pd.read_sql_query(query, conn)
-        conn.close()
-
-        df['Date'] = pd.to_datetime(df['Date'])
+        
+        df['date'] = pd.to_datetime(df['date'])
 
         # Map symbols to their full names
         symbol_mapping = {
-            '^IRX': '3-Month Treasury Yield',
-            '^FVX': '5-Year Treasury Yield',
-            '^TNX': '10-Year Treasury Yield',
-            '^TYX': '30-Year Treasury Yield'
+            'DGS3MO': '3-Month Treasury Yield',
+            'DGS2': '2-Year Treasury Yield',
+            'DGS5': '5-Year Treasury Yield',
+            'DGS10': '10-Year Treasury Yield',
+            'DGS30': '30-Year Treasury Yield'
         }
         df['symbol'] = df['symbol'].map(symbol_mapping)
 
         # Filter data based on user-selected date range
-        df = df[(df['Date'] >= pd.Timestamp(start_date)) & (df['Date'] <= pd.Timestamp(end_date))]
+        df = df[(df['date'] >= pd.Timestamp(start_date)) & (df['date'] <= pd.Timestamp(end_date))]
+        
+        # Rename columns for consistency
+        df = df.rename(columns={'date': 'Date', 'value': 'Close'})
 
-        # Get the data for economic_indicators.symbol = 'T10Y2Y' and graph it separately
-        conn = sqlite3.connect(db_path)
-        query = """
-        SELECT Date, symbol, economic_value AS Close
-        FROM economic_indicators
-        WHERE symbol = 'T10Y2Y'
-        ORDER BY Date
+        # Get the data for T10Y2Y from the same database
+        query2 = """
+        SELECT IV.date AS Date, IV.value AS Close, EI.symbol
+        FROM indicator_values IV
+        INNER JOIN economic_indicators EI ON IV.economic_indicator_id = EI.id
+        WHERE EI.symbol = 'T10Y2Y'
+        ORDER BY IV.date
         """
-        df2 = pd.read_sql_query(query, conn)
+        df2 = pd.read_sql_query(query2, conn)
         conn.close()
-        df2['Date'] = pd.to_datetime(df2['Date'])
-        df2 = df2[(df2['Date'] >= pd.Timestamp(start_date)) & (df2['Date'] <= pd.Timestamp(end_date))]
-        df2['symbol'] = 'T10Y2Y'
-        df2['symbol'] = df2['symbol'].replace({'T10Y2Y': '10-Year Minus 2-Year Treasury Yield'})
+        
+        if not df2.empty:
+            df2['Date'] = pd.to_datetime(df2['Date'])
+            df2 = df2[(df2['Date'] >= pd.Timestamp(start_date)) & (df2['Date'] <= pd.Timestamp(end_date))]
+            df2['symbol'] = '10-Year Minus 2-Year Treasury Yield'
 
         # Adding a divider
         st.markdown("<hr>", unsafe_allow_html=True)
@@ -212,7 +219,10 @@ def economic_indicators():
         st.header("Bond Yields")
 
         st.markdown(
-        "<span style='color:#3399FF; font-weight:bold;'>The 3-Month Treasury Bill yield reflects short-term investor confidence and expectations for monetary policy. Higher yields often suggest tighter policy or economic optimism, while lower yields may indicate economic caution or expectations of rate cuts.</span>",
+        "<span style='color:#0066CC; font-weight:bold;'>The 3-Month Treasury Bill yield reflects short-term investor confidence and expectations for monetary policy. Higher yields often suggest tighter policy or economic optimism, while lower yields may indicate economic caution or expectations of rate cuts.</span>",
+        unsafe_allow_html=True)
+        st.markdown(
+        "<span style='color:#3399FF; font-weight:bold;'>The 2-Year Treasury Note yield is closely watched as it reflects near-term Federal Reserve policy expectations and investor sentiment about economic conditions over the next two years, often moving in tandem with federal funds rate expectations.</span>",
         unsafe_allow_html=True)  
         st.markdown(
         "<span style='color:#CC0000; font-weight:bold;'>The 5-Year Treasury Note yield reflects intermediate-term investor expectations for economic growth and inflation, with higher yields suggesting confidence in moderate economic expansion but also concerns about persistent inflation or tighter monetary policy</span>",
@@ -221,25 +231,28 @@ def economic_indicators():
         "<span style='color:#FF6666; font-weight:bold;'>The 10-Year Treasury Note yield indicates long-term investor expectations for the U.S. economy, with elevated yields suggesting cautious optimism for growth but also concerns about persistent inflation, trade policy uncertainties, and rising federal debt levels.</span>",
         unsafe_allow_html=True)
         st.markdown(
-        "<span style='color:#0066CC; font-weight:bold;'>The 30-Year Treasury Bond yield indicates long-term investor expectations for the U.S. economy, higher yields indicating anticipation of sustained economic growth or rising inflation, but also signaling concerns about long-term fiscal challenges, such as increasing federal debt and potential trade disruptions.</span>",
+        "<span style='color:#009900; font-weight:bold;'>The 30-Year Treasury Bond yield indicates long-term investor expectations for the U.S. economy, higher yields indicating anticipation of sustained economic growth or rising inflation, but also signaling concerns about long-term fiscal challenges, such as increasing federal debt and potential trade disruptions.</span>",
         unsafe_allow_html=True)
 
-        # Ensure the order of symbols is 3-Month, 5-Year, 10-Year, 30-Year for both plot and legend
-        order = ['3-Month Treasury Yield', '5-Year Treasury Yield', '10-Year Treasury Yield', '30-Year Treasury Yield']
+        # Ensure the order of symbols includes 2-Year Treasury Yield
+        order = ['3-Month Treasury Yield', '2-Year Treasury Yield', '5-Year Treasury Yield', '10-Year Treasury Yield', '30-Year Treasury Yield']
         bond_yields_df = df[df['symbol'].isin(order)].copy()
         bond_yields_df['symbol'] = pd.Categorical(bond_yields_df['symbol'], categories=order, ordered=True)
         bond_yields_df = bond_yields_df.sort_values(['Date', 'symbol'])
 
         # Plot Bond Yields Over Time (excluding 10-Year Minus 2-Year Treasury Yield)
-        fig = px.line(
-            bond_yields_df,
-            x='Date',
-            y='Close',
-            color='symbol',
-            category_orders={'symbol': order},
-            title='Bond Yields: 3-Month, 5-Year, 10-Year, 30-Year'
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        if not bond_yields_df.empty:
+            fig = px.line(
+                bond_yields_df,
+                x='Date',
+                y='Close',
+                color='symbol',
+                category_orders={'symbol': order},
+                title='Bond Yields: 3-Month, 2-Year, 5-Year, 10-Year, 30-Year'
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning("No bond yield data available for the selected date range.")
 
         # Display the most recent value for 10-Year Minus 2-Year Treasury Yield
         if not df2.empty:
@@ -249,46 +262,49 @@ def economic_indicators():
             "<span style='color:#0066CC; font-weight:bold;'>The difference between the 10-year and the 2-year Treasury yields, known as the Yield Curve Spread, indicates investor expectations about future economic growth and monetary policy. A positive spread suggests cautious optimism for economic expansion while a negative spread (inverted yield curve) often signals recession risk.</span>",
             unsafe_allow_html=True)
 
-        # Display a graph of the 10-Year Minus 2-Year Treasury Yield
-        fig2 = px.line(df2, x='Date', y='Close',
-                    title='10-Year Minus 2-Year Treasury Yield')
-        fig2.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=1))  # Reduce line thickness
+            # Display a graph of the 10-Year Minus 2-Year Treasury Yield
+            fig2 = px.line(df2, x='Date', y='Close',
+                        title='10-Year Minus 2-Year Treasury Yield')
+            fig2.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=1))  # Reduce line thickness
 
-        # Add a horizontal line at y=0
-        fig2.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Zero Line", 
-                    annotation_position="top left")
+            # Add a horizontal line at y=0
+            fig2.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Zero Line", 
+                        annotation_position="top left")
 
-        fig2.update_layout(xaxis_title="Date", yaxis_title="Yield (%)")
-        st.plotly_chart(fig2, use_container_width=True)
+            fig2.update_layout(xaxis_title="Date", yaxis_title="Yield (%)")
+            st.plotly_chart(fig2, use_container_width=True)
 
         # User selects a specific date
-        st.subheader("The Yield Curve")
-        st.markdown(
-            "<span style='color:blue; font-weight:bold;'>A normal yield curve is upward-sloping, where longer-term Treasury yields are higher than shorter-term yields, reflecting investor expectations of economic growth and moderate inflation, with higher returns demanded for locking in funds over longer periods.</span>",
-            unsafe_allow_html=True)
-        unique_dates = bond_yields_df['Date'].dt.date.unique()
-        selected_date = st.date_input("Select a Date", value=unique_dates[-1], min_value=min(unique_dates), max_value=max(unique_dates))
+        if not bond_yields_df.empty:
+            st.subheader("The Yield Curve")
+            st.markdown(
+                "<span style='color:blue; font-weight:bold;'>A normal yield curve is upward-sloping, where longer-term Treasury yields are higher than shorter-term yields, reflecting investor expectations of economic growth and moderate inflation, with higher returns demanded for locking in funds over longer periods.</span>",
+                unsafe_allow_html=True)
+            unique_dates = bond_yields_df['Date'].dt.date.unique()
+            selected_date = st.date_input("Select a Date", value=unique_dates[-1], min_value=min(unique_dates), max_value=max(unique_dates))
 
-        # Filter data for the selected date
-        selected_date_data = bond_yields_df[bond_yields_df['Date'].dt.date == selected_date].copy()
+            # Filter data for the selected date
+            selected_date_data = bond_yields_df[bond_yields_df['Date'].dt.date == selected_date].copy()
 
-        # Ensure the order of symbols is 3-Month, 5-Year, 10-Year, 30-Year for the selected date
-        selected_date_data.loc[:, 'symbol'] = pd.Categorical(selected_date_data['symbol'], categories=order, ordered=True)
-        selected_date_data = selected_date_data.sort_values('symbol')
+            # Ensure the order of symbols includes 2-Year Treasury Yield for the selected date
+            selected_date_data.loc[:, 'symbol'] = pd.Categorical(selected_date_data['symbol'], categories=order, ordered=True)
+            selected_date_data = selected_date_data.sort_values('symbol')
 
-        # Create a line chart for the selected date
-        fig_selected_date = px.line(
-            selected_date_data,
-            x='symbol',
-            y='Close',
-            markers=True,
-            category_orders={'symbol': order},
-            title=f'Bond Yields for {selected_date}'
-        )
-        fig_selected_date.update_traces(mode='lines+markers', marker=dict(size=10))
-        fig_selected_date.update_layout(xaxis_title="Bond Type", yaxis_title="Yield (%)")
-        st.plotly_chart(fig_selected_date, use_container_width=True)
-
+            # Create a line chart for the selected date
+            if not selected_date_data.empty:
+                fig_selected_date = px.line(
+                    selected_date_data,
+                    x='symbol',
+                    y='Close',
+                    markers=True,
+                    category_orders={'symbol': order},
+                    title=f'Bond Yields for {selected_date}'
+                )
+                fig_selected_date.update_traces(mode='lines+markers', marker=dict(size=10))
+                fig_selected_date.update_layout(xaxis_title="Bond Type", yaxis_title="Yield (%)")
+                st.plotly_chart(fig_selected_date, use_container_width=True)
+            else:
+                st.warning(f"No data available for {selected_date}")
     
 
     def plot_custom_chart(db_path, start_date, end_date):
