@@ -98,31 +98,6 @@ class StockInfo:
         ''', values)
 
 
-# --- FRED Economic Indicators Update ---
-
-def update_fred_economic_indicators(database_path, api_key):
-    fred_client = Fred(api_key=api_key)
-    conn = sqlite3.connect(database_path)
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT symbol FROM economic_indicators")
-    symbols = [row[0] for row in cursor.fetchall()]
-    for symbol in symbols:
-        try:
-            data = fred_client.get_series(symbol, observation_start='1994-01-01', observation_end=datetime.now().strftime('%Y-%m-%d'))
-            data_df = pd.DataFrame(data, columns=['economic_value'])
-            data_df.index.name = 'Date'
-            data_df.reset_index(inplace=True)
-            data_df['Date'] = data_df['Date'].dt.strftime('%Y-%m-%d')
-            for _, row in data_df.iterrows():
-                cursor.execute("""
-                    INSERT OR REPLACE INTO economic_indicators (symbol, Date, economic_value)
-                    VALUES (?, ?, ?)
-                """, (symbol, row['Date'], row['economic_value']))
-            print(f"Data for {symbol} inserted successfully.")
-        except Exception as e:
-            print(f"Error fetching or inserting data for {symbol}: {e}")
-    conn.commit()
-    conn.close()
 
 ## Function that updates the etf_prices.Close column with the latest daily close prices from the etf_infos table for each ETF in the etfs table.
 def update_etf_prices_with_market_price(database_path):
@@ -545,9 +520,6 @@ if __name__ == "__main__":
     # Update ETF info table
     stock_info = StockInfo(database_path)
     stock_info.fetch_and_store_etf_info()
-
-    # Update FRED economic indicators
-    update_fred_economic_indicators(database_path, fred_api_key)
     
     # Update yields for security sets and models
     update_yields_models_and_security_sets(database_path)
