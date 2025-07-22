@@ -7,6 +7,7 @@ from correlationmatrix import display_correlation_matrix
 from economicindicators import economic_indicators
 from consumerindicators import consumer_indicators
 from livefactsheet import display_live_factsheet
+from sectorrotationresearch import sector_rotation_research
 import pandas as pd
 import sqlite3
 import datetime
@@ -29,8 +30,8 @@ pages = {
     "Beta Calculator": calculate_beta_page,
     "Correlation Matrix": display_correlation_matrix,
     "Economic Indicators": economic_indicators,
-    "Consumer Indicators": consumer_indicators
-    
+    "Consumer Indicators": consumer_indicators,
+    "Sector Rotation": sector_rotation_research
 }
 
 selected_page = st.sidebar.radio("Go to", list(pages.keys()))
