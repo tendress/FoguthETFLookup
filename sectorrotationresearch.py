@@ -144,8 +144,8 @@ def plot_time_weighted_returns(selected_etfs, start_date, end_date):
 
 def sector_rotation_research():
     # App title
-    st.title("Sector Rotation Research Dashboard")
-    st.markdown("**Analyze time-weighted returns for SPDR Sector ETFs (XL series)**")
+    st.title("Sector Rotation Dashboard")
+    st.markdown("**Analyze time-weighted returns for SPDR Sector ETFs**")
     
     # Sidebar for controls
     st.sidebar.header("Controls")
@@ -155,20 +155,26 @@ def sector_rotation_research():
         xl_etfs_df = get_xl_etfs()
         
         if xl_etfs_df.empty:
-            st.error("No XL ETFs found in the database.")
+            st.error("No ETFs found in the database.")
             return
         
         # Display available ETFs
-        st.sidebar.subheader("Available XL ETFs")
+        st.sidebar.subheader("Available ETFs")
         st.sidebar.dataframe(xl_etfs_df[['symbol', 'name']], use_container_width=True)
         
         # ETF selection
         st.sidebar.subheader("Select ETFs to Compare")
         etf_options = xl_etfs_df['symbol'].tolist()
+
+        # Define specific default ETFs
+        default_etfs = ['XLE', 'XLU', 'XLRE', 'XLF', 'XLK', 'XLC']
+        # Filter to only include defaults that exist in the database
+        available_defaults = [etf for etf in default_etfs if etf in etf_options]
+
         selected_etfs = st.sidebar.multiselect(
             "Choose ETFs:",
             options=etf_options,
-            default=etf_options[:3] if len(etf_options) >= 3 else etf_options,
+            default=available_defaults,
             help="Select one or more ETFs to compare their time-weighted returns"
         )
         
