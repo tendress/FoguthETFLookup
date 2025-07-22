@@ -124,7 +124,8 @@ def plot_time_weighted_returns(selected_etfs, start_date, end_date):
             
             summary_data.append({
                 'ETF': etf,
-                'Total Return (%)': f"{total_return:.2f}%",
+                'Total Return (%)': total_return,  # Keep as number for sorting
+                'Total Return Display': f"{total_return:.2f}%",  # String for display
                 'Start Price': f"${start_price:.2f}",
                 'End Price': f"${end_price:.2f}",
                 'Price Change': f"${end_price - start_price:.2f}"
@@ -132,7 +133,14 @@ def plot_time_weighted_returns(selected_etfs, start_date, end_date):
     
     if summary_data:
         summary_df = pd.DataFrame(summary_data)
-        st.dataframe(summary_df, use_container_width=True)
+        # Sort by Total Return (%) in descending order (highest returns first)
+        summary_df = summary_df.sort_values('Total Return (%)', ascending=False)
+        
+        # Drop the numeric column and rename the display column for final display
+        display_df = summary_df.drop('Total Return (%)', axis=1)
+        display_df = display_df.rename(columns={'Total Return Display': 'Total Return (%)'})
+        
+        st.dataframe(display_df, use_container_width=True)
 
 def sector_rotation_research():
     # App title
