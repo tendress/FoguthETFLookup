@@ -106,6 +106,14 @@ if selected_page == "Home":
         st.session_state.open_buttons = {}
 
     
+    #Add a section for important notice at the top of the page
+    st.markdown("""
+    <div style="background-color:#FFDD57;padding:10px;border-radius:5px;">
+    <h3 style="color:#333;">Important Notice</h3>
+    <p style="color:#333;">Sector Rotation Rebalance 8/6/2025</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
         
     # Display the model groups and their security sets
     st.title("Welcome to Foguth ETP Model Insights")
