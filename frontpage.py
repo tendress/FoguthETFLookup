@@ -110,7 +110,15 @@ if selected_page == "Home":
     st.markdown("""
     <div style="background-color:#FFDD57;padding:10px;border-radius:5px;">
     <h3 style="color:#333;">Important Notice</h3>
-    <p style="color:#333;">Sector Rotation Rebalance 8/6/2025</p>
+    <p style="color:#333;">Sector Rotation Rebalance 8/6/2025 for Qualified accounts and 8/8/25 for Non-Qualified accounts</p>
+    <ul style="color:#333;">
+        <li>XLK: 30%</li>
+        <li>XLE: 20%</li>
+        <li>XLC: 15%</li>
+        <li>XLU: 10%</li>
+        <li>XLF: 10%</li>
+        <li>XLRE: 10%</li>
+        <li>XLP: 5%</li>
     </div>
     """, unsafe_allow_html=True)
     
