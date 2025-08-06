@@ -170,26 +170,7 @@ if selected_page == "Home":
     # Close the database connection
     conn.close()
     
-    
-    st.markdown(
-            """
-            This app provides tools for analyzing the Foguth ETP models, calculating betas, and visualizing model performance.
-            
-            Disclosure: The information provided in this app is for educational purposes only and should not be considered as financial advice. Performance results do not include advisory fees, which would reduce returns. Past performance is not indicative of future results. 
-            
-            ETP "Exchange Traded Portfolios"
-            
-            **Features:**
-            - View model performance metrics.
-            - Lookup information on the individual ETFs.
-            - Calculate weighted beta for each models and customize the time frame.
-            - Visualize model graphs Year to Date.
-            
-            Use the navigation menu on the left to explore the app.
-            """
-        )
-    
-    
+  
 else:
 # Run the selected page's function
     pages[selected_page]()
