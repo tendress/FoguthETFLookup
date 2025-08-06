@@ -167,7 +167,7 @@ def sector_rotation_research():
         etf_options = xl_etfs_df['symbol'].tolist()
 
         # Define specific default ETFs
-        default_etfs = ['XLE', 'XLU', 'XLRE', 'XLF', 'XLK', 'XLC']
+        default_etfs = ['XLE', 'XLU', 'XLRE', 'XLF', 'XLK', 'XLC', 'XLP']
         # Filter to only include defaults that exist in the database
         available_defaults = [etf for etf in default_etfs if etf in etf_options]
 
