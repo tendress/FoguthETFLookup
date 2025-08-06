@@ -405,12 +405,12 @@ def calculate_security_set_prices(database_path):
         AND Date = '2025-05-02 00:00:00'
         ''')
     
-    #cursor.execute('''
-    #    UPDATE security_set_prices
-    #    SET percentChange = 0
-    #    WHERE security_set_id = 6
-    #    AND Date = '2025-08-06 00:00:00'
-    #    ''')
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 6
+        AND Date = '2025-08-05 00:00:00'
+        ''')
 
     
     
