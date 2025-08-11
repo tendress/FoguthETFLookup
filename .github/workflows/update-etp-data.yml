@@ -25,6 +25,9 @@ jobs:
       - name: Run updatealldataforetpsite.py
         run: python updatealldataforetpsite.py
 
+      - name: Run updateindicatorsforetpsite.py
+        run: python updateindicatorsforetpsite.py
+
       - name: Configure git
         run: |
           git config --global user.name "github-actions[bot]"
@@ -34,6 +37,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git add foguth_etf_models.db
-          git commit -m "Update ETF data [skip ci]" || echo "No changes to commit"
+          git add foguth_etf_models.db foguth_fred_indicators.db
+          git commit -m "Update ETF and indicators data [skip ci]" || echo "No changes to commit"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
