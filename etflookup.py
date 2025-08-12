@@ -15,13 +15,13 @@ def etf_lookup():
     cursor = conn.cursor()
 
     # Fetch all ETFs with their names
-    @st.cache_data
+    @st.cache_data(ttl=86400) 
     def load_all_etfs_with_names():
         cursor.execute('SELECT symbol, name FROM etfs')
         return cursor.fetchall()  # List of (symbol, name)
 
     # Fetch models and security sets
-    @st.cache_data
+    @st.cache_data(ttl=86400) 
     def load_models_and_security_sets():
         # Fetch all models
         cursor.execute('''
@@ -41,7 +41,7 @@ def etf_lookup():
         return models, security_sets
 
     # Fetch security sets and ETFs for a selected model
-    @st.cache_data
+    @st.cache_data(ttl=86400) 
     def load_security_sets_and_etfs_for_model(selected_model):
         query = '''
             SELECT 
