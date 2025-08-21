@@ -114,20 +114,20 @@ if selected_page == "Home":
                 """, unsafe_allow_html=True)
     
     #Add a section for important notice at the top of the page
-    st.markdown("""
-    <div style="background-color:#FFDD57;padding:10px;border-radius:5px;">
-    <h3 style="color:#333;">Important Notice</h3>
-    <h4 style="color:#333;">Sector Rotation Rebalance is Complete</h4>
-    <ul style="color:#333; font-size: 16px; line-height: 1.5;">
-        <li>XLK: 30%</li>
-        <li>XLE: 20%</li>
-        <li>XLC: 15%</li>
-        <li>XLU: 10%</li>
-        <li>XLF: 10%</li>
-        <li>XLRE: 10%</li>
-        <li>XLP: 5%</li>
-    </div>
-    """, unsafe_allow_html=True)
+    #st.markdown("""
+    #<div style="background-color:#FFDD57;padding:10px;border-radius:5px;">
+    #<h3 style="color:#333;">Important Notice</h3>
+    #<h4 style="color:#333;">Sector Rotation Rebalance is Complete</h4>
+    #<ul style="color:#333; font-size: 16px; line-height: 1.5;">
+    #    <li>XLK: 30%</li>
+    #    <li>XLE: 20%</li>
+    #    <li>XLC: 15%</li>
+    #    <li>XLU: 10%</li>
+    #    <li>XLF: 10%</li>
+    #    <li>XLRE: 10%</li>
+    #    <li>XLP: 5%</li>
+    #</div>
+    #""", unsafe_allow_html=True)
     
         
     # Display the model groups and their security sets
