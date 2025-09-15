@@ -301,10 +301,6 @@ def display_model_performance():
     if overlay_symbol:
         conn = sqlite3.connect(database_path)
         query = f"""
-        SELECT Date, economic_value AS Close
-        FROM economic_indicators
-        WHERE symbol = '{overlay_symbol}'
-        UNION
         SELECT Date, Close
         FROM etf_prices
         WHERE symbol = '{overlay_symbol}'
