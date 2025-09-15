@@ -241,10 +241,6 @@ def display_model_performance():
     # Fetch available symbols and their names from the database
     conn = sqlite3.connect(database_path)
     query = """
-    SELECT DISTINCT symbol, name
-    FROM economic_indicators
-    WHERE name IS NOT NULL
-    UNION
     SELECT symbol, name
     FROM etfs
     WHERE name IS NOT NULL
