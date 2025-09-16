@@ -76,7 +76,7 @@ def consumer_indicators():
         for symbol, title in indicators.items():
             # Fetch data for the current indicator
             query = f"""
-            SELECT iv.date, iv.economic_value AS Close
+            SELECT iv.date, iv.value AS Close
             FROM indicator_values iv
             JOIN economic_indicators ei ON iv.id = ei.id
             WHERE ei.symbol = '{symbol}'
