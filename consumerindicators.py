@@ -14,7 +14,7 @@ def consumer_indicators():
     st.title("Economic Indicators Dashboard")
 
     # Hardcoded database path
-    db_path = "foguth_etf_models.db"
+    db_path = "foguth_fred_indicators.db"
 
     # Sidebar for Date Range Selection
     st.sidebar.header("Select Time Frame")
