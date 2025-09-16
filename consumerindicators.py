@@ -16,27 +16,27 @@ def consumer_indicators():
     # Hardcoded database path
     db_path = "foguth_fred_indicators.db"
 
-    # Sidebar for Date Range Selection
+    # Sidebar for date Range Selection
     st.sidebar.header("Select Time Frame")
 
     # Default start and end dates
     start_date = st.sidebar.date_input(
-        "Start Date", 
+        "Start date", 
         value=datetime(1994, 1, 1), 
         min_value=datetime(1994, 1, 1), 
         max_value=datetime.today()
     )
     end_date = st.sidebar.date_input(
-        "End Date", 
+        "End date", 
         value=datetime.today(), 
         min_value=datetime(1994, 1, 1), 
         max_value=datetime.today()
     )
 
-    # Add a button to set the timeframe to Year to Date (YTD)
-    if st.sidebar.button("Set to Year to Date"):
+    # Add a button to set the timeframe to Year to date (YTD)
+    if st.sidebar.button("Set to Year to date"):
         start_date = date(datetime.today().year, 1, 1)
-        st.sidebar.success(f"Timeframe set to Year to Date: {start_date} to {end_date}")
+        st.sidebar.success(f"Timeframe set to Year to date: {start_date} to {end_date}")
 
     # Add buttons to set the timeframe
     if st.sidebar.button("Set to Last 3 Years"):
@@ -84,15 +84,15 @@ def consumer_indicators():
             """
             df = pd.read_sql_query(query, conn)
 
-            # Convert Date column to datetime and filter by date range
-            df['Date'] = pd.to_datetime(df['Date'])
-            df = df[(df['Date'] >= pd.Timestamp(start_date)) & (df['Date'] <= pd.Timestamp(end_date))]
+            # Convert date column to datetime and filter by date range
+            df['date'] = pd.to_datetime(df['date'])
+            df = df[(df['date'] >= pd.Timestamp(start_date)) & (df['date'] <= pd.Timestamp(end_date))]
 
             # Plot the data if the DataFrame is not empty
             if not df.empty:
-                fig = px.line(df, x='Date', y='Close', title=title)
+                fig = px.line(df, x='date', y='Close', title=title)
                 fig.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=2))
-                fig.update_layout(xaxis_title="Date", yaxis_title="Value")
+                fig.update_layout(xaxis_title="date", yaxis_title="Value")
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.write(f"No data available for {title} in the selected date range.")
@@ -117,22 +117,22 @@ def consumer_indicators():
         for symbol, title in commodities.items():
             # Fetch data for the current commodity
             query = f"""
-            SELECT Date, Close
+            SELECT date, Close
             FROM etf_prices
             WHERE symbol = '{symbol}'
-            ORDER BY Date
+            ORDER BY date
             """
             df = pd.read_sql_query(query, conn)
 
-            # Convert Date column to datetime and filter by date range
-            df['Date'] = pd.to_datetime(df['Date'])
-            df = df[(df['Date'] >= pd.Timestamp(start_date)) & (df['Date'] <= pd.Timestamp(end_date))]
+            # Convert date column to datetime and filter by date range
+            df['date'] = pd.to_datetime(df['date'])
+            df = df[(df['date'] >= pd.Timestamp(start_date)) & (df['date'] <= pd.Timestamp(end_date))]
 
             # Plot the data if the DataFrame is not empty
             if not df.empty:
-                fig = px.line(df, x='Date', y='Close', title=title)
+                fig = px.line(df, x='date', y='Close', title=title)
                 fig.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=2))
-                fig.update_layout(xaxis_title="Date", yaxis_title="Value")
+                fig.update_layout(xaxis_title="date", yaxis_title="Value")
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.write(f"No data available for {title} in the selected date range.")
