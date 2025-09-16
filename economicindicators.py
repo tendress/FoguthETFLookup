@@ -338,10 +338,6 @@ def economic_indicators():
             data_frames = []
             for symbol in selected_symbols:
                 query = f"""
-                SELECT Date, economic_value AS Close, '{symbol}' AS symbol
-                FROM economic_indicators
-                WHERE symbol = '{symbol}'
-                UNION
                 SELECT Date, Close, '{symbol}' AS symbol
                 FROM etf_prices
                 WHERE symbol = '{symbol}'
