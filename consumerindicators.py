@@ -76,10 +76,10 @@ def consumer_indicators():
         for symbol, title in indicators.items():
             # Fetch data for the current indicator
             query = f"""
-            SELECT Date, economic_value AS Close
+            SELECT date, economic_value AS Close
             FROM economic_indicators
             WHERE symbol = '{symbol}'
-            ORDER BY Date
+            ORDER BY date
             """
             df = pd.read_sql_query(query, conn)
 
