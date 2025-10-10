@@ -14,7 +14,7 @@ def update_historical_prices(database_path, enddate=None):
     cursor.execute('SELECT id, symbol FROM etfs')
     etf_data = cursor.fetchall()
     ticker_to_etf_id = {ticker: etf_id for etf_id, ticker in etf_data}
-    tickers = ['^GSPC', '^IXIC', '^DJI', '^VIX', '^IRX', '^FVX', '^TNX', '^TYX']
+    tickers = ['SPXT', 'EFA']
     
     try:
         all_data = yf.download(tickers, start='1994-01-01', end=enddate, interval="1d", group_by="ticker")
