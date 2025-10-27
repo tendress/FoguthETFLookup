@@ -33,12 +33,11 @@ def benchmark_returns_dashboard():
     selected_strategies = st.sidebar.multiselect(
         "Select Strategies", 
         options=strategies,
-        default=strategies[:3] if len(strategies) >= 3 else strategies
+        default=['Conservative Growth', 'Balanced Growth', 'Bullish Growth', 'Velocity', 'Opportunistic' ]
     )
     
     # Date range selection
     date_options = {
-        "Last 30 Days": 30,
         "Last 90 Days": 90,
         "Last 180 Days": 180,
         "Last 1 Year": 365,
@@ -58,11 +57,9 @@ def benchmark_returns_dashboard():
         
     # Advanced options
     st.sidebar.header("Display Options")
-    show_rolling_avg = st.sidebar.checkbox("Show Rolling Average", value=True)
-    rolling_window = st.sidebar.slider("Rolling Window (days)", 5, 90, 21) if show_rolling_avg else 0
-    
+
     # Calculate cumulative returns
-    show_cumulative = st.sidebar.checkbox("Show Cumulative Returns", value=False)
+    show_cumulative = st.sidebar.checkbox("Show Cumulative Returns", value=True)
     
     # Main content area - display returns
     if not selected_strategies:

@@ -4,7 +4,7 @@ import pandas as pd
 import datetime as dt
 import argparse
 
-ticker = '^RUT'
+ticker = '^892400-USD-STRD'
 
 data = yf.download(ticker, interval='1d', start='2022-01-01', end='2025-09-15')
 print("Downloaded data:")
@@ -32,7 +32,7 @@ data['symbol'] = ticker
 data = data[['Date', 'symbol', 'Close']]
 
 # insert column etf_id and put the number 82 in every row of the dataframe
-data['etf_id'] = 82
+data['etf_id'] = 85
 data = data[['Date', 'etf_id', 'symbol',  'Close']]
 
 # insert the data into the etf_prices table
