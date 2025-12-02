@@ -41,7 +41,7 @@ def etf_lookup():
         return models, security_sets
 
     # Fetch security sets and ETFs for a selected model
-    @st.cache_data(ttl=86400) 
+    @st.cache_data(ttl=30) 
     def load_security_sets_and_etfs_for_model(selected_model):
         query = '''
             SELECT 
