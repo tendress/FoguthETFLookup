@@ -1,43 +1,73 @@
 import yfinance as yf
 import sqlite3
 import pandas as pd
-import datetime as dt
-import argparse
 
-ticker = '^892400-USD-STRD'
+# --- Identifiers you can edit ---
+ETF_ID = 88            # the etf_id stored in your DB
+SYMBOL = 'DTCR'        # the DB symbol to store
+TICKER = 'DTCR'        # the Yahoo Finance ticker to download (can match SYMBOL)
+START_DATE = '2025-11-26'  # adjust as needed
+# -------------------------------
 
-data = yf.download(ticker, interval='1d', start='2022-01-01', end='2025-09-15')
+data = yf.download(TICKER, interval='1d', start=START_DATE)
 print("Downloaded data:")
 print(data)
 print("\nData columns:", data.columns)
-
-
 
 database_path = 'foguth_etf_models.db'
 conn = sqlite3.connect(database_path)
 cursor = conn.cursor()
 
-# --- FIX: Flatten the column index if it's a MultiIndex ---
+# Flatten MultiIndex if present
 if isinstance(data.columns, pd.MultiIndex):
-    data.columns = data.columns.droplevel(1)
+    data.columns = data.columns.get_level_values(0)
 
-data.reset_index(inplace=True)
+# Ensure a clean Date + Close shape
+data = data.reset_index()
+if 'Date' not in data.columns:  # safety if index wasn't named
+    data.rename(columns={'index': 'Date'}, inplace=True)
 
+# Keep only rows with a Close value
+data = data.dropna(subset=['Close']).copy()
 
-# Remove rows with missing 'Close' data
-data.dropna(inplace=True)
+# Add identifiers and normalize types
+data['symbol'] = SYMBOL
+data['etf_id'] = ETF_ID
+data['Date'] = pd.to_datetime(data['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
 
-# create a dataframe out of the data
-data['symbol'] = ticker
-data = data[['Date', 'symbol', 'Close']]
+# Remove any duplicates within this batch
+data = data.drop_duplicates(subset=['Date', 'etf_id'])
 
-# insert column etf_id and put the number 82 in every row of the dataframe
-data['etf_id'] = 85
-data = data[['Date', 'etf_id', 'symbol',  'Close']]
+# Filter out rows already in the table for this etf_id
+existing = pd.read_sql_query(
+    "SELECT Date FROM etf_prices WHERE etf_id = ?",
+    conn, params=(ETF_ID,)
+)
+existing_dates = set(existing['Date'].astype(str))
+data = data[~data['Date'].isin(existing_dates)]
 
-# insert the data into the etf_prices table
-data.to_sql('etf_prices', conn, if_exists='append', index=False)
-print(f"Inserted {len(data)} rows into the etf_prices table.")
-conn.commit()
-conn.close()
-print("Data insertion complete.")
+# Nothing new? Exit gracefully
+if data.empty:
+    print("No new rows to insert for this ticker/etf_id.")
+    conn.close()
+else:
+    rows = list(data[['Date', 'etf_id', 'symbol', 'Close']].itertuples(index=False, name=None))
+
+    # UPSERT: update Close/symbol if the (Date, etf_id) row exists
+    cursor.executemany("""
+        INSERT INTO etf_prices (Date, etf_id, symbol, Close)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(Date, etf_id) DO UPDATE SET
+            symbol = excluded.symbol,
+            Close  = excluded.Close
+    """, rows)
+
+    # If your SQLite is too old for ON CONFLICT DO UPDATE, use IGNORE instead:
+    # cursor.executemany("""
+    #     INSERT OR IGNORE INTO etf_prices (Date, etf_id, symbol, Close)
+    #     VALUES (?, ?, ?, ?)
+    # """, rows)
+
+    conn.commit()
+    print(f"Upserted {len(rows)} rows into etf_prices.")
+    conn.close()
