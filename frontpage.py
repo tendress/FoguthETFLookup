@@ -109,6 +109,7 @@ if selected_page == "Home":
     st.markdown("""
     <div style="background-color:#f8f9fa;padding:10px;border-radius:5px;">
                 <h2 style="color:red;">For Advisor Use Only. Not for public distribution. </h2>
+                <h2>Database maintenance underway on 12/2/2025</h2>
                 <p>The information provided in this app is for educational purposes only and should not be considered as financial advice. Performance results do not include advisory fees, which would reduce returns. Past performance is not indicative of future results.</p>
                 </div>
                 """, unsafe_allow_html=True)
