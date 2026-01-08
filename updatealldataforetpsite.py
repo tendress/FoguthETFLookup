@@ -205,11 +205,15 @@ def update_etf_ytd_returns(database_path):
 
 ## Update Security Set YTD Returns ##
 
-def update_security_set_ytd_returns(database_path, start_date="2025-01-01"):
+def update_security_set_ytd_returns(database_path, start_date=None):
     """
     Update the YTD returns for security sets in the database using the security_set_prices table.
-    Only includes data from the specified start_date.
+    Only includes data from the specified start_date. If not provided, uses January 1st of current year.
     """
+    # If no start_date provided, use January 1st of current year
+    if start_date is None:
+        start_date = datetime.now().strftime('%Y-01-01')
+    
     # Connect to SQLite database
     conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
@@ -594,7 +598,7 @@ def update_web_log(database_path):
 if __name__ == "__main__":
     database_path = 'foguth_etf_models.db'
     fred_api_key = '43370c0e912250381f6728328dfff294'
-    start_date = "2025-01-01"
+    start_date = datetime.now().strftime('%Y-01-01')
 
     # Update ETF historical prices
     # Comment this out normally, if you miss a day or two, turn this back on for one run

@@ -52,6 +52,10 @@ def display_model_graphs():
         # Create DataFrame for security set weights
         ss_weights_df = pd.DataFrame(security_sets, columns=['security_set_id', 'model_weight'])
 
+        # Get current year for filtering
+        current_year = dt.datetime.now().year
+        ytd_start = f"{current_year}-01-01"
+
         # Fetch daily percent changes for each security set from security_set_prices
         conn = sqlite3.connect(database_path)
         ss_data = {}
@@ -59,10 +63,10 @@ def display_model_graphs():
             query = '''
                 SELECT Date, percentChange
                 FROM security_set_prices
-                WHERE security_set_id = ?
+                WHERE security_set_id = ? AND Date >= ?
                 ORDER BY Date
             '''
-            df = pd.read_sql_query(query, conn, params=(ss_id,))
+            df = pd.read_sql_query(query, conn, params=(ss_id, ytd_start))
             if not df.empty:
                 df['Date'] = pd.to_datetime(df['Date'])
                 df.set_index('Date', inplace=True)
@@ -149,9 +153,9 @@ def display_model_graphs():
 
     # Convert the dictionary to a DataFrame
     daily_returns_df = pd.DataFrame(daily_returns_dict)
-
-    # Filter to only include dates from 2025-01-01 onward
-    daily_returns_df = daily_returns_df[daily_returns_df.index >= pd.to_datetime("2025-01-01")]
+    
+    current_year = dt.datetime.now().year
+    daily_returns_df = daily_returns_df[daily_returns_df.index >= pd.to_datetime(f"{current_year}-01-01")]
 
     # Create an interactive Plotly graph
     fig = go.Figure()
@@ -183,7 +187,7 @@ def display_model_graphs():
         df = pd.read_sql_query(query, conn)
         if not df.empty:
             df['Date'] = pd.to_datetime(df['Date'])
-            df = df[df['Date'] >= pd.to_datetime("2025-01-01")]
+            df = df[df['Date'] >= pd.to_datetime("2026-01-01")]
             df = df.sort_values('Date')
             # Normalize to start at 0% for overlay (percent change from first value)
             df = df.set_index('Date')

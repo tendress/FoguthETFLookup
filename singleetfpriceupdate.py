@@ -3,9 +3,9 @@ import sqlite3
 import pandas as pd
 
 # --- Identifiers you can edit ---
-ETF_ID = 88            # the etf_id stored in your DB
-SYMBOL = 'DTCR'        # the DB symbol to store
-TICKER = 'DTCR'        # the Yahoo Finance ticker to download (can match SYMBOL)
+ETF_ID = 51            # the etf_id stored in your DB
+SYMBOL = '^DJI'        # the DB symbol to store
+TICKER = '^DJI'        # the Yahoo Finance ticker to download (can match SYMBOL)
 START_DATE = '2025-11-26'  # adjust as needed
 # -------------------------------
 

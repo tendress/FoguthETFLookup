@@ -4,14 +4,23 @@ import yfinance as yf
 import datetime as dt
 
 DB_PATH = 'foguth_etf_models.db'
-TICKERS = ['XLE', 'XLU', 'XLK']
 START_DATE = '1994-01-01'
 END_DATE = dt.datetime.now().strftime('%Y-%m-%d')
+
+def get_all_tickers(conn):
+    """Fetch all ticker symbols from the etfs table."""
+    cur = conn.cursor()
+    cur.execute("SELECT symbol FROM etfs ORDER BY symbol")
+    rows = cur.fetchall()
+    tickers = [row[0] for row in rows]
+    print(f"Found {len(tickers)} tickers in etfs table: {tickers}")
+    return tickers
 
 def delete_target_rows(conn, tickers):
     cur = conn.cursor()
     cur.execute(f"DELETE FROM etf_prices WHERE symbol IN ({','.join(['?']*len(tickers))})", tickers)
     conn.commit()
+    print(f"Deleted existing rows for {len(tickers)} tickers.")
 
 def map_tickers_to_ids(conn, tickers):
     cur = conn.cursor()
@@ -24,9 +33,11 @@ def map_tickers_to_ids(conn, tickers):
     return mapping
 
 def download_prices(tickers, start_date, end_date):
+    print(f"Downloading price data for {len(tickers)} tickers from {start_date} to {end_date}...")
     data = yf.download(tickers, start=start_date, end=end_date, interval="1d", group_by="ticker")
     if data.empty:
         raise RuntimeError("yfinance returned no data.")
+    print("Download complete.")
     return data
 
 def rebuild(conn, all_data, mapping):
@@ -67,10 +78,20 @@ def rebuild(conn, all_data, mapping):
 def main():
     conn = sqlite3.connect(DB_PATH)
     try:
-        delete_target_rows(conn, TICKERS)
-        mapping = map_tickers_to_ids(conn, TICKERS)
-        all_data = download_prices(TICKERS, START_DATE, END_DATE)
+        tickers = get_all_tickers(conn)
+        if not tickers:
+            print("No tickers found in etfs table. Exiting.")
+            return
+        
+        delete_target_rows(conn, tickers)
+        mapping = map_tickers_to_ids(conn, tickers)
+        all_data = download_prices(tickers, START_DATE, END_DATE)
         rebuild(conn, all_data, mapping)
+        
+        print("\n✓ Historical prices rebuild complete!")
+    except Exception as e:
+        print(f"Error: {e}")
+        raise
     finally:
         conn.close()
 
