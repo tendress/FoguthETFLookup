@@ -21,7 +21,7 @@ def display_live_factsheet():
         </style>
     """, unsafe_allow_html=True)
     
-    @st.cache_data(ttl=30) 
+    @st.cache_data(ttl=31) 
     def load_etf_weights_for_model(selected_model):
         query = '''
             SELECT 

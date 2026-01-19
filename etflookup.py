@@ -11,18 +11,22 @@ def etf_lookup():
 
     # Database connection
     database_path = 'foguth_etf_models.db'
-    conn = sqlite3.connect(database_path)
-    cursor = conn.cursor()
 
     # Fetch all ETFs with their names
     @st.cache_data(ttl=30) 
     def load_all_etfs_with_names():
+        conn = sqlite3.connect(database_path)
+        cursor = conn.cursor()
         cursor.execute('SELECT symbol, name FROM etfs')
-        return cursor.fetchall()  # List of (symbol, name)
+        result = cursor.fetchall()
+        conn.close()
+        return result  # List of (symbol, name)
 
     # Fetch models and security sets
     @st.cache_data(ttl=30) 
     def load_models_and_security_sets():
+        conn = sqlite3.connect(database_path)
+        cursor = conn.cursor()
         # Fetch all models
         cursor.execute('''
             SELECT DISTINCT models.name
@@ -37,12 +41,15 @@ def etf_lookup():
             FROM security_sets
         ''')
         security_sets = [row[0] for row in cursor.fetchall()]
+        conn.close()
 
         return models, security_sets
 
     # Fetch security sets and ETFs for a selected model
     @st.cache_data(ttl=30) 
     def load_security_sets_and_etfs_for_model(selected_model):
+        conn = sqlite3.connect(database_path)
+        cursor = conn.cursor()
         query = '''
             SELECT 
                 security_sets.name AS security_set, 
@@ -60,6 +67,7 @@ def etf_lookup():
         '''
         cursor.execute(query, (selected_model,))
         results = cursor.fetchall()
+        conn.close()
         return pd.DataFrame(results, columns=["Security Set", "Security Set Weight", "ETF", "ETF Weight"])
 
     # Load all ETFs with names
