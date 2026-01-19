@@ -478,6 +478,36 @@ def calculate_security_set_prices(database_path):
         AND Date = '2025-11-28 00:00:00'
         ''')
     
+    
+    #Rising Dividend Momentum Rebalance 11/7/25
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 12
+        AND Date = '2025-11-07 00:00:00'
+        ''')
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 12
+        AND Date = '2025-11-10 00:00:00'
+        ''')
+    
+    #Rising Dividend Aggressive Rebalance 11/7/25
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 11
+        AND Date = '2025-11-07 00:00:00'
+        ''')
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 11
+        AND Date = '2025-11-10 00:00:00'
+        ''')
+    
+    
     #Value Rebalance 12/22/25
     cursor.execute('''
         UPDATE security_set_prices
@@ -492,7 +522,7 @@ def calculate_security_set_prices(database_path):
         AND Date = '2025-12-23 00:00:00'
         ''')
 
-
+    
     
     conn.commit()
     conn.close()
