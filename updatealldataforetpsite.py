@@ -402,34 +402,75 @@ def calculate_security_set_prices(database_path):
         AND Date = '2025-01-02 00:00:00'
         ''')
 
+    
+    
+    #Secotr Rotation
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 6
+        AND Date = '2024-10-01 00:00:00'
+        ''')
     cursor.execute('''
         UPDATE security_set_prices
         SET percentChange = 0
         WHERE security_set_id = 6
         AND Date = '2025-05-02 00:00:00'
         ''')
-    
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 6
+        AND Date = '2025-06-19 00:00:00'
+        ''')
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 6
+        AND Date = '2025-06-20 00:00:00'
+        ''')
     cursor.execute('''
         UPDATE security_set_prices
         SET percentChange = 0
         WHERE security_set_id = 6
         AND Date = '2025-08-05 00:00:00'
         ''')
-    
     cursor.execute('''
         UPDATE security_set_prices
         SET percentChange = 0
         WHERE security_set_id = 6
-        AND Date = '2025-10-27 00:00:00'
+        AND Date = '2025-09-01 00:00:00'
         ''')
-    
     cursor.execute('''
         UPDATE security_set_prices
         SET percentChange = 0
         WHERE security_set_id = 6
         AND Date = '2025-09-02 00:00:00'
         ''')
-    
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 6
+        AND Date = '2025-10-24 00:00:00'
+        ''')
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 6
+        AND Date = '2025-10-27 00:00:00'
+        ''')
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 7
+        AND Date = '2025-11-05 00:00:00'
+        ''')
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 6
+        AND Date = '2025-11-27 00:00:00'
+        ''')
     cursor.execute('''
         UPDATE security_set_prices
         SET percentChange = 0
@@ -437,60 +478,21 @@ def calculate_security_set_prices(database_path):
         AND Date = '2025-11-28 00:00:00'
         ''')
     
+    #Value Rebalance 12/22/25
     cursor.execute('''
         UPDATE security_set_prices
         SET percentChange = 0
-        WHERE security_set_id = 6
-        AND Date = '2025-06-20 00:00:00'
+        WHERE security_set_id = 2
+        AND Date = '2025-12-22 00:00:00'
         ''')
-    
     cursor.execute('''
         UPDATE security_set_prices
         SET percentChange = 0
-        WHERE security_set_id = 6
-        AND Date = '2025-09-01 00:00:00'
-        ''')
-    
-    cursor.execute('''
-        UPDATE security_set_prices
-        SET percentChange = 0
-        WHERE security_set_id = 6
-        AND Date = '2025-11-27 00:00:00'
-        ''')
-    
-    cursor.execute('''
-        UPDATE security_set_prices
-        SET percentChange = 0
-        WHERE security_set_id = 6
-        AND Date = '2025-06-19 00:00:00'
-        ''')
-    
-    cursor.execute('''
-        UPDATE security_set_prices
-        SET percentChange = 0
-        WHERE security_set_id = 6
-        AND Date = '2024-10-01 00:00:00'
-        ''')
-    
-    cursor.execute('''
-        UPDATE security_set_prices
-        SET percentChange = 0
-        WHERE security_set_id = 6
-        AND Date = '2025-10-24 00:00:00'
-        ''')
-    
-    
-    
-    
-    cursor.execute('''
-        UPDATE security_set_prices
-        SET percentChange = 0
-        WHERE security_set_id = 7
-        AND Date = '2025-11-05 00:00:00'
+        WHERE security_set_id = 2
+        AND Date = '2025-12-23 00:00:00'
         ''')
 
 
-    
     
     conn.commit()
     conn.close()
