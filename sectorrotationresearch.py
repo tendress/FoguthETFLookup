@@ -4,9 +4,6 @@ import streamlit as st
 import plotly.express as px
 from datetime import datetime, date
 
-# Set Streamlit page configuration
-st.set_page_config(page_title="Sector Rotation Research", layout="wide")
-
 def get_xl_etfs():
     """
     Get all ETFs starting with 'XL' from the etfs table.

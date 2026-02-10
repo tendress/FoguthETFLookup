@@ -14,9 +14,6 @@ from plotly.subplots import make_subplots
 import yfinance as yf
 import requests
 
-# Configure Streamlit page
-st.set_page_config(page_title="Technical Indicators", page_icon="📊", layout="wide")
-
 # Database configuration
 SOURCE_DATABASE_PATH = 'foguth_etf_models.db'  # Read ETF data from here
 INDICATORS_DATABASE_PATH = 'etf_technical_indicators.db'  # Store indicators here

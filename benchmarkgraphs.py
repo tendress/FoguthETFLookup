@@ -7,8 +7,6 @@ from datetime import datetime, timedelta
 import numpy as np
 
 def benchmark_returns_dashboard():
-    # Page config
-    st.set_page_config(page_title="Benchmark Returns Dashboard", layout="wide")
     st.title("Daily Benchmark Returns Dashboard")
     
     # Connect to database
