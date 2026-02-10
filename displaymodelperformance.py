@@ -319,7 +319,8 @@ def display_model_performance():
     # Convert the dictionary to a DataFrame
     daily_returns_df = pd.DataFrame(daily_returns_dict)
 
-    # Filter to only include dates from 2025-01-01 onward
+    # Ensure date ordering and filter to only include dates from 2025-01-01 onward
+    daily_returns_df = daily_returns_df.sort_index()
     daily_returns_df = daily_returns_df[daily_returns_df.index >= pd.to_datetime("2025-01-01")]
 
     # Create an interactive Plotly graph
@@ -327,9 +328,9 @@ def display_model_performance():
     # Plot selected models
     for model_name in selected_models:
         if model_name in daily_returns_df.columns:
-            model_data = daily_returns_df[model_name]
-            # Calculate cumulative returns as a percentage
-            cumulative_returns_pct = np.cumsum(model_data) * 100
+            model_data = pd.to_numeric(daily_returns_df[model_name], errors="coerce").fillna(0)
+            # Calculate cumulative returns as a percentage (compounded)
+            cumulative_returns_pct = ((1 + model_data).cumprod() - 1) * 100
             fig.add_trace(go.Scatter(
                 x=model_data.index,
                 y=cumulative_returns_pct,
