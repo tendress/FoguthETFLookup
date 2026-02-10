@@ -1,3 +1,4 @@
+import datetime
 import sqlite3
 import pandas as pd
 import streamlit as st
@@ -48,6 +49,26 @@ def display_model_performance():
     st.title("Model Performance")
     st.write("This page displays model performance metrics.")
 
+    today = datetime.date.today()
+    default_start = datetime.date(today.year, 1, 1)
+    date_col1, date_col2 = st.columns(2)
+    with date_col1:
+        start_date = st.date_input("Start Date", value=default_start, key="model_perf_start_date")
+    with date_col2:
+        end_date = st.date_input("End Date", value=today, key="model_perf_end_date")
+
+    if start_date > end_date:
+        st.warning("Start Date must be on or before End Date. Using default YTD range.")
+        start_date = default_start
+        end_date = today
+
+    if start_date == default_start and end_date == today:
+        range_label = f"YTD {today.year}"
+    elif start_date == datetime.date(today.year - 1, 1, 1) and end_date == datetime.date(today.year - 1, 12, 31):
+        range_label = f"{today.year - 1}"
+    else:
+        range_label = f"{start_date.strftime('%b %d, %Y')} to {end_date.strftime('%b %d, %Y')}"
+
     database_path = 'foguth_etf_models.db'
 
     # Load the models table
@@ -93,32 +114,70 @@ def display_model_performance():
             st.error(f"Error loading Security Sets table: {e}")
             return pd.DataFrame()
 
+    def load_model_returns_for_range(start_date, end_date):
+        conn = sqlite3.connect(database_path)
+        df = pd.read_sql_query(
+            """
+            SELECT m.name AS Name, mr.return_date, mr.return_amount
+            FROM model_returns mr
+            JOIN models m ON mr.model_id = m.id
+            WHERE mr.return_date BETWEEN ? AND ?
+            ORDER BY mr.return_date ASC
+            """,
+            conn,
+            params=(start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')),
+        )
+        conn.close()
+        if df.empty:
+            return df
+
+        df['return_amount'] = pd.to_numeric(df['return_amount'], errors='coerce')
+        grouped = df.groupby('Name', as_index=False)['return_amount'].sum()
+        grouped['Return'] = (grouped['return_amount'] * 100).round(2)
+        grouped['AsOf'] = end_date.strftime('%Y-%m-%d')
+        return grouped[['Name', 'Return', 'AsOf']]
+
+    def load_security_set_returns_for_range(start_date, end_date):
+        conn = sqlite3.connect(database_path)
+        df = pd.read_sql_query(
+            """
+            SELECT ss.name AS Name, ssp.Date, ssp.percentChange
+            FROM security_set_prices ssp
+            JOIN security_sets ss ON ssp.security_set_id = ss.id
+            WHERE ssp.Date BETWEEN ? AND ?
+            ORDER BY ssp.Date ASC
+            """,
+            conn,
+            params=(start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')),
+        )
+        conn.close()
+        if df.empty:
+            return df
+
+        df['percentChange'] = pd.to_numeric(df['percentChange'], errors='coerce')
+        grouped = df.groupby('Name', as_index=False)['percentChange'].sum()
+        grouped['Return'] = grouped['percentChange'].round(2)
+        grouped['AsOf'] = end_date.strftime('%Y-%m-%d')
+        return grouped[['Name', 'Return', 'AsOf']]
+
     # Load data from the database
-    models_df = load_models_table()
-    security_sets_df = load_security_sets_table()
+    models_df = load_model_returns_for_range(start_date, end_date)
+    security_sets_df = load_security_set_returns_for_range(start_date, end_date)
 
     # Display the models table
-    st.header("Year-To-Date Model Performance")
+    st.header(f"Model Performance ({range_label})")
     if not models_df.empty:
-        # Sort by YTDPriceReturn in descending order
-        if 'YTDReturn' in models_df.columns:
-            models_df = models_df.sort_values(by='YTDReturn', ascending=False).reset_index(drop=True)
-
-        # Format the Yield and ExpenseRatio columns
-        if 'ExpenseRatio' in models_df.columns:
-            models_df['ExpenseRatio'] = models_df['ExpenseRatio'].apply(lambda x: f"{x:.2f}%" if pd.notnull(x) else "N/A")
-
-        # Display the DataFrame
+        models_df = models_df.sort_values(by='Return', ascending=False).reset_index(drop=True)
         safe_dataframe(models_df, use_container_width=True, height=500, hide_index=True)
     else:
-        st.warning("No data available in the models table.")
+        st.warning("No data available for the selected model date range.")
 
     
 
-    # Sidebar for benchmark YTD performance
-    def get_ytd_price_return(ticker, database_path):
+    # Sidebar for benchmark performance
+    def get_range_price_return(ticker, database_path, start_date, end_date):
         """
-        Calculate the YTD time-weighted return (TWR) for a given ticker using the etf_prices table.
+        Calculate time-weighted return (TWR) for a given ticker using the etf_prices table.
         """
         try:
             # Connect to the SQLite database
@@ -135,13 +194,13 @@ def display_model_performance():
 
             etf_id = etf_id[0]
 
-            # Fetch all daily close prices for the current year
+            # Fetch all daily close prices for the selected date range
             cursor.execute('''
                 SELECT Date, Close
                 FROM etf_prices
-                WHERE etf_id = ? AND strftime('%Y', Date) = strftime('%Y', 'now')
+                WHERE etf_id = ? AND Date BETWEEN ? AND ?
                 ORDER BY Date ASC
-            ''', (etf_id,))
+            ''', (etf_id, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
             price_data = cursor.fetchall()
 
             # Close the database connection
@@ -172,13 +231,22 @@ def display_model_performance():
 
     # Display benchmark YTD performance in the sidebar
     st.sidebar.title("Benchmarks")
-    spy_ytd_return = get_ytd_price_return('^GSPC', database_path)
-    qqqm_ytd_return = get_ytd_price_return('^IXIC', database_path)
-    dia_ytd_return = get_ytd_price_return('^DJI', database_path)
+    spy_ytd_return = get_range_price_return('^GSPC', database_path, start_date, end_date)
+    qqqm_ytd_return = get_range_price_return('^IXIC', database_path, start_date, end_date)
+    dia_ytd_return = get_range_price_return('^DJI', database_path, start_date, end_date)
 
-    st.sidebar.write(f"S&P 500 YTD: {spy_ytd_return:.2f}%" if spy_ytd_return is not None else "SPY data not available")
-    st.sidebar.write(f"Nasdaq YTD: {qqqm_ytd_return:.2f}%" if qqqm_ytd_return is not None else "QQQM data not available")
-    st.sidebar.write(f"Dow Jones YTD: {dia_ytd_return:.2f}%" if dia_ytd_return is not None else "DIA data not available")
+    st.sidebar.write(
+        f"S&P 500 ({range_label}): {spy_ytd_return:.2f}%"
+        if spy_ytd_return is not None else "S&P 500 data not available"
+    )
+    st.sidebar.write(
+        f"Nasdaq ({range_label}): {qqqm_ytd_return:.2f}%"
+        if qqqm_ytd_return is not None else "Nasdaq data not available"
+    )
+    st.sidebar.write(
+        f"Dow Jones ({range_label}): {dia_ytd_return:.2f}%"
+        if dia_ytd_return is not None else "Dow Jones data not available"
+    )
 
     st.title("Model Graphs")
     st.write("This page displays interactive graphs for model performance.")
@@ -287,12 +355,25 @@ def display_model_performance():
             continue
 
         model_data = model_data.sort_values("return_date")
+        model_data = model_data[
+            (model_data["return_date"].dt.date >= start_date)
+            & (model_data["return_date"].dt.date <= end_date)
+        ]
+        if model_data.empty:
+            continue
+        cum_return = model_data["return_amount"].cumsum()
+
+        # If returns are tiny, scale to percent for display.
+        if cum_return.abs().max() <= 1.0:
+            cumulative_returns_pct = cum_return * 100
+        else:
+            cumulative_returns_pct = cum_return
 
         fig.add_trace(go.Scatter(
             x=model_data["return_date"],
-            y=model_data["return_amount"],
+            y=cumulative_returns_pct,
             mode='lines',
-            name=model_name
+            name=f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)"
         ))
 
     # Overlay the selected ETF or economic indicator
@@ -306,7 +387,7 @@ def display_model_performance():
         df = pd.read_sql_query(query, conn)
         if not df.empty:
             df['Date'] = pd.to_datetime(df['Date'])
-            df = df[df['Date'] >= pd.to_datetime("2025-01-01")]
+            df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
             df = df.sort_values('Date')
             # Normalize to start at 0% for overlay (percent change from first value)
             df = df.set_index('Date')
@@ -323,9 +404,9 @@ def display_model_performance():
 
     # Customize the layout
     fig.update_layout(
-        title=f"{selected_group} - Model Returns (with Overlay)",
+        title=f"{selected_group} - Cumulative Returns ({range_label})",
         xaxis_title="Date",
-        yaxis_title="Daily Return / Overlay (%)",
+        yaxis_title="Cumulative Returns / Overlay (%)",
         legend_title="Models & Overlays",
         template="plotly_white",
         yaxis_tickformat=".2f"
@@ -336,13 +417,11 @@ def display_model_performance():
 
     
     # Display the security_sets table
-    st.header("Year-To-Date Security Sets Performance")
+    st.header(f"Security Sets Performance ({range_label})")
     if not security_sets_df.empty:
-        # Sort by YTDPriceReturn in descending order
-        if 'YTDReturn' in security_sets_df.columns:
-            security_sets_df = security_sets_df.sort_values(by='YTDReturn', ascending=False).reset_index(drop=True)
+        security_sets_df = security_sets_df.sort_values(by='Return', ascending=False).reset_index(drop=True)
 
         # Display the DataFrame
         safe_dataframe(security_sets_df, use_container_width=True, height=500, hide_index=True)
     else:
-        st.warning("No data available in the security sets table.")
+        st.warning("No data available for the selected security set date range.")

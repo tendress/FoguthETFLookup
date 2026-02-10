@@ -6,6 +6,61 @@ import datetime as dt
 from fredapi import Fred
 #from updateytdreturnsmodule import update_etf_ytd_returns, update_security_set_ytd_returns, update_model_ytd_returns
 
+# --- Model Returns Update Function --- #
+def update_model_returns(database_path):
+    """
+    Rebuild the model_returns table from security_set_prices and model weights.
+    Stores daily returns as decimal values (e.g., 0.01 for 1%).
+    """
+    conn = sqlite3.connect(database_path)
+    cursor = conn.cursor()
+
+    models_df = pd.read_sql_query("SELECT id, name FROM models", conn)
+    if models_df.empty:
+        conn.close()
+        print("No models found for model_returns update.")
+        return
+
+    all_rows = []
+    for model_id, name in models_df.itertuples(index=False):
+        weights_df = pd.read_sql_query(
+            "SELECT security_set_id, weight FROM model_security_set WHERE model_id = ?",
+            conn,
+            params=(model_id,),
+        )
+        if weights_df.empty:
+            continue
+
+        set_ids = weights_df["security_set_id"].tolist()
+        placeholders = ",".join(["?"] * len(set_ids))
+        prices_query = f"""
+            SELECT security_set_id, Date, percentChange
+            FROM security_set_prices
+            WHERE security_set_id IN ({placeholders})
+            ORDER BY Date ASC
+        """
+        prices_df = pd.read_sql_query(prices_query, conn, params=set_ids)
+        if prices_df.empty:
+            continue
+
+        prices_df["Date"] = pd.to_datetime(prices_df["Date"])
+        merged = prices_df.merge(weights_df, on="security_set_id", how="left")
+        merged["weighted_return"] = (merged["percentChange"] / 100.0) * merged["weight"]
+        model_returns = merged.groupby("Date")["weighted_return"].sum().reset_index()
+        model_returns = model_returns.sort_values("Date")
+
+        for return_date, return_amount in model_returns.itertuples(index=False):
+            all_rows.append((model_id, return_date.strftime("%Y-%m-%d"), float(return_amount)))
+
+    cursor.execute("DELETE FROM model_returns")
+    cursor.executemany(
+        "INSERT INTO model_returns (model_id, return_date, return_amount) VALUES (?, ?, ?)",
+        all_rows,
+    )
+    conn.commit()
+    conn.close()
+    print(f"Model returns updated successfully. Rows inserted: {len(all_rows)}")
+
 # --- ETF Price and Info Update Functions --- # 
 
 ## This function updates the historical daily price data for all tickers in the etfs table and inserts a new daily close price into the etf_prices table.
@@ -653,6 +708,10 @@ if __name__ == "__main__":
     # Calculate security set prices
     print("Calculating security set prices...")
     calculate_security_set_prices(database_path)
+
+    # Update model returns
+    print("Updating model returns...")
+    update_model_returns(database_path)
     
     # Update security set YTD returns
     print("Updating security set YTD returns...")
