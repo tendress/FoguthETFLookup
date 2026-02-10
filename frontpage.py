@@ -113,8 +113,11 @@ if selected_page == "Home":
         return [{"name": row[0], "weight": row[1] * 100} for row in results]
 
     # Fetch YTDPriceReturn for all models and store in a dictionary
-    cursor.execute("SELECT name, YTDPriceReturn FROM models")
-    ytd_returns = {row[0]: row[1] for row in cursor.fetchall()}
+    try:
+        cursor.execute("SELECT name, YTDPriceReturn FROM models")
+        ytd_returns = {row[0]: row[1] for row in cursor.fetchall()}
+    except sqlite3.Error:
+        ytd_returns = {}
 
     # Initialize session state for toggling buttons
     if "open_buttons" not in st.session_state:
