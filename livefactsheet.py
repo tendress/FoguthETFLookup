@@ -477,7 +477,10 @@ def display_live_factsheet():
                             st.markdown("---")
                             st.markdown("<p style='text-align: center; font-size: 12px;'></p>", unsafe_allow_html=True)
                         with imcol2:
-                            st.image("assets/fwmlogo.png", width=200, use_container_width=True)
+                            try:
+                                st.image("assets/fwmlogo.png", width=200, use_container_width=True)
+                            except TypeError:
+                                st.image("assets/fwmlogo.png", width=200)
                         with imcol3:
                             st.markdown("---")
                             st.markdown("<p style='text-align: center; font-size: 12px;'>All rights reserved</p>", unsafe_allow_html=True)

@@ -57,10 +57,18 @@ def etf_lookup():
                 etfs.symbol AS etf, 
                 security_sets_etfs.weight AS etf_weight
             FROM model_security_set
+    selected_symbol = None
+    if selected_etf_option != "Select an ETF":
+        selected_symbol = selected_etf_option.split(" - ")[0]
+    else:
+        st.write("")
             JOIN security_sets ON model_security_set.security_set_id = security_sets.id
             JOIN security_sets_etfs ON security_sets.id = security_sets_etfs.security_set_id
             JOIN etfs ON security_sets_etfs.etf_id = etfs.id
-            JOIN models ON model_security_set.model_id = models.id
+    if selected_symbol:
+        conn = sqlite3.connect(database_path)
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM etf_infos WHERE symbol = ?', (selected_symbol,))
             WHERE models.name = ?
             AND security_sets_etfs.endDate IS NULL
             ORDER BY etf_weight DESC
@@ -99,13 +107,11 @@ def etf_lookup():
     )
 
     # Extract the symbol from the selected option
+    selected_symbol = None
     if selected_etf_option != "Select an ETF":
-        selected_etf_option = selected_etf_option.split(" - ")[0]
-        # ...display ETF details using selected_etf...
+        selected_symbol = selected_etf_option.split(" - ")[0]
     else:
         st.write("")
-
-
     # Sidebar: Display security sets and ETFs for the selected model
     if selected_model != "All Models":
         st.sidebar.title(f"Model: {selected_model}")
@@ -130,7 +136,7 @@ def etf_lookup():
     else:
         st.sidebar.write("Select a model to view its associated security sets and ETFs.")
 
-# Main Content, first display the Selected Model name, it's strategies and ETFs
+    # Main Content, first display the Selected Model name, it's strategies and ETFs
     if selected_model != "All Models":
         st.header(f"Model: {selected_model}")
     else:
@@ -143,95 +149,106 @@ def etf_lookup():
         else:
             st.write("No security sets or ETFs found for the selected model.")
 
+    # Main content: Display selected ETF information
+    st.header("Details for Selected ETF")
+    if selected_symbol:
+        st.subheader(f"{selected_symbol}")
+        conn = sqlite3.connect(database_path)
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM etf_infos WHERE symbol = ?', (selected_symbol,))
+        result = cursor.fetchone()
+        etf_info = {}
+        if result:
+            # Get column names dynamically
+            columns = [description[0] for description in cursor.description]
+            etf_info = dict(zip(columns, result))
 
+            st.markdown(f"### **{selected_symbol} - {etf_info.get('longName', 'No name available')}**")
+            st.write(f"**Category:** {etf_info.get('category', 'No category available')}")
+            st.write(f"**Fund Manager:** {etf_info.get('fundFamily', 'No fund family available')}")
+            st.write(f"**Dividend Yield:** {etf_info.get('dividendYield', 'No dividend yield available')}%")
+            st.write(f"**Net Expense Ratio:** {etf_info.get('netExpenseRatio', 'No expense ratio available')}%")
+            st.write(f"**Summary:** {etf_info.get('longBusinessSummary', 'No summary available.')}")
+        else:
+            st.write("No details available.")
 
-# Main content: Display selected ETF information
-    st.header(f"Details for Selected ETF: {selected_etf_option}")
-    cursor.execute('SELECT * FROM etf_infos WHERE symbol = ?', (selected_etf_option,))
-    result = cursor.fetchone()
-    if result:
-        # Get column names dynamically
-        columns = [description[0] for description in cursor.description]
-        etf_info = dict(zip(columns, result))
-
-        st.markdown(f"### **{selected_etf_option} - {etf_info.get('longName', 'No name available')}**")
-        st.write(f"**Category:** {etf_info.get('category', 'No category available')}")
-        st.write(f"**Fund Manager:** {etf_info.get('fundFamily', 'No fund family available')}")
-        st.write(f"**Dividend Yield:** {etf_info.get('dividendYield', 'No dividend yield available')}%")
-        st.write(f"**Net Expense Ratio:** {etf_info.get('netExpenseRatio', 'No expense ratio available')}%")
-        st.write(f"**Summary:** {etf_info.get('longBusinessSummary', 'No summary available.')}")
-    else:
-        st.write(" ")
-
-    # Display Top Holdings
-    st.header("Top 10 Holdings")
-    if result and etf_info.get('topHoldings'):
-        try:
-            # Parse the JSON string from the topHoldings column
-            top_holdings = pd.read_json(etf_info['topHoldings'])
-            top_holdings.index = range(1, len(top_holdings) + 1)
-            top_holdings['Holding Percent'] = top_holdings['Holding Percent'].apply(lambda x: f"{x:.2f}")
-            st.write(top_holdings)
-        except Exception as e:
+        # Display Top Holdings
+        st.header("Top 10 Holdings")
+        if etf_info.get('topHoldings'):
+            try:
+                # Parse the JSON string from the topHoldings column
+                top_holdings = pd.read_json(etf_info['topHoldings'])
+                top_holdings.index = range(1, len(top_holdings) + 1)
+                top_holdings['Holding Percent'] = top_holdings['Holding Percent'].apply(lambda x: f"{x:.2f}")
+                st.write(top_holdings)
+            except Exception as e:
+                st.write(" ")
+                st.write(f"Error: {e}")
+        else:
             st.write(" ")
-            st.write(f"Error: {e}")
+
+        # Performance Graph
+        st.header("Performance Graph")
+        today = datetime.date.today()
+        start_of_year = datetime.date(today.year, 1, 1)
+        start_date = st.date_input("Start Date", value=start_of_year, key="start_date")
+        end_date = st.date_input("End Date", value=today, key="end_date")
+
+        # Fetch price data for the selected ETF
+        query = '''
+            SELECT Date, Close
+            FROM etf_prices
+            WHERE symbol = ? AND Date BETWEEN ? AND ?
+            ORDER BY Date ASC
+        '''
+        price_data = pd.read_sql_query(query, conn, params=(selected_symbol, start_date, end_date))
+
+        # Calculate Time-Weighted Return (TWR)
+        twr = None
+        if not price_data.empty:
+            price_data['Date'] = pd.to_datetime(price_data['Date'])
+            price_data.set_index('Date', inplace=True)
+
+            # Calculate TWR
+            start_price = price_data['Close'].iloc[0]
+            end_price = price_data['Close'].iloc[-1]
+            twr = ((end_price / start_price) - 1) * 100  # Convert to percentage
+
+        # Display Performance Graph Header with TWR
+        if twr is not None:
+            st.markdown(
+                f"<h2 style='text-align: center;'>Performance Graph (Time-Weighted Return: {twr:.2f}%)</h2>",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                "<h2 style='text-align: center;'>Performance Graph (No Data Available)</h2>",
+                unsafe_allow_html=True
+            )
+
+        # Plot the performance graph using Plotly
+        if not price_data.empty:
+            price_data.reset_index(inplace=True)  # Reset index to use Date as a column
+            fig = px.line(
+                price_data,
+                x='Date',
+                y='Close',
+                title=f"Price Performance of {selected_symbol}",
+                labels={'Close': 'Closing Price', 'Date': 'Date'},
+                template='plotly_white'
+            )
+            fig.update_layout(
+                xaxis_title="Date",
+                yaxis_title="Closing Price",
+                hovermode="x unified"
+            )
+            try:
+                st.plotly_chart(fig, use_container_width=True)
+            except TypeError:
+                st.plotly_chart(fig)
+        else:
+            st.write(" ")
+
+        conn.close()
     else:
-        st.write(" ")
-
-    # Performance Graph
-    st.header("Performance Graph")
-    today = datetime.date.today()
-    start_of_year = datetime.date(today.year, 1, 1)
-    start_date = st.date_input("Start Date", value=start_of_year, key="start_date")
-    end_date = st.date_input("End Date", value=today, key="end_date")
-
-    # Fetch price data for the selected ETF
-    query = '''
-        SELECT Date, Close
-        FROM etf_prices
-        WHERE symbol = ? AND Date BETWEEN ? AND ?
-        ORDER BY Date ASC
-    '''
-    price_data = pd.read_sql_query(query, conn, params=(selected_etf_option, start_date, end_date))
-
-    # Calculate Time-Weighted Return (TWR)
-    twr = None
-    if not price_data.empty:
-        price_data['Date'] = pd.to_datetime(price_data['Date'])
-        price_data.set_index('Date', inplace=True)
-
-        # Calculate TWR
-        start_price = price_data['Close'].iloc[0]
-        end_price = price_data['Close'].iloc[-1]
-        twr = ((end_price / start_price) - 1) * 100  # Convert to percentage
-
-    # Display Performance Graph Header with TWR
-    if twr is not None:
-        st.markdown(f"<h2 style='text-align: center;'>Performance Graph (Time-Weighted Return: {twr:.2f}%)</h2>", unsafe_allow_html=True)
-    else:
-        st.markdown("<h2 style='text-align: center;'>Performance Graph (No Data Available)</h2>", unsafe_allow_html=True)
-
-    # Plot the performance graph using Plotly
-    if not price_data.empty:
-        price_data.reset_index(inplace=True)  # Reset index to use Date as a column
-        fig = px.line(
-            price_data,
-            x='Date',
-            y='Close',
-            title=f"{selected_etf_option} Performance",
-            labels={'Close': 'Closing Price', 'Date': 'Date'},
-            template='plotly_white'
-        )
-        fig.update_layout(
-            xaxis_title="Date",
-            yaxis_title="Closing Price",
-            hovermode="x unified"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.write(" ")
-
-    
-
-    # Close the database connection
-    conn.close()
+        st.write("Select an ETF to view details, holdings, and performance.")
