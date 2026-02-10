@@ -275,9 +275,22 @@ def display_live_factsheet():
         
         # Get benchmark price data
         benchmark_df = pd.read_sql_query(
-            f"SELECT Date, Close FROM etf_prices WHERE symbol = '{benchmark_symbol}' ORDER BY Date ASC",
-            conn
+            "SELECT Date, Close FROM etf_prices WHERE symbol = ? ORDER BY Date ASC",
+            conn,
+            params=(benchmark_symbol,)
         )
+        if benchmark_df.empty:
+            fallback_map = {
+                "^GSPC": "SPY",
+                "^IXIC": "QQQ",
+            }
+            fallback_symbol = fallback_map.get(benchmark_symbol)
+            if fallback_symbol:
+                benchmark_df = pd.read_sql_query(
+                    "SELECT Date, Close FROM etf_prices WHERE symbol = ? ORDER BY Date ASC",
+                    conn,
+                    params=(fallback_symbol,)
+                )
         conn.close()
         
         if benchmark_df.empty:
@@ -294,18 +307,6 @@ def display_live_factsheet():
         benchmark_df['cum_return'] = benchmark_df['cum_return'] * 100  # as percentage
         
         return benchmark_df[["Date", "cum_return"]]
-        if benchmark_df.empty:
-            fallback_map = {
-                "^GSPC": "SPY",
-                "^IXIC": "QQQ",
-            }
-            fallback_symbol = fallback_map.get(benchmark_symbol)
-            if fallback_symbol:
-                benchmark_df = pd.read_sql_query(
-                    "SELECT Date, Close FROM etf_prices WHERE symbol = ? ORDER BY Date ASC",
-                    conn,
-                    params=(fallback_symbol,)
-                )
 
     def load_model_yield(selected_model):
         """
@@ -360,7 +361,7 @@ def display_live_factsheet():
             merged = pd.merge(etf_df, category_df, left_on="ETF", right_on="symbol", how="left")
             merged = merged.dropna(subset=["category"])
             merged["category"] = merged["category"].str.strip()
-            merged["Weight"] = merged["ModelWeight (%)"].str.rstrip('%').astype(float)
+            merged["Weight"] = merged["ModelWeightValue"].astype(float)
             pie_data = merged.groupby("category")["Weight"].sum().reset_index()
             pie_data = pie_data[pie_data["category"].notnull() & (pie_data["category"] != "")]
 
