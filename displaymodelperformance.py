@@ -287,19 +287,12 @@ def display_model_performance():
             continue
 
         model_data = model_data.sort_values("return_date")
-        cum_return = model_data["return_amount"].cumsum()
-
-        # If returns are tiny, scale to percent for display.
-        if cum_return.abs().max() <= 1.0:
-            cumulative_returns_pct = cum_return * 100
-        else:
-            cumulative_returns_pct = cum_return
 
         fig.add_trace(go.Scatter(
             x=model_data["return_date"],
-            y=cumulative_returns_pct,
+            y=model_data["return_amount"],
             mode='lines',
-            name=f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)"
+            name=model_name
         ))
 
     # Overlay the selected ETF or economic indicator
@@ -330,9 +323,9 @@ def display_model_performance():
 
     # Customize the layout
     fig.update_layout(
-        title=f"{selected_group} - Cumulative YTD Returns (with Overlay)",
+        title=f"{selected_group} - Model Returns (with Overlay)",
         xaxis_title="Date",
-        yaxis_title="Cumulative Returns / Overlay (%)",
+        yaxis_title="Daily Return / Overlay (%)",
         legend_title="Models & Overlays",
         template="plotly_white",
         yaxis_tickformat=".2f"
