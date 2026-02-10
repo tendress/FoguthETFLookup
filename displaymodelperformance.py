@@ -199,27 +199,24 @@ def display_model_performance():
         conn.close()
         return models
 
-    def calculate_model_daily_returns(model_name):
-        """
-        Load daily model returns from the model_returns table.
-        """
+    def load_model_returns():
         conn = sqlite3.connect(database_path)
-        query = '''
-            SELECT mr.return_date, mr.return_amount
+        df = pd.read_sql_query(
+            """
+            SELECT m.name AS model_name, mr.return_date, mr.return_amount
             FROM model_returns mr
             JOIN models m ON mr.model_id = m.id
-            WHERE m.name = ?
             ORDER BY mr.return_date ASC
-        '''
-        df = pd.read_sql_query(query, conn, params=(model_name,))
+            """,
+            conn,
+        )
         conn.close()
-
         if df.empty:
-            return pd.Series(dtype=float)
+            return df
 
-        df['return_date'] = pd.to_datetime(df['return_date'])
-        df = df.set_index('return_date')
-        return df['return_amount']
+        df["return_date"] = pd.to_datetime(df["return_date"])
+        df["return_amount"] = pd.to_numeric(df["return_amount"], errors="coerce")
+        return df
 
     # Fetch models
     models_df = fetch_models()
@@ -275,30 +272,31 @@ def display_model_performance():
     # Automatically update the graph when overlay_option changes (no button needed)
     # Remove the "Run Model Graphs" button and always show the graph
 
-    # Calculate daily returns for each model and store them in a dictionary
-    daily_returns_dict = {}
-    for model_name in models_df['name']:
-        daily_returns_dict[model_name] = calculate_model_daily_returns(model_name)
-
-    # Convert the dictionary to a DataFrame
-    daily_returns_df = pd.DataFrame(daily_returns_dict)
-
-    # Ensure date ordering and filter to only include dates from 2025-01-01 onward
-    daily_returns_df = daily_returns_df.sort_index()
-    daily_returns_df = daily_returns_df[daily_returns_df.index >= pd.to_datetime("2025-01-01")]
+    model_returns_df = load_model_returns()
 
     # Create an interactive Plotly graph
     fig = go.Figure()
     # Plot selected models
     for model_name in selected_models:
-        if model_name in daily_returns_df.columns:
-            model_data = pd.to_numeric(daily_returns_df[model_name], errors="coerce").dropna()
-            if model_data.empty:
-                continue
-            # Calculate cumulative returns as a percentage (compounded)
-            cumulative_returns_pct = ((1 + model_data).cumprod() - 1) * 100
+        if model_returns_df.empty:
+            continue
+
+        model_data = model_returns_df[model_returns_df["model_name"] == model_name]
+        model_data = model_data.dropna(subset=["return_date", "return_amount"])
+        if model_data.empty:
+            continue
+
+        model_data = model_data.sort_values("return_date")
+        cum_return = model_data["return_amount"].cumsum()
+
+        # If returns are tiny, scale to percent for display.
+        if cum_return.abs().max() <= 1.0:
+            cumulative_returns_pct = cum_return * 100
+        else:
+            cumulative_returns_pct = cum_return
+
             fig.add_trace(go.Scatter(
-                x=model_data.index,
+                x=model_data["return_date"],
                 y=cumulative_returns_pct,
                 mode='lines',
                 name=f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)"
