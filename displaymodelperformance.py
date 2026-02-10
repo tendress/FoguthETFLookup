@@ -5,9 +5,20 @@ import plotly.graph_objects as go
 import numpy as np
 
 def display_model_performance():
+    def normalize_df_for_streamlit(dataframe):
+        if dataframe is None:
+            return dataframe
+
+        cleaned = dataframe.copy()
+        for col in cleaned.columns:
+            if pd.api.types.is_string_dtype(cleaned[col].dtype):
+                cleaned[col] = cleaned[col].astype("object")
+        return cleaned
+
     def safe_dataframe(dataframe, **kwargs):
+        normalized_df = normalize_df_for_streamlit(dataframe)
         try:
-            st.dataframe(dataframe, **kwargs)
+            st.dataframe(normalized_df, **kwargs)
             return
         except TypeError:
             pass
@@ -16,9 +27,9 @@ def display_model_performance():
         fallback_kwargs.pop("hide_index", None)
         fallback_kwargs.pop("use_container_width", None)
         try:
-            st.dataframe(dataframe, **fallback_kwargs)
+            st.dataframe(normalized_df, **fallback_kwargs)
         except TypeError:
-            st.dataframe(dataframe)
+            st.dataframe(normalized_df)
 
     def safe_plotly_chart(fig, **kwargs):
         try:
