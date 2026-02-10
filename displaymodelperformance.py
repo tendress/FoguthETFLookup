@@ -72,6 +72,7 @@ def display_model_performance():
     database_path = 'foguth_etf_models.db'
 
     # Load the models table
+    @st.cache_data(ttl=7200)
     def load_models_table():
         """
         Load the models table from the database.
@@ -94,6 +95,7 @@ def display_model_performance():
             return pd.DataFrame()
 
     # Load the security_sets table
+    @st.cache_data(ttl=7200)
     def load_security_sets_table():
         """
         Load the security_sets table from the database.
@@ -114,6 +116,7 @@ def display_model_performance():
             st.error(f"Error loading Security Sets table: {e}")
             return pd.DataFrame()
 
+    @st.cache_data(ttl=7200)
     def load_model_returns_for_range(start_date, end_date):
         conn = sqlite3.connect(database_path)
         df = pd.read_sql_query(
@@ -137,6 +140,7 @@ def display_model_performance():
         grouped['AsOf'] = end_date.strftime('%Y-%m-%d')
         return grouped[['Name', 'Return', 'AsOf']]
 
+    @st.cache_data(ttl=7200)
     def load_security_set_returns_for_range(start_date, end_date):
         conn = sqlite3.connect(database_path)
         df = pd.read_sql_query(
@@ -267,6 +271,7 @@ def display_model_performance():
         conn.close()
         return models
 
+    @st.cache_data(ttl=7200)
     def load_model_returns():
         conn = sqlite3.connect(database_path)
         df = pd.read_sql_query(
