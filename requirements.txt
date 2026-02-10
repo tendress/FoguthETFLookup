@@ -2,6 +2,7 @@ yfinance
 pandas
 numpy
 streamlit
+altair==4.2.2
 openpyxl
 matplotlib
 plotly
