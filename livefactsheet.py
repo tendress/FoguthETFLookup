@@ -70,9 +70,10 @@ def display_live_factsheet():
         # Convert ModelWeight to percentage and add '%' sign
         if not df.empty:
             total_weight = df["ModelWeight"].sum()
-            df["ModelWeight"] = (df["ModelWeight"] / total_weight * 100).round(2).astype(str) + '%'
-            df["ModelWeightValue"] = (df["ModelWeight"].str.rstrip('%').astype(float))  # For pie chart
-            df.rename(columns={"ModelWeight": "ModelWeight (%)"}, inplace=True)
+            df["ModelWeightPct"] = (df["ModelWeight"] / total_weight * 100).round(2)
+            df["ModelWeightValue"] = df["ModelWeightPct"]
+            df["ModelWeight (%)"] = df["ModelWeightPct"].map(lambda x: f"{x:.2f}%")
+            df.drop(columns=["ModelWeight"], inplace=True)
         return df
 
     def parse_mixed_dates(val):
@@ -293,6 +294,18 @@ def display_live_factsheet():
         benchmark_df['cum_return'] = benchmark_df['cum_return'] * 100  # as percentage
         
         return benchmark_df[["Date", "cum_return"]]
+        if benchmark_df.empty:
+            fallback_map = {
+                "^GSPC": "SPY",
+                "^IXIC": "QQQ",
+            }
+            fallback_symbol = fallback_map.get(benchmark_symbol)
+            if fallback_symbol:
+                benchmark_df = pd.read_sql_query(
+                    "SELECT Date, Close FROM etf_prices WHERE symbol = ? ORDER BY Date ASC",
+                    conn,
+                    params=(fallback_symbol,)
+                )
 
     def load_model_yield(selected_model):
         """
