@@ -201,61 +201,25 @@ def display_model_performance():
 
     def calculate_model_daily_returns(model_name):
         """
-        Calculate daily price returns for a model using the security_set_prices table and model_security_set weights.
+        Load daily model returns from the model_returns table.
         """
         conn = sqlite3.connect(database_path)
-        # Get security set IDs and their weights for the model
         query = '''
-            SELECT 
-                ss.id AS security_set_id,
-                ms.weight AS model_weight
-            FROM models m
-            JOIN model_security_set ms ON m.id = ms.model_id
-            JOIN security_sets ss ON ms.security_set_id = ss.id
+            SELECT mr.return_date, mr.return_amount
+            FROM model_returns mr
+            JOIN models m ON mr.model_id = m.id
             WHERE m.name = ?
+            ORDER BY mr.return_date ASC
         '''
-        cursor = conn.cursor()
-        cursor.execute(query, (model_name,))
-        security_sets = cursor.fetchall()
+        df = pd.read_sql_query(query, conn, params=(model_name,))
         conn.close()
 
-        if not security_sets:
+        if df.empty:
             return pd.Series(dtype=float)
 
-        # Create DataFrame for security set weights
-        ss_weights_df = pd.DataFrame(security_sets, columns=['security_set_id', 'model_weight'])
-
-        # Fetch daily percent changes for each security set from security_set_prices
-        conn = sqlite3.connect(database_path)
-        ss_data = {}
-        for ss_id in ss_weights_df['security_set_id']:
-            query = '''
-                SELECT Date, percentChange
-                FROM security_set_prices
-                WHERE security_set_id = ?
-                ORDER BY Date
-            '''
-            df = pd.read_sql_query(query, conn, params=(ss_id,))
-            if not df.empty:
-                df['Date'] = pd.to_datetime(df['Date'])
-                df.set_index('Date', inplace=True)
-                # Convert percentChange to decimal returns
-                ss_data[ss_id] = df['percentChange'] / 100.0
-        conn.close()
-
-        if not ss_data:
-            return pd.Series(dtype=float)
-
-        # Combine all security set returns into a DataFrame
-        ss_returns = pd.DataFrame(ss_data)
-
-        # Set weights index for multiplication
-        ss_weights_df.set_index('security_set_id', inplace=True)
-
-        # Calculate weighted daily returns for the model
-        weighted_returns = ss_returns.mul(ss_weights_df['model_weight'], axis=1).sum(axis=1)
-
-        return weighted_returns
+        df['return_date'] = pd.to_datetime(df['return_date'])
+        df = df.set_index('return_date')
+        return df['return_amount']
 
     # Fetch models
     models_df = fetch_models()
@@ -331,8 +295,8 @@ def display_model_performance():
             model_data = pd.to_numeric(daily_returns_df[model_name], errors="coerce").dropna()
             if model_data.empty:
                 continue
-            # Calculate cumulative returns as a percentage (sum of daily returns)
-            cumulative_returns_pct = model_data.cumsum() * 100
+            # Calculate cumulative returns as a percentage (compounded)
+            cumulative_returns_pct = ((1 + model_data).cumprod() - 1) * 100
             fig.add_trace(go.Scatter(
                 x=model_data.index,
                 y=cumulative_returns_pct,
