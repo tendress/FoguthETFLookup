@@ -1,13 +1,4 @@
 import streamlit as st
-from displaymodelperformance import display_model_performance
-from etflookup import etf_lookup
-from calculatebeta import calculate_beta_page
-from displaymodelgraphs import display_model_graphs
-from correlationmatrix import display_correlation_matrix
-from economicindicators import economic_indicators
-from consumerindicators import consumer_indicators
-from livefactsheet import display_live_factsheet
-from sectorrotationresearch import sector_rotation_research
 import pandas as pd
 import sqlite3
 import datetime
@@ -20,6 +11,16 @@ try:
 except TypeError:
     # Older Streamlit versions do not support use_container_width.
     st.sidebar.image("assets/logo.png")
+
+from displaymodelperformance import display_model_performance
+from etflookup import etf_lookup
+from calculatebeta import calculate_beta_page
+from displaymodelgraphs import display_model_graphs
+from correlationmatrix import display_correlation_matrix
+from economicindicators import economic_indicators
+from consumerindicators import consumer_indicators
+from livefactsheet import display_live_factsheet
+from sectorrotationresearch import sector_rotation_research
 
 
 
