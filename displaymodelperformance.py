@@ -295,12 +295,12 @@ def display_model_performance():
         else:
             cumulative_returns_pct = cum_return
 
-            fig.add_trace(go.Scatter(
-                x=model_data["return_date"],
-                y=cumulative_returns_pct,
-                mode='lines',
-                name=f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)"
-            ))
+        fig.add_trace(go.Scatter(
+            x=model_data["return_date"],
+            y=cumulative_returns_pct,
+            mode='lines',
+            name=f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)"
+        ))
 
     # Overlay the selected ETF or economic indicator
     if overlay_symbol:
