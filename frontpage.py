@@ -15,7 +15,11 @@ import datetime
 
 # Set the app title and logo
 st.set_page_config(page_title="Foguth Financial Group", page_icon="🧮", layout="wide")
-st.sidebar.image("assets/logo.png", use_container_width=True)
+try:
+    st.sidebar.image("assets/logo.png", use_container_width=True)
+except TypeError:
+    # Older Streamlit versions do not support use_container_width.
+    st.sidebar.image("assets/logo.png")
 
 
 
