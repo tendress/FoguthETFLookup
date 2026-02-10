@@ -361,7 +361,8 @@ def display_live_factsheet():
             merged = pd.merge(etf_df, category_df, left_on="ETF", right_on="symbol", how="left")
             merged = merged.dropna(subset=["category"])
             merged["category"] = merged["category"].str.strip()
-            merged["Weight"] = merged["ModelWeightValue"].astype(float)
+            merged["Weight"] = pd.to_numeric(merged["ModelWeightValue"], errors="coerce")
+            merged = merged.dropna(subset=["Weight"])
             pie_data = merged.groupby("category")["Weight"].sum().reset_index()
             pie_data = pie_data[pie_data["category"].notnull() & (pie_data["category"] != "")]
 
