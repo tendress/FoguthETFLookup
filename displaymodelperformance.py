@@ -328,9 +328,11 @@ def display_model_performance():
     # Plot selected models
     for model_name in selected_models:
         if model_name in daily_returns_df.columns:
-            model_data = pd.to_numeric(daily_returns_df[model_name], errors="coerce").fillna(0)
-            # Calculate cumulative returns as a percentage (compounded)
-            cumulative_returns_pct = ((1 + model_data).cumprod() - 1) * 100
+            model_data = pd.to_numeric(daily_returns_df[model_name], errors="coerce").dropna()
+            if model_data.empty:
+                continue
+            # Calculate cumulative returns as a percentage (sum of daily returns)
+            cumulative_returns_pct = model_data.cumsum() * 100
             fig.add_trace(go.Scatter(
                 x=model_data.index,
                 y=cumulative_returns_pct,
