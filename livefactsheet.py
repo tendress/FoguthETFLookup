@@ -31,6 +31,14 @@ def display_live_factsheet():
             st.dataframe(normalized_df, **fallback_kwargs)
         except TypeError:
             st.dataframe(normalized_df)
+
+    def safe_image(image, **kwargs):
+        try:
+            st.image(image, **kwargs)
+        except TypeError:
+            fallback_kwargs = dict(kwargs)
+            fallback_kwargs.pop("use_container_width", None)
+            st.image(image, **fallback_kwargs)
     st.markdown("""
         <style>
         @media print {
@@ -335,7 +343,7 @@ def display_live_factsheet():
 
     fscol1, fscol2 = st.columns([.3,.7])
     with fscol1:
-        st.image("assets/fwmlogo.png", width=200, )
+        safe_image("assets/fwmlogo.png", width=200)
     with fscol2:
         st.title("Foguth Wealth Management ETP Fact Sheet")
 
@@ -517,10 +525,7 @@ def display_live_factsheet():
                             st.markdown("---")
                             st.markdown("<p style='text-align: center; font-size: 12px;'></p>", unsafe_allow_html=True)
                         with imcol2:
-                            try:
-                                st.image("assets/fwmlogo.png", width=200, use_container_width=True)
-                            except TypeError:
-                                st.image("assets/fwmlogo.png", width=200)
+                            safe_image("assets/fwmlogo.png", width=200, use_container_width=True)
                         with imcol3:
                             st.markdown("---")
                             st.markdown("<p style='text-align: center; font-size: 12px;'>All rights reserved</p>", unsafe_allow_html=True)

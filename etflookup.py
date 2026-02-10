@@ -155,13 +155,17 @@ def etf_lookup():
         st.subheader(f"{selected_symbol}")
         conn = sqlite3.connect(database_path)
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM etf_infos WHERE symbol = ?', (selected_symbol,))
-        result = cursor.fetchone()
+        result = None
         etf_info = {}
-        if result:
-            # Get column names dynamically
-            columns = [description[0] for description in cursor.description]
-            etf_info = dict(zip(columns, result))
+        try:
+            cursor.execute('SELECT * FROM etf_infos WHERE symbol = ?', (selected_symbol,))
+            result = cursor.fetchone()
+            if result:
+                # Get column names dynamically
+                columns = [description[0] for description in cursor.description]
+                etf_info = dict(zip(columns, result))
+        finally:
+            pass
 
             st.markdown(f"### **{selected_symbol} - {etf_info.get('longName', 'No name available')}**")
             st.write(f"**Category:** {etf_info.get('category', 'No category available')}")

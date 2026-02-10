@@ -45,18 +45,25 @@ selected_page = st.sidebar.radio("Go to", list(pages.keys()))
 def get_last_updated_date():
     # Connect to the database
     database_path = 'foguth_etf_models.db'
+    conn = None
     try:
         conn = sqlite3.connect(database_path)
         cursor = conn.cursor()
 
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='ffgwebUpdateLog'"
+        )
+        if cursor.fetchone() is None:
+            return None
+
         # Fetch the last updated date from the database
         cursor.execute("SELECT MAX(updateDateTime) FROM ffgwebUpdateLog")
         last_updated = cursor.fetchone()[0]
-
-        # Close the database connection
-        conn.close()
-    except sqlite3.DatabaseError:
+    except sqlite3.Error:
         return None
+    finally:
+        if conn is not None:
+            conn.close()
 
     if last_updated:
         # Convert the last updated date to a datetime object and subtract 4 hours
