@@ -6,6 +6,31 @@ import datetime
 from updateytdreturnsmodule import update_etf_ytd_returns, update_security_set_ytd_returns, update_model_ytd_returns
 
 def display_live_factsheet():
+    def normalize_df_for_streamlit(dataframe):
+        if dataframe is None:
+            return dataframe
+
+        cleaned = dataframe.copy()
+        for col in cleaned.columns:
+            if pd.api.types.is_string_dtype(cleaned[col].dtype):
+                cleaned[col] = cleaned[col].astype("object")
+        return cleaned
+
+    def safe_dataframe(dataframe, **kwargs):
+        normalized_df = normalize_df_for_streamlit(dataframe)
+        try:
+            st.dataframe(normalized_df, **kwargs)
+            return
+        except TypeError:
+            pass
+
+        fallback_kwargs = dict(kwargs)
+        fallback_kwargs.pop("hide_index", None)
+        fallback_kwargs.pop("use_container_width", None)
+        try:
+            st.dataframe(normalized_df, **fallback_kwargs)
+        except TypeError:
+            st.dataframe(normalized_df)
     st.markdown("""
         <style>
         @media print {
@@ -330,7 +355,7 @@ def display_live_factsheet():
             col1, col2 = st.columns(2)
             with col1:
                 st.subheader("Security Target Weights")
-                st.dataframe(top10_df)
+                safe_dataframe(top10_df)
                 # Load model yield data
                 model_yield = load_model_yield(selected_model)
                 if model_yield:
