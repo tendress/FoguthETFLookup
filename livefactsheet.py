@@ -413,16 +413,36 @@ def display_live_factsheet():
                 st.subheader("Asset Allocation")
                 if not pie_data.empty:
                     pie_data = pie_data.sort_values("Weight", ascending=False)
-                    fig, ax = plt.subplots(figsize=(6, 6))
-                    ax.pie(
+                    fig, ax = plt.subplots(figsize=(7, 5.5))
+                    wedges, _, _ = ax.pie(
                         pie_data["Weight"],
-                        labels=pie_data["category"],
+                        labels=None,
                         autopct="%1.1f%%",
                         startangle=90,
                         counterclock=False,
+                        pctdistance=0.68,
+                        textprops={"fontsize": 10},
+                        wedgeprops={"linewidth": 0.8, "edgecolor": "white"},
                     )
                     ax.axis("equal")
-                    fig.tight_layout()
+
+                    legend_labels = [
+                        f"{category} ({weight:.1f}%)"
+                        for category, weight in zip(pie_data["category"], pie_data["Weight"])
+                    ]
+                    ax.legend(
+                        wedges,
+                        legend_labels,
+                        title="Category",
+                        loc="upper center",
+                        bbox_to_anchor=(0.5, -0.05),
+                        ncol=2,
+                        frameon=False,
+                        fontsize=9,
+                        title_fontsize=10,
+                    )
+
+                    fig.tight_layout(rect=[0, 0.1, 1, 1])
                     st.pyplot(fig)
                     plt.close(fig)
                 else:
