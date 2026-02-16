@@ -190,38 +190,54 @@ def display_model_performance():
         try:
             # Connect to the SQLite database
             conn = sqlite3.connect(database_path)
-            cursor = conn.cursor()
+            start_str = start_date.strftime('%Y-%m-%d')
+            end_str = end_date.strftime('%Y-%m-%d')
 
-            # Fetch the etf_id for the given ticker
-            cursor.execute('SELECT id FROM etfs WHERE symbol = ?', (ticker,))
-            etf_id = cursor.fetchone()
+            fallback_map = {
+                '^GSPC': ['SPY'],
+                '^IXIC': ['QQQ'],
+                '^DJI': ['DIA']
+            }
+            symbols_to_try = [ticker] + fallback_map.get(ticker, [])
 
-            if etf_id is None:
-                st.error(f"Ticker {ticker} not found in the database.")
-                return None
+            price_df = pd.DataFrame(columns=['Date', 'Close'])
+            for symbol in symbols_to_try:
+                try:
+                    candidate_df = pd.read_sql_query(
+                        '''
+                        SELECT Date, Close
+                        FROM etf_prices
+                        WHERE symbol = ? AND substr(Date, 1, 10) BETWEEN ? AND ?
+                        ORDER BY Date ASC
+                        ''',
+                        conn,
+                        params=(symbol, start_str, end_str)
+                    )
+                except sqlite3.DatabaseError:
+                    candidate_df = pd.DataFrame(columns=['Date', 'Close'])
 
-            etf_id = etf_id[0]
-
-            # Fetch all daily close prices for the selected date range
-            cursor.execute('''
-                SELECT Date, Close
-                FROM etf_prices
-                WHERE etf_id = ? AND Date BETWEEN ? AND ?
-                ORDER BY Date ASC
-            ''', (etf_id, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
-            price_data = cursor.fetchall()
+                if not candidate_df.empty:
+                    price_df = candidate_df
+                    break
 
             # Close the database connection
             conn.close()
 
             # Ensure there is enough data to calculate TWR
-            if len(price_data) < 2:
+            if price_df.empty:
+                st.warning(f"No data available to calculate return for {ticker}.")
+                return None
+
+            price_df['Date'] = pd.to_datetime(price_df['Date'], errors='coerce')
+            price_df['Close'] = pd.to_numeric(price_df['Close'], errors='coerce')
+            price_df = price_df.dropna(subset=['Date', 'Close'])
+            price_df = price_df[price_df['Close'] > 0]
+            price_df = price_df.sort_values('Date').drop_duplicates(subset=['Date'], keep='last')
+
+            if len(price_df) < 2:
                 st.warning(f"Not enough data to calculate TWR for {ticker}.")
                 return None
 
-            # Convert the data to a DataFrame
-            price_df = pd.DataFrame(price_data, columns=['Date', 'Close'])
-            price_df['Date'] = pd.to_datetime(price_df['Date'])
             price_df.set_index('Date', inplace=True)
 
             # Calculate daily returns
