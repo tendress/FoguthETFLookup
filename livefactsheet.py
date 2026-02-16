@@ -2,6 +2,7 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+import altair as alt
 import datetime
 from updateytdreturnsmodule import update_etf_ytd_returns, update_security_set_ytd_returns, update_model_ytd_returns
 
@@ -489,30 +490,30 @@ def display_live_factsheet():
                         # --- Plot line and bar chart side by side ---
                         chart_col1, chart_col2 = st.columns(2)
                         with chart_col1:
-                            fig = px.line(
-                                plot_df,
-                                x="Date",
-                                y=[selected_model, benchmark_name],
-                                title=f"Growth of $1,000,000: {selected_model} vs {benchmark_name}",
-                                labels={"value": "Portfolio Value ($)", "variable": "Investment"}
+                            line_df = plot_df.melt(
+                                id_vars="Date",
+                                value_vars=[selected_model, benchmark_name],
+                                var_name="Investment",
+                                value_name="Portfolio Value ($)"
                             )
-                            # round y-axis values to 0 decimal places
-                            fig.update_layout(
-                                yaxis_title="Portfolio Value ($)",
-                                xaxis_title="Date",
-                                legend_title_text="Investment",
-                                legend=dict(x=1, y=1, traceorder="normal"),
-                                xaxis=dict(tickformat="%Y-%m-%d"),
-                                yaxis=dict(tickformat="$,.0f"),  # Format y-axis as currency with no decimal places
-                                title=dict(text=f"Growth of $1,000,000: {selected_model} vs {benchmark_name}"),
-                                font=dict(size=12),
-                                margin=dict(t=60)  # Increase top margin for title
+
+                            growth_chart = (
+                                alt.Chart(line_df)
+                                .mark_line(strokeWidth=2.5)
+                                .encode(
+                                    x=alt.X("Date:T", title="Date"),
+                                    y=alt.Y("Portfolio Value ($):Q", title="Portfolio Value ($)", axis=alt.Axis(format="$,.0f")),
+                                    color=alt.Color("Investment:N", title="Investment"),
+                                    tooltip=[
+                                        alt.Tooltip("Date:T", title="Date"),
+                                        alt.Tooltip("Investment:N", title="Investment"),
+                                        alt.Tooltip("Portfolio Value ($):Q", title="Portfolio Value ($)", format=",.0f"),
+                                    ],
+                                )
+                                .properties(title=f"Growth of $1,000,000: {selected_model} vs {benchmark_name}")
+                                .interactive()
                             )
-                            
-                            # round the tick values on y-axis to 0 decimal places
-                            fig.update_yaxes(tickformat="$,.0f")
-                            fig.update_xaxes(tickformat="%Y-%m-%d")
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.altair_chart(growth_chart, use_container_width=True)
                         with chart_col2:
                             plot_ytd_and_range_bar_chart(
                                 model_returns_df,

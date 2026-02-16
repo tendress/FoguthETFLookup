@@ -2,7 +2,7 @@ import datetime
 import sqlite3
 import pandas as pd
 import streamlit as st
-import plotly.graph_objects as go
+import altair as alt
 import numpy as np
 
 def display_model_performance():
@@ -32,9 +32,9 @@ def display_model_performance():
         except TypeError:
             st.dataframe(normalized_df)
 
-    def safe_plotly_chart(fig, **kwargs):
+    def safe_altair_chart(chart, **kwargs):
         try:
-            st.plotly_chart(fig, **kwargs)
+            st.altair_chart(chart, **kwargs)
             return
         except TypeError:
             pass
@@ -42,9 +42,9 @@ def display_model_performance():
         fallback_kwargs = dict(kwargs)
         fallback_kwargs.pop("use_container_width", None)
         try:
-            st.plotly_chart(fig, **fallback_kwargs)
+            st.altair_chart(chart, **fallback_kwargs)
         except TypeError:
-            st.plotly_chart(fig)
+            st.altair_chart(chart)
 
     st.title("Model Performance")
     st.write("This page displays model performance metrics.")
@@ -323,8 +323,7 @@ def display_model_performance():
 
     model_returns_df = load_model_series_for_group(tuple(selected_models), start_date, end_date)
 
-    fig = go.Figure()
-    trace_count = 0
+    chart_rows = []
 
     for model_name in selected_models:
         if model_returns_df.empty:
@@ -338,26 +337,35 @@ def display_model_performance():
         # Daily return series -> cumulative compounded percent return.
         cumulative_returns_pct = ((1 + model_data["return_amount"]).cumprod() - 1) * 100
 
-        fig.add_trace(go.Scatter(
-            x=model_data["return_date"],
-            y=cumulative_returns_pct,
-            mode='lines',
-            line=dict(width=2.5),
-            name=f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)"
-        ))
-        trace_count += 1
+        chart_rows.append(
+            pd.DataFrame(
+                {
+                    "Date": model_data["return_date"],
+                    "Cumulative Return (%)": cumulative_returns_pct,
+                    "Model": f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)",
+                }
+            )
+        )
 
-    fig.update_layout(
-        title=f"{selected_group} - Cumulative Returns ({range_label})",
-        xaxis_title="Date",
-        yaxis_title="Cumulative Return (%)",
-        legend_title="Models",
-        template="plotly_white",
-        yaxis_tickformat=".2f"
-    )
-
-    if not model_returns_df.empty and trace_count > 0:
-        safe_plotly_chart(fig, use_container_width=True)
+    if chart_rows:
+        chart_df = pd.concat(chart_rows, ignore_index=True)
+        line_chart = (
+            alt.Chart(chart_df)
+            .mark_line(strokeWidth=2.5)
+            .encode(
+                x=alt.X("Date:T", title="Date"),
+                y=alt.Y("Cumulative Return (%):Q", title="Cumulative Return (%)"),
+                color=alt.Color("Model:N", title="Models"),
+                tooltip=[
+                    alt.Tooltip("Date:T", title="Date"),
+                    alt.Tooltip("Model:N", title="Model"),
+                    alt.Tooltip("Cumulative Return (%):Q", title="Cumulative Return (%)", format=".2f"),
+                ],
+            )
+            .properties(title=f"{selected_group} - Cumulative Returns ({range_label})")
+            .interactive()
+        )
+        safe_altair_chart(line_chart, use_container_width=True)
     else:
         st.warning("No model return data available for the selected group and date range.")
 
