@@ -300,7 +300,12 @@ def display_model_performance():
 
         df["return_date"] = pd.to_datetime(df["return_date"])
         df["return_amount"] = pd.to_numeric(df["return_amount"], errors="coerce")
-        return df
+        df = df.dropna(subset=["model_name", "return_date", "return_amount"])
+        daily_returns_df = df.groupby(["model_name", "return_date"], as_index=False).agg(
+            return_amount=("return_amount", "sum")
+        )
+        daily_returns_df = daily_returns_df.sort_values(by=["model_name", "return_date"])
+        return daily_returns_df
 
     # Fetch models
     models_df = fetch_models()
