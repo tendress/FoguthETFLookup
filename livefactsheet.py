@@ -279,14 +279,28 @@ def display_live_factsheet():
         Calculate benchmark time-weighted return using the same methodology as model returns.
         Returns a DataFrame with columns: Date, cum_return.
         """
+        def load_benchmark_prices(conn, symbol, min_date='2025-01-01'):
+            try:
+                # Bound query to recent data used by the lower chart to avoid scanning old/corrupt pages.
+                return pd.read_sql_query(
+                    """
+                    SELECT Date, Close
+                    FROM etf_prices
+                    WHERE symbol = ?
+                      AND substr(Date, 1, 10) >= ?
+                    ORDER BY Date ASC
+                    """,
+                    conn,
+                    params=(symbol, min_date)
+                )
+            except sqlite3.DatabaseError:
+                return pd.DataFrame(columns=["Date", "Close"])
+            except sqlite3.Error:
+                return pd.DataFrame(columns=["Date", "Close"])
+
         conn = sqlite3.connect("foguth_etf_models.db")
-        
-        # Get benchmark price data
-        benchmark_df = pd.read_sql_query(
-            "SELECT Date, Close FROM etf_prices WHERE symbol = ? ORDER BY Date ASC",
-            conn,
-            params=(benchmark_symbol,)
-        )
+
+        benchmark_df = load_benchmark_prices(conn, benchmark_symbol)
         if benchmark_df.empty:
             fallback_map = {
                 "^GSPC": "SPY",
@@ -294,11 +308,7 @@ def display_live_factsheet():
             }
             fallback_symbol = fallback_map.get(benchmark_symbol)
             if fallback_symbol:
-                benchmark_df = pd.read_sql_query(
-                    "SELECT Date, Close FROM etf_prices WHERE symbol = ? ORDER BY Date ASC",
-                    conn,
-                    params=(fallback_symbol,)
-                )
+                benchmark_df = load_benchmark_prices(conn, fallback_symbol)
         conn.close()
         
         if benchmark_df.empty:
@@ -306,6 +316,9 @@ def display_live_factsheet():
         
         benchmark_df['Date'] = pd.to_datetime(benchmark_df['Date'])
         benchmark_df = benchmark_df.sort_values('Date')
+        benchmark_df['Close'] = pd.to_numeric(benchmark_df['Close'], errors='coerce')
+        benchmark_df = benchmark_df.dropna(subset=['Date', 'Close'])
+        benchmark_df = benchmark_df[benchmark_df['Close'] > 0]
         
         # Calculate daily percent change
         benchmark_df['daily_return'] = benchmark_df['Close'].pct_change() * 100
