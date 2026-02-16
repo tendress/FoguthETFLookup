@@ -2,7 +2,8 @@ import datetime
 import sqlite3
 import pandas as pd
 import streamlit as st
-import altair as alt
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import numpy as np
 
 def display_model_performance():
@@ -32,19 +33,11 @@ def display_model_performance():
         except TypeError:
             st.dataframe(normalized_df)
 
-    def safe_altair_chart(chart, **kwargs):
+    def safe_pyplot(fig):
         try:
-            st.altair_chart(chart, **kwargs)
-            return
+            st.pyplot(fig)
         except TypeError:
-            pass
-
-        fallback_kwargs = dict(kwargs)
-        fallback_kwargs.pop("use_container_width", None)
-        try:
-            st.altair_chart(chart, **fallback_kwargs)
-        except TypeError:
-            st.altair_chart(chart)
+            st.pyplot(fig)
 
     st.title("Model Performance")
     st.write("This page displays model performance metrics.")
@@ -349,23 +342,21 @@ def display_model_performance():
 
     if chart_rows:
         chart_df = pd.concat(chart_rows, ignore_index=True)
-        line_chart = (
-            alt.Chart(chart_df)
-            .mark_line(strokeWidth=2.5)
-            .encode(
-                x=alt.X("Date:T", title="Date"),
-                y=alt.Y("Cumulative Return (%):Q", title="Cumulative Return (%)"),
-                color=alt.Color("Model:N", title="Models"),
-                tooltip=[
-                    alt.Tooltip("Date:T", title="Date"),
-                    alt.Tooltip("Model:N", title="Model"),
-                    alt.Tooltip("Cumulative Return (%):Q", title="Cumulative Return (%)", format=".2f"),
-                ],
-            )
-            .properties(title=f"{selected_group} - Cumulative Returns ({range_label})")
-            .interactive()
-        )
-        safe_altair_chart(line_chart, use_container_width=True)
+        fig, ax = plt.subplots(figsize=(12, 5))
+        for model_label, model_series in chart_df.groupby("Model"):
+            ax.plot(model_series["Date"], model_series["Cumulative Return (%)"], linewidth=2.0, label=model_label)
+
+        ax.set_title(f"{selected_group} - Cumulative Returns ({range_label})")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Cumulative Return (%)")
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.2f}"))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+        ax.legend(title="Models", loc="best", fontsize=8)
+        ax.grid(True, alpha=0.3)
+        fig.autofmt_xdate()
+        fig.tight_layout()
+        safe_pyplot(fig)
+        plt.close(fig)
     else:
         st.warning("No model return data available for the selected group and date range.")
 

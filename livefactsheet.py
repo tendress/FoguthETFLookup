@@ -2,7 +2,9 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 import plotly.express as px
-import altair as alt
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import matplotlib.ticker as mticker
 import datetime
 from updateytdreturnsmodule import update_etf_ytd_returns, update_security_set_ytd_returns, update_model_ytd_returns
 
@@ -490,30 +492,21 @@ def display_live_factsheet():
                         # --- Plot line and bar chart side by side ---
                         chart_col1, chart_col2 = st.columns(2)
                         with chart_col1:
-                            line_df = plot_df.melt(
-                                id_vars="Date",
-                                value_vars=[selected_model, benchmark_name],
-                                var_name="Investment",
-                                value_name="Portfolio Value ($)"
-                            )
+                            fig, ax = plt.subplots(figsize=(8, 4.8))
+                            ax.plot(plot_df["Date"], plot_df[selected_model], linewidth=2.2, label=selected_model)
+                            ax.plot(plot_df["Date"], plot_df[benchmark_name], linewidth=2.2, label=benchmark_name)
 
-                            growth_chart = (
-                                alt.Chart(line_df)
-                                .mark_line(strokeWidth=2.5)
-                                .encode(
-                                    x=alt.X("Date:T", title="Date"),
-                                    y=alt.Y("Portfolio Value ($):Q", title="Portfolio Value ($)", axis=alt.Axis(format="$,.0f")),
-                                    color=alt.Color("Investment:N", title="Investment"),
-                                    tooltip=[
-                                        alt.Tooltip("Date:T", title="Date"),
-                                        alt.Tooltip("Investment:N", title="Investment"),
-                                        alt.Tooltip("Portfolio Value ($):Q", title="Portfolio Value ($)", format=",.0f"),
-                                    ],
-                                )
-                                .properties(title=f"Growth of $1,000,000: {selected_model} vs {benchmark_name}")
-                                .interactive()
-                            )
-                            st.altair_chart(growth_chart, use_container_width=True)
+                            ax.set_title(f"Growth of $1,000,000: {selected_model} vs {benchmark_name}")
+                            ax.set_xlabel("Date")
+                            ax.set_ylabel("Portfolio Value ($)")
+                            ax.yaxis.set_major_formatter(mticker.StrMethodFormatter('${x:,.0f}'))
+                            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+                            ax.legend(title="Investment", loc="best", fontsize=8)
+                            ax.grid(True, alpha=0.3)
+                            fig.autofmt_xdate()
+                            fig.tight_layout()
+                            st.pyplot(fig)
+                            plt.close(fig)
                         with chart_col2:
                             plot_ytd_and_range_bar_chart(
                                 model_returns_df,
