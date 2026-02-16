@@ -412,8 +412,19 @@ def display_live_factsheet():
             with col2:
                 st.subheader("Asset Allocation")
                 if not pie_data.empty:
-                    fig = px.pie(pie_data, names="category", values="Weight")
-                    st.plotly_chart(fig, use_container_width=True)
+                    pie_data = pie_data.sort_values("Weight", ascending=False)
+                    fig, ax = plt.subplots(figsize=(6, 6))
+                    ax.pie(
+                        pie_data["Weight"],
+                        labels=pie_data["category"],
+                        autopct="%1.1f%%",
+                        startangle=90,
+                        counterclock=False,
+                    )
+                    ax.axis("equal")
+                    fig.tight_layout()
+                    st.pyplot(fig)
+                    plt.close(fig)
                 else:
                     st.write("No category data available for the selected model.")
 
