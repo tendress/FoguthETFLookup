@@ -266,169 +266,100 @@ def display_model_performance():
     st.title("Model Graphs")
     st.write("This page displays interactive graphs for model performance.")
 
-    # Database connection
-    database_path = 'foguth_etf_models.db'
-
-    def fetch_models():
-        """
-        Fetch model names and YTD returns from the database.
-        """
-        conn = sqlite3.connect(database_path)
-        query = '''
-            SELECT name, YTDPriceReturn
-            FROM models
-        '''
-        models = pd.read_sql_query(query, conn)
-        conn.close()
-        return models
-
     @st.cache_data(ttl=7200)
-    def load_model_returns():
+    def load_model_series_for_group(selected_models, start_date, end_date):
+        if not selected_models:
+            return pd.DataFrame(columns=["model_name", "return_date", "return_amount"])
+
+        placeholders = ",".join(["?"] * len(selected_models))
+        params = list(selected_models) + [
+            start_date.strftime('%Y-%m-%d'),
+            end_date.strftime('%Y-%m-%d')
+        ]
+
         conn = sqlite3.connect(database_path)
         df = pd.read_sql_query(
-            """
+            f"""
             SELECT m.name AS model_name, mr.return_date, mr.return_amount
             FROM model_returns mr
             JOIN models m ON mr.model_id = m.id
-            ORDER BY mr.return_date ASC
+            WHERE m.name IN ({placeholders})
+              AND mr.return_date BETWEEN ? AND ?
+            ORDER BY m.name ASC, mr.return_date ASC
             """,
             conn,
+            params=params,
         )
         conn.close()
+
         if df.empty:
             return df
 
-        df["return_date"] = pd.to_datetime(df["return_date"])
+        df["return_date"] = pd.to_datetime(df["return_date"], errors="coerce")
         df["return_amount"] = pd.to_numeric(df["return_amount"], errors="coerce")
         df = df.dropna(subset=["model_name", "return_date", "return_amount"])
-        daily_returns_df = df.groupby(["model_name", "return_date"], as_index=False).agg(
-            return_amount=("return_amount", "sum")
+
+        # Keep one daily value per model/date to avoid duplicate-row inflation.
+        df = df.groupby(["model_name", "return_date"], as_index=False).agg(
+            return_amount=("return_amount", "mean")
         )
-        daily_returns_df = daily_returns_df.sort_values(by=["model_name", "return_date"])
-        return daily_returns_df
+        return df.sort_values(["model_name", "return_date"]) 
 
-    # Fetch models
-    models_df = fetch_models()
-
-    # Define the model groups
+    # Define model groups
     model_groups = [
         ['Conservative Growth', 'Balanced Growth', 'Bullish Growth', 'Velocity', 'Opportunistic'],
         ['Conservative Value', 'Balanced Value', 'Bullish Value', 'Velocity', 'Opportunistic'],
         ['Rising Dividend Conservative', 'Rising Dividend Balanced', 'Rising Dividend Bullish', 'Rising Dividend Aggressive', 'Rising Dividend Momentum']
     ]
 
-    # Streamlit selectbox for group selection
     group_mapping = {
         "Growth Tilt": 0,
         "Value Tilt": 1,
         "Rising Dividend": 2
     }
-    selected_group = st.selectbox("Select a Model Group", list(group_mapping.keys()))
-    group_index = group_mapping[selected_group]  # Map the selected group to its index
+    selected_group = st.selectbox("Select a Model Group", list(group_mapping.keys()), key="model_graph_group")
+    group_index = group_mapping[selected_group]
     selected_models = model_groups[group_index]
 
-    # --- Overlay selection ---
-    # Fetch available symbols and their names from the database
-    conn = sqlite3.connect(database_path)
-    query = """
-    SELECT symbol, name
-    FROM etfs
-    WHERE name IS NOT NULL
-    """
-    symbols_df = pd.read_sql_query(query, conn)
-    conn.close()
+    model_returns_df = load_model_series_for_group(tuple(selected_models), start_date, end_date)
 
-    # Create a dictionary mapping symbols to their names for display
-    symbol_name_mapping = dict(zip(symbols_df['symbol'], symbols_df['name']))
-
-    # Create a list of options with symbol in front of the name
-    overlay_options = ["None"] + [f"{symbol} - {name}" for symbol, name in symbol_name_mapping.items()]
-
-    # Sidebar for selecting a single overlay
-    st.sidebar.header("Overlay ETFs or Economic Indicators")
-    overlay_option = st.sidebar.selectbox(
-        "Select a single Economic Indicator or ETF to Overlay",
-        options=overlay_options,
-        index=0,
-        key="overlay_selectbox"
-    )
-    overlay_symbol = None
-    overlay_name = None
-    if overlay_option != "None":
-        overlay_symbol = overlay_option.split(" - ")[0]
-        overlay_name = overlay_option.split(" - ", 1)[1]
-
-    # Automatically update the graph when overlay_option changes (no button needed)
-    # Remove the "Run Model Graphs" button and always show the graph
-
-    model_returns_df = load_model_returns()
-
-    # Create an interactive Plotly graph
     fig = go.Figure()
-    # Plot selected models
+    trace_count = 0
+
     for model_name in selected_models:
         if model_returns_df.empty:
             continue
-
         model_data = model_returns_df[model_returns_df["model_name"] == model_name]
-        model_data = model_data.dropna(subset=["return_date", "return_amount"])
         if model_data.empty:
             continue
 
         model_data = model_data.sort_values("return_date")
-        model_data = model_data[
-            (model_data["return_date"].dt.date >= start_date)
-            & (model_data["return_date"].dt.date <= end_date)
-        ]
-        if model_data.empty:
-            continue
+
+        # Daily return series -> cumulative compounded percent return.
         cumulative_returns_pct = ((1 + model_data["return_amount"]).cumprod() - 1) * 100
 
         fig.add_trace(go.Scatter(
             x=model_data["return_date"],
             y=cumulative_returns_pct,
             mode='lines',
+            line=dict(width=2.5),
             name=f"{model_name} ({cumulative_returns_pct.iloc[-1]:.2f}%)"
         ))
+        trace_count += 1
 
-    # Overlay the selected ETF or economic indicator
-    if overlay_symbol:
-        conn = sqlite3.connect(database_path)
-        query = f"""
-        SELECT Date, Close
-        FROM etf_prices
-        WHERE symbol = '{overlay_symbol}'
-        """
-        df = pd.read_sql_query(query, conn)
-        if not df.empty:
-            df['Date'] = pd.to_datetime(df['Date'])
-            df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
-            df = df.sort_values('Date')
-            # Normalize to start at 0% for overlay (percent change from first value)
-            df = df.set_index('Date')
-            df = df[~df.index.duplicated(keep='first')]
-            if len(df) > 0:
-                norm = (df['Close'] / df['Close'].iloc[0] - 1) * 100
-                fig.add_trace(go.Scatter(
-                    x=norm.index,
-                    y=norm.values,
-                    mode='lines',
-                    name=f"{overlay_symbol} - {overlay_name} (Overlay, % Chg)"
-                ))
-        conn.close()
-
-    # Customize the layout
     fig.update_layout(
         title=f"{selected_group} - Cumulative Returns ({range_label})",
         xaxis_title="Date",
-        yaxis_title="Cumulative Returns / Overlay (%)",
-        legend_title="Models & Overlays",
+        yaxis_title="Cumulative Return (%)",
+        legend_title="Models",
         template="plotly_white",
         yaxis_tickformat=".2f"
     )
 
-    # Display the interactive Plotly graph in Streamlit
-    safe_plotly_chart(fig, use_container_width=True)
+    if not model_returns_df.empty and trace_count > 0:
+        safe_plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("No model return data available for the selected group and date range.")
 
     
     # Display the security_sets table
