@@ -132,7 +132,7 @@ def display_model_performance():
         )
         conn.close()
         if df.empty:
-            return df
+            return pd.DataFrame(columns=['Name', 'Return', 'AsOf'])
 
         df['return_amount'] = pd.to_numeric(df['return_amount'], errors='coerce')
         grouped = df.groupby('Name', as_index=False)['return_amount'].sum()
@@ -156,7 +156,7 @@ def display_model_performance():
         )
         conn.close()
         if df.empty:
-            return df
+            return pd.DataFrame(columns=['Name', 'Return', 'AsOf'])
 
         df['percentChange'] = pd.to_numeric(df['percentChange'], errors='coerce')
         grouped = df.groupby('Name', as_index=False)['percentChange'].sum()
@@ -165,8 +165,17 @@ def display_model_performance():
         return grouped[['Name', 'Return', 'AsOf']]
 
     # Load data from the database
-    models_df = load_model_returns_for_range(start_date, end_date)
-    security_sets_df = load_security_set_returns_for_range(start_date, end_date)
+    models_returns_df = load_model_returns_for_range(start_date, end_date)
+    security_set_returns_df = load_security_set_returns_for_range(start_date, end_date)
+
+    models_yield_df = load_models_table()[['Name', 'AnnualYield']].rename(columns={'AnnualYield': 'Yield'})
+    security_sets_yield_df = load_security_sets_table()[['Name', 'Yield']]
+
+    models_df = models_yield_df.merge(models_returns_df, on='Name', how='left')
+    models_df['AsOf'] = models_df['AsOf'].fillna(end_date.strftime('%Y-%m-%d'))
+
+    security_sets_df = security_sets_yield_df.merge(security_set_returns_df, on='Name', how='left')
+    security_sets_df['AsOf'] = security_sets_df['AsOf'].fillna(end_date.strftime('%Y-%m-%d'))
 
     # Display the models table
     st.header(f"Model Performance ({range_label})")
