@@ -52,6 +52,16 @@ def display_live_factsheet():
             section[data-testid="stMain"] {
                 width: 100vw !important;
             }
+            /* Preserve background colors (including blue section headers) */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            h2[style*="background-color:#336699"],
+            h4[style*="background-color:#336699"] {
+                background-color: #336699 !important;
+                color: #ffffff !important;
+            }
         }
         </style>
     """, unsafe_allow_html=True)
@@ -441,8 +451,8 @@ def display_live_factsheet():
                         autopct="%1.1f%%",
                         startangle=90,
                         counterclock=False,
-                        pctdistance=0.68,
-                        textprops={"fontsize": 10},
+                        pctdistance=0.62,
+                        textprops={"fontsize": 8.5, "weight": "semibold", "color": "#1f1f1f"},
                         wedgeprops={"linewidth": 0.8, "edgecolor": "white"},
                     )
                     wedges = pie_result[0]
