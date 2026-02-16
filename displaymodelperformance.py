@@ -377,13 +377,7 @@ def display_model_performance():
         ]
         if model_data.empty:
             continue
-        cum_return = model_data["return_amount"].cumsum()
-
-        # If returns are tiny, scale to percent for display.
-        if cum_return.abs().max() <= 1.0:
-            cumulative_returns_pct = cum_return * 100
-        else:
-            cumulative_returns_pct = cum_return
+        cumulative_returns_pct = ((1 + model_data["return_amount"]).cumprod() - 1) * 100
 
         fig.add_trace(go.Scatter(
             x=model_data["return_date"],
