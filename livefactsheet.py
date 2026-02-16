@@ -1,7 +1,6 @@
 import sqlite3
 import pandas as pd
 import streamlit as st
-import plotly.express as px
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
@@ -127,12 +126,16 @@ def display_live_factsheet():
         - Selected date range return of the model vs benchmark
         Uses the corrected return calculation methodology.
         """
-        import plotly.express as px
-        import pandas as pd
-
         # Ensure dates are datetime
         model_returns_df["Date"] = pd.to_datetime(model_returns_df["Date"])
         benchmark_returns_df["Date"] = pd.to_datetime(benchmark_returns_df["Date"])
+
+        model_returns_df = model_returns_df.sort_values("Date").dropna(subset=["cum_return"])
+        benchmark_returns_df = benchmark_returns_df.sort_values("Date").dropna(subset=["cum_return"])
+
+        if model_returns_df.empty or benchmark_returns_df.empty:
+            st.warning("Insufficient data to calculate YTD and selected range returns.")
+            return
 
         # --- YTD Calculation ---
         ytd_start = pd.Timestamp(year=pd.Timestamp.today().year, month=1, day=1)
@@ -140,71 +143,87 @@ def display_live_factsheet():
 
         # Model YTD - find the cum_return at start and end of YTD period
         model_ytd_df = model_returns_df[(model_returns_df["Date"] >= ytd_start) & (model_returns_df["Date"] <= ytd_end)]
-        if not model_ytd_df.empty:
+        if not model_ytd_df.empty and model_ytd_df["cum_return"].notna().any():
             # Use simple difference method to match updatealldataforetpsite.py
-            start_cum_return = model_ytd_df["cum_return"].iloc[0]
-            end_cum_return = model_ytd_df["cum_return"].iloc[-1]
+            start_cum_return = model_ytd_df["cum_return"].dropna().iloc[0]
+            end_cum_return = model_ytd_df["cum_return"].dropna().iloc[-1]
             model_ytd_return = end_cum_return - start_cum_return
         else:
             model_ytd_return = 0
 
         # Benchmark YTD
         benchmark_ytd_df = benchmark_returns_df[(benchmark_returns_df["Date"] >= ytd_start) & (benchmark_returns_df["Date"] <= ytd_end)]
-        if not benchmark_ytd_df.empty:
-            start_cum_return = benchmark_ytd_df["cum_return"].iloc[0]
-            end_cum_return = benchmark_ytd_df["cum_return"].iloc[-1]
+        if not benchmark_ytd_df.empty and benchmark_ytd_df["cum_return"].notna().any():
+            start_cum_return = benchmark_ytd_df["cum_return"].dropna().iloc[0]
+            end_cum_return = benchmark_ytd_df["cum_return"].dropna().iloc[-1]
             benchmark_ytd_return = ((1 + end_cum_return/100) / (1 + start_cum_return/100) - 1) * 100
         else:
             benchmark_ytd_return = 0
 
         # --- Selected Date Range Calculation ---
         model_range_df = model_returns_df[(model_returns_df["Date"] >= pd.to_datetime(start_date)) & (model_returns_df["Date"] <= pd.to_datetime(end_date))]
-        if not model_range_df.empty:
-            start_cum_return = model_range_df["cum_return"].iloc[0]
-            end_cum_return = model_range_df["cum_return"].iloc[-1]
+        if not model_range_df.empty and model_range_df["cum_return"].notna().any():
+            start_cum_return = model_range_df["cum_return"].dropna().iloc[0]
+            end_cum_return = model_range_df["cum_return"].dropna().iloc[-1]
             model_range_return = end_cum_return - start_cum_return
         else:
             model_range_return = 0
 
         benchmark_range_df = benchmark_returns_df[(benchmark_returns_df["Date"] >= pd.to_datetime(start_date)) & (benchmark_returns_df["Date"] <= pd.to_datetime(end_date))]
-        if not benchmark_range_df.empty:
-            start_cum_return = benchmark_range_df["cum_return"].iloc[0]
-            end_cum_return = benchmark_range_df["cum_return"].iloc[-1]
+        if not benchmark_range_df.empty and benchmark_range_df["cum_return"].notna().any():
+            start_cum_return = benchmark_range_df["cum_return"].dropna().iloc[0]
+            end_cum_return = benchmark_range_df["cum_return"].dropna().iloc[-1]
             benchmark_range_return = ((1 + end_cum_return/100) / (1 + start_cum_return/100) - 1) * 100
         else:
             benchmark_range_return = 0
 
-        # --- Prepare DataFrame for Grouped Bar Plot ---
-        bar_data = pd.DataFrame({
-            "Period": ["YTD", "YTD", "Range", "Range"],
-            "Return Type": [selected_model, benchmark_name, selected_model, benchmark_name],
-            "Return (%)": [
-                round(model_ytd_return, 2),
-                round(benchmark_ytd_return, 2),
-                round(model_range_return, 2),
-                round(benchmark_range_return, 2)
-            ]
-        })
+        periods = ["YTD", "Range"]
+        model_vals = [round(model_ytd_return, 2), round(model_range_return, 2)]
+        benchmark_vals = [round(benchmark_ytd_return, 2), round(benchmark_range_return, 2)]
 
-        fig = px.bar(
-            bar_data,
-            x="Period",
-            y="Return (%)",
-            color="Return Type",
-            barmode="group",
-            text="Return (%)",
-            title=f"YTD and Selected Range Returns: {selected_model} vs {benchmark_name}"
-        )
-        fig.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
-        # Give extra space at the top so text is not cut off
-        max_y = bar_data["Return (%)"].max()
-        fig.update_layout(
-            yaxis_title="Return (%)",
-            margin=dict(t=60),  # Increase top margin
-            yaxis_range=[None, max_y * 1.25]  # Add 25% headroom
-        )
-        fig.update_layout(yaxis_title="Return (%)")
-        st.plotly_chart(fig, use_container_width=True)
+        x = [0, 1]
+        width = 0.34
+        fig, ax = plt.subplots(figsize=(8, 4.8))
+
+        model_bars = ax.bar([i - width / 2 for i in x], model_vals, width, label=selected_model)
+        benchmark_bars = ax.bar([i + width / 2 for i in x], benchmark_vals, width, label=benchmark_name)
+
+        ax.set_xticks(x)
+        ax.set_xticklabels(periods)
+        ax.set_xlabel("Period")
+        ax.set_ylabel("Return (%)")
+        ax.set_title(f"YTD and Selected Range Returns: {selected_model} vs {benchmark_name}")
+        ax.legend(title="Return Type", loc="best", fontsize=8)
+        ax.grid(axis='y', alpha=0.25)
+
+        all_vals = model_vals + benchmark_vals
+        ymin = min(all_vals + [0])
+        ymax = max(all_vals + [0])
+        if ymin == ymax:
+            ymin -= 1
+            ymax += 1
+        padding = (ymax - ymin) * 0.15
+        ax.set_ylim(ymin - padding, ymax + padding)
+
+        def label_bars(bars):
+            for bar in bars:
+                h = bar.get_height()
+                va = 'bottom' if h >= 0 else 'top'
+                offset = 0.15 if h >= 0 else -0.15
+                ax.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    h + offset,
+                    f"{h:.2f}%",
+                    ha='center',
+                    va=va,
+                    fontsize=8,
+                )
+
+        label_bars(model_bars)
+        label_bars(benchmark_bars)
+        fig.tight_layout()
+        st.pyplot(fig)
+        plt.close(fig)
 
     def calculate_model_time_weighted_return(selected_model):
         """
@@ -318,13 +337,15 @@ def display_live_factsheet():
             return pd.DataFrame(columns=["Date", "cum_return"])
         
         benchmark_df['Date'] = pd.to_datetime(benchmark_df['Date'])
+        benchmark_df['Date'] = benchmark_df['Date'].map(lambda d: d.normalize() if pd.notna(d) else d)
         benchmark_df = benchmark_df.sort_values('Date')
+        benchmark_df = benchmark_df.drop_duplicates(subset=['Date'], keep='last')
         benchmark_df['Close'] = pd.to_numeric(benchmark_df['Close'], errors='coerce')
         benchmark_df = benchmark_df.dropna(subset=['Date', 'Close'])
         benchmark_df = benchmark_df[benchmark_df['Close'] > 0]
         
         # Calculate daily percent change
-        benchmark_df['daily_return'] = benchmark_df['Close'].pct_change() * 100
+        benchmark_df['daily_return'] = benchmark_df['Close'].pct_change().fillna(0) * 100
         
         # Calculate cumulative return using the same methodology as model returns
         benchmark_df['cum_return'] = (1 + benchmark_df['daily_return'] / 100).cumprod() - 1
@@ -414,7 +435,7 @@ def display_live_factsheet():
                 if not pie_data.empty:
                     pie_data = pie_data.sort_values("Weight", ascending=False)
                     fig, ax = plt.subplots(figsize=(7, 5.5))
-                    wedges, _, _ = ax.pie(
+                    pie_result = ax.pie(
                         pie_data["Weight"],
                         labels=None,
                         autopct="%1.1f%%",
@@ -424,6 +445,7 @@ def display_live_factsheet():
                         textprops={"fontsize": 10},
                         wedgeprops={"linewidth": 0.8, "edgecolor": "white"},
                     )
+                    wedges = pie_result[0]
                     ax.axis("equal")
 
                     legend_labels = [
@@ -442,7 +464,7 @@ def display_live_factsheet():
                         title_fontsize=10,
                     )
 
-                    fig.tight_layout(rect=[0, 0.1, 1, 1])
+                    fig.tight_layout(rect=(0, 0.1, 1, 1))
                     st.pyplot(fig)
                     plt.close(fig)
                 else:
@@ -504,6 +526,9 @@ def display_live_factsheet():
                     mask_sp = (benchmark_returns_df["Date"] >= pd.to_datetime(start_date)) & (benchmark_returns_df["Date"] <= pd.to_datetime(end_date))
                     filtered_sp500_df = benchmark_returns_df.loc[mask_sp].copy()
 
+                    filtered_model_returns_df = filtered_model_returns_df.sort_values("Date").dropna(subset=["growth"])
+                    filtered_sp500_df = filtered_sp500_df.sort_values("Date").dropna(subset=["growth"])
+
                     # Rebase both series to $1,000,000 at the selected start date
                     if not filtered_model_returns_df.empty and not filtered_sp500_df.empty:
                         model_start = filtered_model_returns_df["growth"].iloc[0]
@@ -511,6 +536,9 @@ def display_live_factsheet():
 
                         sp500_start = filtered_sp500_df["growth"].iloc[0]
                         filtered_sp500_df["growth_rebased"] = filtered_sp500_df["growth"] / sp500_start * 1_000_000
+
+                        filtered_model_returns_df["Date"] = pd.to_datetime(filtered_model_returns_df["Date"]).dt.normalize()
+                        filtered_sp500_df["Date"] = pd.to_datetime(filtered_sp500_df["Date"]).dt.normalize()
 
                         # Merge for plotting
                         plot_df = pd.merge(
@@ -520,33 +548,38 @@ def display_live_factsheet():
                             how="inner"
                         )
 
-                        # --- Plot line and bar chart side by side ---
-                        chart_col1, chart_col2 = st.columns(2)
-                        with chart_col1:
-                            fig, ax = plt.subplots(figsize=(8, 4.8))
-                            ax.plot(plot_df["Date"], plot_df[selected_model], linewidth=2.2, label=selected_model)
-                            ax.plot(plot_df["Date"], plot_df[benchmark_name], linewidth=2.2, label=benchmark_name)
+                        plot_df = plot_df.dropna(subset=[selected_model, benchmark_name]).sort_values("Date")
 
-                            ax.set_title(f"Growth of $1,000,000: {selected_model} vs {benchmark_name}")
-                            ax.set_xlabel("Date")
-                            ax.set_ylabel("Portfolio Value ($)")
-                            ax.yaxis.set_major_formatter(mticker.StrMethodFormatter('${x:,.0f}'))
-                            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-                            ax.legend(title="Investment", loc="best", fontsize=8)
-                            ax.grid(True, alpha=0.3)
-                            fig.autofmt_xdate()
-                            fig.tight_layout()
-                            st.pyplot(fig)
-                            plt.close(fig)
-                        with chart_col2:
-                            plot_ytd_and_range_bar_chart(
-                                model_returns_df,
-                                benchmark_returns_df,
-                                selected_model,
-                                benchmark_name,
-                                start_date,
-                                end_date
-                            )
+                        if not plot_df.empty:
+                            # --- Plot line and bar chart side by side ---
+                            chart_col1, chart_col2 = st.columns(2)
+                            with chart_col1:
+                                fig, ax = plt.subplots(figsize=(8, 4.8))
+                                ax.plot(plot_df["Date"], plot_df[selected_model], linewidth=2.2, label=selected_model)
+                                ax.plot(plot_df["Date"], plot_df[benchmark_name], linewidth=2.2, label=benchmark_name)
+
+                                ax.set_title(f"Growth of $1,000,000: {selected_model} vs {benchmark_name}")
+                                ax.set_xlabel("Date")
+                                ax.set_ylabel("Portfolio Value ($)")
+                                ax.yaxis.set_major_formatter(mticker.StrMethodFormatter('${x:,.0f}'))
+                                ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+                                ax.legend(title="Investment", loc="best", fontsize=8)
+                                ax.grid(True, alpha=0.3)
+                                fig.autofmt_xdate()
+                                fig.tight_layout()
+                                st.pyplot(fig)
+                                plt.close(fig)
+                            with chart_col2:
+                                plot_ytd_and_range_bar_chart(
+                                    model_returns_df,
+                                    benchmark_returns_df,
+                                    selected_model,
+                                    benchmark_name,
+                                    start_date,
+                                    end_date
+                                )
+                        else:
+                            st.warning("No overlapping model and benchmark dates were found for the selected range.")
                         
                         st.markdown("---")
                         st.markdown("<h2 style='color: #ffffff; background-color:#336699; padding-left:4pt;'>Disclosures</h2>", unsafe_allow_html=True)
