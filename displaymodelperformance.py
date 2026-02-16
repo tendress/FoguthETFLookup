@@ -173,9 +173,11 @@ def display_model_performance():
 
     models_df = models_yield_df.merge(models_returns_df, on='Name', how='left')
     models_df['AsOf'] = models_df['AsOf'].fillna(end_date.strftime('%Y-%m-%d'))
+    models_df = models_df[['Name', 'Return', 'Yield', 'AsOf']]
 
     security_sets_df = security_sets_yield_df.merge(security_set_returns_df, on='Name', how='left')
     security_sets_df['AsOf'] = security_sets_df['AsOf'].fillna(end_date.strftime('%Y-%m-%d'))
+    security_sets_df = security_sets_df[['Name', 'Return', 'Yield', 'AsOf']]
 
     # Display the models table
     st.header(f"Model Performance ({range_label})")
