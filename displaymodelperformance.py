@@ -292,9 +292,9 @@ def display_model_performance():
         df["return_amount"] = pd.to_numeric(df["return_amount"], errors="coerce")
         df = df.dropna(subset=["model_name", "return_date", "return_amount"])
 
-        # Keep one daily value per model/date to avoid duplicate-row inflation.
+        # Aggregate to one daily value per model/date using sum so graph math matches the grid.
         df = df.groupby(["model_name", "return_date"], as_index=False).agg(
-            return_amount=("return_amount", "mean")
+            return_amount=("return_amount", "sum")
         )
         return df.sort_values(["model_name", "return_date"]) 
 
@@ -327,8 +327,8 @@ def display_model_performance():
 
         model_data = model_data.sort_values("return_date")
 
-        # Daily return series -> cumulative compounded percent return.
-        cumulative_returns_pct = ((1 + model_data["return_amount"]).cumprod() - 1) * 100
+        # Match the Model Performance grid methodology: summed return_amount, shown as percent.
+        cumulative_returns_pct = model_data["return_amount"].cumsum() * 100
 
         chart_rows.append(
             pd.DataFrame(
