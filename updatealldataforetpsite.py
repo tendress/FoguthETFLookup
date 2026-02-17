@@ -374,33 +374,90 @@ def calculate_security_set_prices(database_path):
     # Connect to the SQLite database
     conn = sqlite3.connect(database_path)
 
-    # Fetch security sets, ETFs, and their weights
-    query = """
-        SELECT 
-            sse.security_set_id,
-            sse.etf_id,
-            sse.weight,
-            sse.startDate,
-            sse.endDate,
-            ep.Date,
-            ep.Close AS etf_price
-        FROM security_sets_etfs sse
-        JOIN etf_prices ep ON sse.etf_id = ep.etf_id
-        WHERE ep.Date BETWEEN sse.startDate AND COALESCE(sse.endDate, '9999-12-31')
-        ORDER BY sse.security_set_id, ep.Date
+    # Load security set ETF components first (small table, safer than large joins on malformed DBs)
+    components_query = """
+        SELECT security_set_id, etf_id, weight, startDate, endDate
+        FROM security_sets_etfs
+        ORDER BY security_set_id
     """
-    data = pd.read_sql_query(query, conn)
-    conn.close()
+    components_df = pd.read_sql_query(components_query, conn)
 
-    if data.empty:
-        print("No data found for the given query.")
+    if components_df.empty:
+        conn.close()
+        print("No security set ETF components found.")
         return
 
-    # Convert Date to datetime for easier manipulation
-    data['Date'] = pd.to_datetime(data['Date'])
+    etf_map_df = pd.read_sql_query("SELECT id, symbol FROM etfs", conn)
+    id_to_symbol = dict(zip(etf_map_df['id'], etf_map_df['symbol']))
 
-    # Calculate the weighted price for each ETF in the security set
-    data['weighted_price'] = data['weight'] * data['etf_price']
+    weighted_rows = []
+
+    for row in components_df.itertuples(index=False):
+        security_set_id = row.security_set_id
+        etf_id = row.etf_id
+        weight = row.weight
+        start_bound = str(row.startDate)[:10] if pd.notna(row.startDate) else '1900-01-01'
+        end_bound = str(row.endDate)[:10] if pd.notna(row.endDate) else '9999-12-31'
+
+        # Try etf_id lookup first
+        try:
+            etf_prices_df = pd.read_sql_query(
+                """
+                SELECT Date, Close
+                FROM etf_prices
+                WHERE etf_id = ?
+                  AND substr(Date, 1, 10) BETWEEN ? AND ?
+                ORDER BY Date ASC
+                """,
+                conn,
+                params=(etf_id, start_bound, end_bound)
+            )
+        except sqlite3.DatabaseError:
+            etf_prices_df = pd.DataFrame(columns=['Date', 'Close'])
+
+        # Fallback to symbol lookup when id mapping is bad or empty
+        if etf_prices_df.empty:
+            symbol = id_to_symbol.get(etf_id)
+            if symbol:
+                try:
+                    etf_prices_df = pd.read_sql_query(
+                        """
+                        SELECT Date, Close
+                        FROM etf_prices
+                        WHERE symbol = ?
+                          AND substr(Date, 1, 10) BETWEEN ? AND ?
+                        ORDER BY Date ASC
+                        """,
+                        conn,
+                        params=(symbol, start_bound, end_bound)
+                    )
+                except sqlite3.DatabaseError:
+                    etf_prices_df = pd.DataFrame(columns=['Date', 'Close'])
+
+        if etf_prices_df.empty:
+            print(f"[Warning] No price data for security_set_id={security_set_id}, etf_id={etf_id}. Skipping.")
+            continue
+
+        etf_prices_df['Date'] = pd.to_datetime(etf_prices_df['Date'], errors='coerce')
+        etf_prices_df['Close'] = pd.to_numeric(etf_prices_df['Close'], errors='coerce')
+        etf_prices_df = etf_prices_df.dropna(subset=['Date', 'Close'])
+        etf_prices_df = etf_prices_df[etf_prices_df['Close'] > 0]
+        etf_prices_df = etf_prices_df.drop_duplicates(subset=['Date'], keep='last')
+
+        if etf_prices_df.empty:
+            continue
+
+        etf_prices_df['security_set_id'] = security_set_id
+        etf_prices_df['weighted_price'] = weight * etf_prices_df['Close']
+        weighted_rows.append(etf_prices_df[['security_set_id', 'Date', 'weighted_price']])
+
+    conn.close()
+
+    if not weighted_rows:
+        print("No valid ETF price rows were available to calculate security set prices.")
+        return
+
+    data = pd.concat(weighted_rows, ignore_index=True)
 
     # Group by security_set_id and Date to calculate the total weighted price for each security set
     security_set_prices = (
@@ -412,14 +469,17 @@ def calculate_security_set_prices(database_path):
 
     # Ensure we have a row for today's date for each security_set_id
     today = pd.to_datetime(datetime.now().strftime('%Y-%m-%d'))
-    all_sets = security_set_prices['security_set_id'].unique()
+    all_sets = components_df['security_set_id'].unique()
     result_rows = []
 
     for set_id in all_sets:
         set_prices = security_set_prices[security_set_prices['security_set_id'] == set_id].copy()
+        if set_prices.empty:
+            print(f"[Warning] No aggregated prices for security_set_id {set_id}. Skipping fill-forward.")
+            continue
         set_prices = set_prices.sort_values('Date')
         # If today's date is missing, forward fill
-        if today not in set_prices['Date'].values:
+        if today not in set_prices['Date'].dt.normalize().values:
             prev_row = set_prices.iloc[-1]
             new_row = prev_row.copy()
             new_row['Date'] = today
@@ -438,12 +498,7 @@ def calculate_security_set_prices(database_path):
     )
    
     
-    # Save the results to the security_set_prices table in the database
-    conn = sqlite3.connect(database_path)
-    security_set_prices.to_sql('security_set_prices', conn, if_exists='replace', index=False)
-    conn.close()
-
-    print("Security set prices and percent changes have been calculated and saved to the 'security_set_prices' table.")
+    print("Security set prices and percent changes have been calculated.")
     # Save the results to the security_set_prices table in the database
     conn = sqlite3.connect(database_path)
     security_set_prices.to_sql('security_set_prices', conn, if_exists='replace', index=False)

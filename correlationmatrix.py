@@ -1,21 +1,25 @@
 import sqlite3
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 import datetime  # Import datetime for date calculations
+import matplotlib.pyplot as plt
 
 def display_correlation_matrix():
+    def safe_pyplot(fig):
+        try:
+            st.pyplot(fig)
+        except TypeError:
+            st.pyplot(fig)
+
     st.title("ETF Correlation Matrix")
     st.write("This page displays the correlation matrix for ETFs based on their historical prices.")
 
-    # Create a SQLite database connection
-    database_path = 'foguth_etf_models.db'  # Replace with your database path
+    database_path = 'foguth_etf_models.db'
     conn = sqlite3.connect(database_path)
 
     # Fetch the list of models
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM models")
-    models = [row[0] for row in cursor.fetchall()]
+    models_df = pd.read_sql_query("SELECT name FROM models ORDER BY name", conn)
+    models = models_df["name"].tolist()
 
     if not models:
         st.warning("No models found in the database.")
@@ -23,10 +27,10 @@ def display_correlation_matrix():
         return
 
     # Let the user select a model
-    selected_model = st.sidebar.selectbox("Select a Model", models)
+    selected_model = st.sidebar.selectbox("Select a Model", models, key="corr_model")
 
     # Fetch the ETFs associated with the selected model
-    query = """
+    etf_query = """
         SELECT e.symbol
         FROM etfs e
         JOIN security_sets_etfs sse ON e.id = sse.etf_id
@@ -34,9 +38,10 @@ def display_correlation_matrix():
         JOIN model_security_set mss ON ss.id = mss.security_set_id
         JOIN models m ON mss.model_id = m.id
         WHERE m.name = ?
+          AND sse.endDate IS NULL
     """
-    cursor.execute(query, (selected_model,))
-    etf_symbols = [row[0] for row in cursor.fetchall()]
+    etf_symbols_df = pd.read_sql_query(etf_query, conn, params=(selected_model,))
+    etf_symbols = sorted(etf_symbols_df["symbol"].dropna().unique().tolist())
 
     if not etf_symbols:
         st.warning(f"No ETFs found for the selected model: {selected_model}.")
@@ -47,8 +52,8 @@ def display_correlation_matrix():
     st.sidebar.header("Filter by Date Range")
     today = datetime.date.today()
     start_of_year = datetime.date(today.year, 1, 1)
-    start_date = st.sidebar.date_input("Start Date", value=start_of_year, key="start_date")
-    end_date = st.sidebar.date_input("End Date", value=today, key="end_date")
+    start_date = st.sidebar.date_input("Start Date", value=start_of_year, key="corr_start_date")
+    end_date = st.sidebar.date_input("End Date", value=today, key="corr_end_date")
 
     if start_date > end_date:
         st.error("Start date must be before end date.")
@@ -56,14 +61,15 @@ def display_correlation_matrix():
         return
 
     # Fetch price data for the ETFs from the etf_prices table
-    query = """
+    price_query = """
         SELECT symbol, Date, Close
         FROM etf_prices
-        WHERE symbol IN ({}) AND Date BETWEEN ? AND ?
+        WHERE symbol IN ({}) AND substr(Date, 1, 10) BETWEEN ? AND ?
         ORDER BY Date ASC
     """.format(','.join(['?'] * len(etf_symbols)))
 
-    price_data = pd.read_sql_query(query, conn, params=etf_symbols + [start_date, end_date])
+    params = etf_symbols + [start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')]
+    price_data = pd.read_sql_query(price_query, conn, params=params)
 
     # Close the database connection
     conn.close()
@@ -73,46 +79,56 @@ def display_correlation_matrix():
         return
 
     # Pivot the data to create a DataFrame with symbols as columns and dates as the index
-    price_data['Date'] = pd.to_datetime(price_data['Date'])
-    pivoted_data = price_data.pivot(index='Date', columns='symbol', values='Close')
+    price_data['Date'] = pd.to_datetime(price_data['Date'], errors='coerce')
+    price_data['Close'] = pd.to_numeric(price_data['Close'], errors='coerce')
+    price_data = price_data.dropna(subset=['Date', 'symbol', 'Close'])
+
+    pivoted_data = price_data.pivot_table(
+        index='Date',
+        columns='symbol',
+        values='Close',
+        aggfunc='last'
+    )
+
+    if pivoted_data.shape[0] < 2 or pivoted_data.shape[1] < 2:
+        st.warning("Not enough data points to compute a correlation matrix for this range.")
+        return
 
     # Calculate the correlation matrix
     correlation_matrix = pivoted_data.corr()
 
-    # Create an interactive heatmap using Plotly
-    fig = px.imshow(
-        correlation_matrix,
-        text_auto=".2f",
-        color_continuous_scale='RdBu',
-        title=f"ETF Correlation Matrix ({selected_model})",
-        labels=dict(color="Correlation"),
-    )
+    if correlation_matrix.empty:
+        st.warning("Correlation matrix could not be computed for the selected data.")
+        return
 
-    # Update layout for better readability and add ETFs to the top x-axis
-    fig.update_layout(
-        xaxis_title="ETFs",
-        yaxis_title="ETFs",
-        width=2000,
-        height=2000,
-        xaxis=dict(tickangle=45),
-        font=dict(size=24),
-    )
+    # Render heatmap with Matplotlib (avoids Plotly/Arrow frontend issues)
+    matrix_size = len(correlation_matrix.columns)
+    fig_width = max(8, min(20, matrix_size * 0.7))
+    fig_height = max(6, min(20, matrix_size * 0.7))
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
 
-    # Add a secondary x-axis (top axis) with the same ETF labels
-    fig.update_layout(
-        xaxis2=dict(
-            tickmode='array',
-            tickvals=list(range(len(correlation_matrix.columns))),
-            ticktext=correlation_matrix.columns,
-            side='top',
-            tickangle=45,
-        ),
-    )
+    heat = ax.imshow(correlation_matrix.values, cmap='RdBu_r', vmin=-1, vmax=1)
+    ax.set_title(f"ETF Correlation Matrix ({selected_model})")
+    ax.set_xlabel("ETFs")
+    ax.set_ylabel("ETFs")
 
-    # Link the top and bottom x-axes
-    fig.update_layout(
-        xaxis=dict(matches='x2'),
-    )
+    tick_labels = correlation_matrix.columns.tolist()
+    ax.set_xticks(range(matrix_size))
+    ax.set_xticklabels(tick_labels, rotation=45, ha='right', fontsize=9)
+    ax.set_yticks(range(matrix_size))
+    ax.set_yticklabels(tick_labels, fontsize=9)
 
-    # Display the interactive Plotly graph in Streamlit
-    st.plotly_chart(fig, use_container_width=True)
+    # Cell labels for smaller matrices only (avoids clutter)
+    if matrix_size <= 15:
+        for i in range(matrix_size):
+            for j in range(matrix_size):
+                value = correlation_matrix.iat[i, j]
+                text_color = 'white' if abs(value) > 0.55 else 'black'
+                ax.text(j, i, f"{value:.2f}", ha='center', va='center', fontsize=8, color=text_color)
+
+    colorbar = fig.colorbar(heat, ax=ax, fraction=0.046, pad=0.04)
+    colorbar.set_label('Correlation')
+
+    fig.tight_layout()
+    safe_pyplot(fig)
+    plt.close(fig)
