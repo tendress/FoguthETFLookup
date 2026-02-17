@@ -496,6 +496,16 @@ def calculate_security_set_prices(database_path):
         security_set_prices.groupby('security_set_id')['security_set_price']
         .pct_change() * 100
     )
+
+    # Serialize dates to SQLite-friendly text format to avoid Timestamp binding errors
+    security_set_prices['Date'] = pd.to_datetime(security_set_prices['Date'], errors='coerce').dt.strftime('%Y-%m-%d %H:%M:%S')
+    security_set_prices['Date'] = security_set_prices['Date'].astype(str)
+    security_set_prices['security_set_id'] = pd.to_numeric(security_set_prices['security_set_id'], errors='coerce').astype('Int64')
+    security_set_prices['security_set_price'] = pd.to_numeric(security_set_prices['security_set_price'], errors='coerce')
+    security_set_prices['percentChange'] = pd.to_numeric(security_set_prices['percentChange'], errors='coerce')
+    security_set_prices = security_set_prices.dropna(subset=['security_set_id', 'Date', 'security_set_price'])
+    security_set_prices['security_set_id'] = security_set_prices['security_set_id'].astype(int)
+    security_set_prices = security_set_prices.where(pd.notnull(security_set_prices), None)
    
     
     print("Security set prices and percent changes have been calculated.")
