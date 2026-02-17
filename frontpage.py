@@ -112,10 +112,27 @@ if selected_page == "Home":
         results = cursor.fetchall()
         return [{"name": row[0], "weight": row[1] * 100} for row in results]
 
-    # Fetch YTDPriceReturn for all models and store in a dictionary
+    # Calculate YTD returns from model_returns so this matches the Model Performance page logic
     try:
-        cursor.execute("SELECT name, YTDPriceReturn FROM models")
-        ytd_returns = {row[0]: row[1] for row in cursor.fetchall()}
+        today = datetime.date.today()
+        start_of_year = datetime.date(today.year, 1, 1)
+        ytd_df = pd.read_sql_query(
+            '''
+            SELECT m.name AS Name, mr.return_amount
+            FROM model_returns mr
+            JOIN models m ON mr.model_id = m.id
+            WHERE mr.return_date BETWEEN ? AND ?
+            ''',
+            conn,
+            params=(start_of_year.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d')),
+        )
+        if ytd_df.empty:
+            ytd_returns = {}
+        else:
+            ytd_df['return_amount'] = pd.to_numeric(ytd_df['return_amount'], errors='coerce')
+            grouped = ytd_df.groupby('Name', as_index=False)['return_amount'].sum()
+            grouped['YTDReturn'] = (grouped['return_amount'] * 100).round(2)
+            ytd_returns = dict(zip(grouped['Name'], grouped['YTDReturn']))
     except sqlite3.Error:
         ytd_returns = {}
 
