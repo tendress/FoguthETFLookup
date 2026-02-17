@@ -3,9 +3,8 @@
 import sqlite3
 import pandas as pd
 from datetime import datetime, date
-import plotly.express as px
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import streamlit as st
 
 def economic_indicators():
@@ -144,23 +143,37 @@ def economic_indicators():
                 normalized_data.append(symbol_df)
         if normalized_data:
             normalized_df = pd.concat(normalized_data)
-            fig1 = px.line(
-                normalized_df,
-                x='Date',
-                y='Normalized',
-                color='symbol',
-                title='Normalized Stock Market Indicators: Dow Jones, S&P 500, NASDAQ (Start = 100)'
-            )
-            fig1.update_layout(yaxis_title="Normalized Value (Start = 100)")
-            st.plotly_chart(fig1, use_container_width=True)
+            fig1, ax1 = plt.subplots(figsize=(12, 5))
+            for symbol, symbol_df in normalized_df.groupby('symbol'):
+                ax1.plot(symbol_df['Date'], symbol_df['Normalized'], linewidth=2, label=symbol)
+            ax1.set_title('Normalized Stock Market Indicators: Dow Jones, S&P 500, NASDAQ (Start = 100)')
+            ax1.set_xlabel('Date')
+            ax1.set_ylabel('Normalized Value (Start = 100)')
+            ax1.legend(loc='best', fontsize=8)
+            ax1.grid(True, alpha=0.3)
+            ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+            fig1.autofmt_xdate()
+            fig1.tight_layout()
+            st.pyplot(fig1)
+            plt.close(fig1)
 
         # Plot Volatility Index in its own chart
         st.markdown(
             "<span style='color:blue; font-weight:bold;'>The VIX, or CBOE Volatility Index, measures market expectations of near-term volatility in the S&P 500, indicating investor fear or uncertainty. Higher VIX values suggest greater market instability, while lower imply calmer conditions, derived from demand for out-of-the-money S&P 500 options, which investors buy as protection against market uncertainty and potential downturns. A normal VIX value ranges between 12 and 20. </span>",
             unsafe_allow_html=True)    
-        fig2 = px.line(vix_data, x='Date', y='Close', color='symbol',
-                    title='Volatility Index (VIX)')
-        st.plotly_chart(fig2, use_container_width=True)
+        if not vix_data.empty:
+            fig2, ax2 = plt.subplots(figsize=(12, 4))
+            ax2.plot(vix_data['Date'], vix_data['Close'], linewidth=2, color='#FF3333', label='Volatility Index')
+            ax2.set_title('Volatility Index (VIX)')
+            ax2.set_xlabel('Date')
+            ax2.set_ylabel('VIX')
+            ax2.legend(loc='best', fontsize=8)
+            ax2.grid(True, alpha=0.3)
+            ax2.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+            fig2.autofmt_xdate()
+            fig2.tight_layout()
+            st.pyplot(fig2)
+            plt.close(fig2)
 
     
     
@@ -239,15 +252,21 @@ def economic_indicators():
 
         # Plot Bond Yields Over Time (excluding 10-Year Minus 2-Year Treasury Yield)
         if not bond_yields_df.empty:
-            fig = px.line(
-                bond_yields_df,
-                x='Date',
-                y='Close',
-                color='symbol',
-                category_orders={'symbol': order},
-                title='Bond Yields: 3-Month, 2-Year, 5-Year, 10-Year, 30-Year'
-            )
-            st.plotly_chart(fig, use_container_width=True)
+            fig, ax = plt.subplots(figsize=(12, 5))
+            for symbol in order:
+                symbol_df = bond_yields_df[bond_yields_df['symbol'] == symbol]
+                if not symbol_df.empty:
+                    ax.plot(symbol_df['Date'], symbol_df['Close'], linewidth=2, label=symbol)
+            ax.set_title('Bond Yields: 3-Month, 2-Year, 5-Year, 10-Year, 30-Year')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Yield (%)')
+            ax.legend(loc='best', fontsize=8)
+            ax.grid(True, alpha=0.3)
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+            fig.autofmt_xdate()
+            fig.tight_layout()
+            st.pyplot(fig)
+            plt.close(fig)
         else:
             st.warning("No bond yield data available for the selected date range.")
 
@@ -260,16 +279,18 @@ def economic_indicators():
             unsafe_allow_html=True)
 
             # Display a graph of the 10-Year Minus 2-Year Treasury Yield
-            fig2 = px.line(df2, x='Date', y='Close',
-                        title='10-Year Minus 2-Year Treasury Yield')
-            fig2.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=1))  # Reduce line thickness
-
-            # Add a horizontal line at y=0
-            fig2.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Zero Line", 
-                        annotation_position="top left")
-
-            fig2.update_layout(xaxis_title="Date", yaxis_title="Yield (%)")
-            st.plotly_chart(fig2, use_container_width=True)
+            fig2, ax2 = plt.subplots(figsize=(12, 4))
+            ax2.plot(df2['Date'], df2['Close'], linewidth=1.5, marker='o', markersize=2, color='#0066CC')
+            ax2.axhline(0, linestyle='--', color='red', linewidth=1)
+            ax2.set_title('10-Year Minus 2-Year Treasury Yield')
+            ax2.set_xlabel('Date')
+            ax2.set_ylabel('Yield (%)')
+            ax2.grid(True, alpha=0.3)
+            ax2.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+            fig2.autofmt_xdate()
+            fig2.tight_layout()
+            st.pyplot(fig2)
+            plt.close(fig2)
 
         # User selects a specific date
         if not bond_yields_df.empty:
@@ -289,17 +310,23 @@ def economic_indicators():
 
             # Create a line chart for the selected date
             if not selected_date_data.empty:
-                fig_selected_date = px.line(
-                    selected_date_data,
-                    x='symbol',
-                    y='Close',
-                    markers=True,
-                    category_orders={'symbol': order},
-                    title=f'Bond Yields for {selected_date}'
+                fig_selected_date, ax_selected = plt.subplots(figsize=(10, 4))
+                ax_selected.plot(
+                    selected_date_data['symbol'],
+                    selected_date_data['Close'],
+                    marker='o',
+                    linewidth=2,
+                    markersize=6,
+                    color='#0066CC'
                 )
-                fig_selected_date.update_traces(mode='lines+markers', marker=dict(size=10))
-                fig_selected_date.update_layout(xaxis_title="Bond Type", yaxis_title="Yield (%)")
-                st.plotly_chart(fig_selected_date, use_container_width=True)
+                ax_selected.set_title(f'Bond Yields for {selected_date}')
+                ax_selected.set_xlabel('Bond Type')
+                ax_selected.set_ylabel('Yield (%)')
+                ax_selected.grid(True, alpha=0.3)
+                fig_selected_date.autofmt_xdate(rotation=30)
+                fig_selected_date.tight_layout()
+                st.pyplot(fig_selected_date)
+                plt.close(fig_selected_date)
             else:
                 st.warning(f"No data available for {selected_date}")
     
@@ -334,12 +361,12 @@ def economic_indicators():
         if selected_symbols:
             data_frames = []
             for symbol in selected_symbols:
-                query = f"""
-                SELECT Date, Close, '{symbol}' AS symbol
+                query = """
+                SELECT Date, Close, ? AS symbol
                 FROM etf_prices
-                WHERE symbol = '{symbol}'
+                WHERE symbol = ?
                 """
-                df = pd.read_sql_query(query, conn)
+                df = pd.read_sql_query(query, conn, params=(symbol, symbol))
                 df['Date'] = pd.to_datetime(df['Date'])
                 df = df[(df['Date'] >= pd.Timestamp(start_date)) & (df['Date'] <= pd.Timestamp(end_date))]
                 data_frames.append(df)
@@ -348,31 +375,27 @@ def economic_indicators():
             if data_frames:
                 combined_df = pd.concat(data_frames)
 
-                # Create a subplot with secondary Y-axes
-                fig = make_subplots(specs=[[{"secondary_y": True}]])
-                for i, symbol in enumerate(selected_symbols):
+                fig, ax = plt.subplots(figsize=(12, 6))
+                for symbol in selected_symbols:
                     symbol_data = combined_df[combined_df['symbol'] == symbol]
-                    fig.add_trace(
-                        go.Scatter(
-                            x=symbol_data['Date'],
-                            y=symbol_data['Close'],
-                            mode='lines+markers',
-                            name=symbol_name_mapping[symbol]  # Use the name for the legend
-                        ),
-                        secondary_y=(i % 2 == 1)  # Alternate Y-axes
-                    )
+                    if not symbol_data.empty:
+                        ax.plot(
+                            symbol_data['Date'],
+                            symbol_data['Close'],
+                            linewidth=2,
+                            label=symbol_name_mapping[symbol]
+                        )
 
-                # Update layout
-                fig.update_layout(
-                    title_text="Custom Chart: Selected Economic Indicators and ETFs",
-                    xaxis_title="Date",
-                    yaxis_title="Primary Y-Axis",
-                    yaxis2_title="Secondary Y-Axis",
-                    legend_title="Symbols",
-                    showlegend=True
-                )
-                fig.update_traces(mode='lines+markers', marker=dict(size=1), line=dict(width=2))
-                st.plotly_chart(fig, use_container_width=True)
+                ax.set_title("Custom Chart: Selected Economic Indicators and ETFs")
+                ax.set_xlabel("Date")
+                ax.set_ylabel("Value")
+                ax.legend(loc='best', fontsize=8)
+                ax.grid(True, alpha=0.3)
+                ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+                fig.autofmt_xdate()
+                fig.tight_layout()
+                st.pyplot(fig)
+                plt.close(fig)
             else:
                 st.write("No data available for the selected symbols in the chosen timeframe.")
         else:
