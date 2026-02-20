@@ -641,6 +641,32 @@ def calculate_security_set_prices(database_path):
         WHERE security_set_id = 2
         AND Date = '2025-12-23 00:00:00'
         ''')
+    
+    #Growth Rebalance 2/3/26
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 1
+        AND Date = '2026-02-03 00:00:00'
+        ''')
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 1
+        AND Date = '2026-02-04 00:00:00'
+        ''')
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 1
+        AND Date = '2026-02-18 00:00:00'
+        ''')
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 1
+        AND Date = '2026-02-20 00:00:00'
+        ''')
 
     
     
