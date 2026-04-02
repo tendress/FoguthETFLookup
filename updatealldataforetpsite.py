@@ -378,6 +378,7 @@ def calculate_security_set_prices(database_path):
     components_query = """
         SELECT security_set_id, etf_id, weight, startDate, endDate
         FROM security_sets_etfs
+        WHERE endDate IS NULL
         ORDER BY security_set_id
     """
     components_df = pd.read_sql_query(components_query, conn)
