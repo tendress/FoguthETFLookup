@@ -667,7 +667,13 @@ def calculate_security_set_prices(database_path):
         WHERE security_set_id = 1
         AND Date = '2026-02-20 00:00:00'
         ''')
-
+    #RD - Enhanced Income
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 11
+        AND Date = '2026-03-16 00:00:00'
+        ''')
     
     
     conn.commit()
