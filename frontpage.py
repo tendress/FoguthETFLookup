@@ -143,27 +143,19 @@ if selected_page == "Home":
     #Add a section for an important disclaimer at the top of the page
     st.markdown("""
     <div style="background-color:#f8f9fa;padding:10px;border-radius:5px;">
-                <h2 style="color:red;">THIS SITE IS CURRENTLY UNDER CONSTRUCTION!!!  WHILE ALLOCATIONS ARE BEING UPDATED, RETURNS WILL NOT BE RELIABLE UNTIL COMPLETE.</h2>
+                <h2 style="color:red;"></h2>
                 <h2 style="color:red;">For Advisor Use Only. Not for public distribution. </h2>
                 <p>The information provided in this app is for educational purposes only and should not be considered as financial advice. Performance results do not include advisory fees, which would reduce returns. Past performance is not indicative of future results.</p>
                 </div>
                 """, unsafe_allow_html=True)
     
     #Add a section for important notice at the top of the page
-    #st.markdown("""
-    #<div style="background-color:#FFDD57;padding:10px;border-radius:5px;">
-    #<h3 style="color:#333;">Important Notice</h3>
-    #<h4 style="color:#333;">Sector Rotation Rebalance is Complete</h4>
-    #<ul style="color:#333; font-size: 16px; line-height: 1.5;">
-    #    <li>XLK: 30%</li>
-    #    <li>XLE: 20%</li>
-    #    <li>XLC: 15%</li>
-    #    <li>XLU: 10%</li>
-    #    <li>XLF: 10%</li>
-    #    <li>XLRE: 10%</li>
-    #    <li>XLP: 5%</li>
-    #</div>
-    #""", unsafe_allow_html=True)
+    st.markdown("""
+    <div style="background-color:#FFDD57;padding:10px;border-radius:5px;">
+    <h3 style="color:#333;">Important Notice</h3>
+    <h4 style="color:#333;">Rising Dividend Stable Value and Enhanced Income Rebalances are complete</h4>
+    </div>
+    """, unsafe_allow_html=True)
     
         
     # Display the model groups and their security sets
