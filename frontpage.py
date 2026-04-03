@@ -94,7 +94,7 @@ if selected_page == "Home":
     model_groups = [
         ['Conservative Growth', 'Balanced Growth', 'Bullish Growth', 'Velocity', 'Opportunistic'],
         ['Conservative Value', 'Balanced Value', 'Bullish Value', 'Velocity', 'Opportunistic'],
-        ['Rising Dividend Conservative', 'Rising Dividend Balanced', 'Rising Dividend Bullish', 'Rising Dividend Enhanced Income', 'Rising Dividend Momentum']
+        ['Rising Dividend Stable Value', 'Rising Dividend Balanced', 'Rising Dividend Bullish', 'Rising Dividend Enhanced Income', 'Rising Dividend Momentum']
     ]
 
         # Fetch security sets and their weights for a given model
