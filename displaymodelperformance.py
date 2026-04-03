@@ -7,6 +7,12 @@ import matplotlib.dates as mdates
 import numpy as np
 
 def display_model_performance():
+    excluded_models = {
+        'Rising Dividend Balanced',
+        'Rising Dividend Bullish',
+        'Rising Dividend Momentum',
+    }
+
     def normalize_df_for_streamlit(dataframe):
         if dataframe is None:
             return dataframe
@@ -70,6 +76,7 @@ def display_model_performance():
         """
         Load the models table from the database.
         """
+        expected_columns = ['Name', 'YTDReturn', 'AsOf', 'AnnualYield', 'ExpenseRatio']
         try:
             conn = sqlite3.connect(database_path)
             query = """
@@ -82,10 +89,15 @@ def display_model_performance():
             """
             models_df = pd.read_sql_query(query, conn)
             conn.close()
+            for col in expected_columns:
+                if col not in models_df.columns:
+                    models_df[col] = pd.NA
+            models_df = models_df[expected_columns]
             return models_df
         except Exception as e:
             st.error(f"Error loading models table: {e}")
-            return pd.DataFrame()
+            # Return an empty frame with expected schema so downstream column selection does not fail.
+            return pd.DataFrame(columns=expected_columns)
 
     # Load the security_sets table
     @st.cache_data(ttl=7200)
@@ -111,19 +123,24 @@ def display_model_performance():
 
     @st.cache_data(ttl=7200)
     def load_model_returns_for_range(start_date, end_date):
-        conn = sqlite3.connect(database_path)
-        df = pd.read_sql_query(
-            """
-            SELECT m.name AS Name, mr.return_date, mr.return_amount
-            FROM model_returns mr
-            JOIN models m ON mr.model_id = m.id
-            WHERE mr.return_date BETWEEN ? AND ?
-            ORDER BY mr.return_date ASC
-            """,
-            conn,
-            params=(start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')),
-        )
-        conn.close()
+        try:
+            conn = sqlite3.connect(database_path)
+            df = pd.read_sql_query(
+                """
+                SELECT m.name AS Name, mr.return_date, mr.return_amount
+                FROM model_returns mr
+                JOIN models m ON mr.model_id = m.id
+                WHERE mr.return_date BETWEEN ? AND ?
+                ORDER BY mr.return_date ASC
+                """,
+                conn,
+                params=(start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')),
+            )
+            conn.close()
+        except Exception as e:
+            st.error(f"Error loading model returns: {e}")
+            return pd.DataFrame(columns=['Name', 'Return', 'AsOf'])
+
         if df.empty:
             return pd.DataFrame(columns=['Name', 'Return', 'AsOf'])
 
@@ -135,19 +152,24 @@ def display_model_performance():
 
     @st.cache_data(ttl=7200)
     def load_security_set_returns_for_range(start_date, end_date):
-        conn = sqlite3.connect(database_path)
-        df = pd.read_sql_query(
-            """
-            SELECT ss.name AS Name, ssp.Date, ssp.percentChange
-            FROM security_set_prices ssp
-            JOIN security_sets ss ON ssp.security_set_id = ss.id
-            WHERE ssp.Date BETWEEN ? AND ?
-            ORDER BY ssp.Date ASC
-            """,
-            conn,
-            params=(start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')),
-        )
-        conn.close()
+        try:
+            conn = sqlite3.connect(database_path)
+            df = pd.read_sql_query(
+                """
+                SELECT ss.name AS Name, ssp.Date, ssp.percentChange
+                FROM security_set_prices ssp
+                JOIN security_sets ss ON ssp.security_set_id = ss.id
+                WHERE ssp.Date BETWEEN ? AND ?
+                ORDER BY ssp.Date ASC
+                """,
+                conn,
+                params=(start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')),
+            )
+            conn.close()
+        except Exception as e:
+            st.error(f"Error loading security set returns: {e}")
+            return pd.DataFrame(columns=['Name', 'Return', 'AsOf'])
+
         if df.empty:
             return pd.DataFrame(columns=['Name', 'Return', 'AsOf'])
 
@@ -161,12 +183,17 @@ def display_model_performance():
     models_returns_df = load_model_returns_for_range(start_date, end_date)
     security_set_returns_df = load_security_set_returns_for_range(start_date, end_date)
 
-    models_yield_df = load_models_table()[['Name', 'AnnualYield']].rename(columns={'AnnualYield': 'Yield'})
+    models_table_df = load_models_table()
+    models_table_df = models_table_df[~models_table_df['Name'].isin(excluded_models)].copy()
+
+    models_yield_df = models_table_df[['Name', 'AnnualYield', 'ExpenseRatio']].rename(columns={'AnnualYield': 'Yield'})
     security_sets_yield_df = load_security_sets_table()[['Name', 'Yield']]
+
+    models_returns_df = models_returns_df[~models_returns_df['Name'].isin(excluded_models)].copy()
 
     models_df = models_yield_df.merge(models_returns_df, on='Name', how='left')
     models_df['AsOf'] = models_df['AsOf'].fillna(end_date.strftime('%Y-%m-%d'))
-    models_df = models_df[['Name', 'Return', 'Yield', 'AsOf']]
+    models_df = models_df[['Name', 'Return', 'Yield', 'ExpenseRatio', 'AsOf']]
 
     security_sets_df = security_sets_yield_df.merge(security_set_returns_df, on='Name', how='left')
     security_sets_df['AsOf'] = security_sets_df['AsOf'].fillna(end_date.strftime('%Y-%m-%d'))
@@ -318,7 +345,7 @@ def display_model_performance():
     model_groups = [
         ['Conservative Growth', 'Balanced Growth', 'Bullish Growth', 'Velocity', 'Opportunistic'],
         ['Conservative Value', 'Balanced Value', 'Bullish Value', 'Velocity', 'Opportunistic'],
-        ['Rising Dividend Conservative', 'Rising Dividend Balanced', 'Rising Dividend Bullish', 'Rising Dividend Aggressive', 'Rising Dividend Momentum']
+        ['Rising Dividend Conservative', 'Rising Dividend Aggressive']
     ]
 
     group_mapping = {
