@@ -65,7 +65,7 @@ def display_model_performance():
     database_path = 'foguth_etf_models.db'
 
     # Load the models table
-    @st.cache_data(ttl=7200)
+    @st.cache_data(ttl=2000)
     def load_models_table():
         """
         Load the models table from the database.
