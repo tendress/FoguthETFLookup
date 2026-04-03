@@ -680,6 +680,18 @@ def calculate_security_set_prices(database_path):
         WHERE security_set_id = 11
         AND Date = '2026-03-17 00:00:00'
         ''')
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 8
+        AND Date = '2026-03-24 00:00:00'
+        ''')
+    cursor.execute('''
+        UPDATE security_set_prices
+        SET percentChange = 0
+        WHERE security_set_id = 8
+        AND Date = '2026-03-25 00:00:00'
+        ''')
     
     
     conn.commit()
