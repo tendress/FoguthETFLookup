@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import datetime
-from cache_invalidation import get_db_cache_buster
+from cache_invalidation import get_db_cache_buster, resolve_db_path
 
 
 # Set the app title and logo
@@ -52,7 +52,7 @@ if st.sidebar.button("Refresh displayed data"):
 # Display the last updated date
 def get_last_updated_date():
     # Connect to the database
-    database_path = 'foguth_etf_models.db'
+    database_path = resolve_db_path('foguth_etf_models.db')
     conn = None
     try:
         conn = sqlite3.connect(database_path)
@@ -94,7 +94,7 @@ if last_updated_date:
 # Display the selected page
 if selected_page == "Home":
     # Database connection
-    database_path = 'foguth_etf_models.db'
+    database_path = resolve_db_path('foguth_etf_models.db')
     db_cache_buster = get_db_cache_buster(database_path)
     conn = sqlite3.connect(database_path)
     cursor = conn.cursor()

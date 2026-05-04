@@ -5,7 +5,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
-from cache_invalidation import get_db_cache_buster
+from cache_invalidation import get_db_cache_buster, resolve_db_path
 
 def display_model_performance():
     excluded_models = {
@@ -69,7 +69,7 @@ def display_model_performance():
     else:
         range_label = f"{start_date.strftime('%b %d, %Y')} to {end_date.strftime('%b %d, %Y')}"
 
-    database_path = 'foguth_etf_models.db'
+    database_path = resolve_db_path('foguth_etf_models.db')
     db_cache_buster = get_db_cache_buster(database_path)
 
     # Load the models table

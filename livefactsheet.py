@@ -6,10 +6,11 @@ import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
 import datetime
 from updateytdreturnsmodule import update_etf_ytd_returns, update_security_set_ytd_returns, update_model_ytd_returns
-from cache_invalidation import get_db_cache_buster
+from cache_invalidation import get_db_cache_buster, resolve_db_path
 
 def display_live_factsheet():
-    db_cache_buster = get_db_cache_buster("foguth_etf_models.db")
+    database_path = resolve_db_path("foguth_etf_models.db")
+    db_cache_buster = get_db_cache_buster(database_path)
 
     def normalize_df_for_streamlit(dataframe):
         if dataframe is None:
@@ -87,7 +88,7 @@ def display_live_factsheet():
             GROUP BY etfs.symbol, etfs.name, etfs.yield
             ORDER BY ModelWeight DESC
         '''
-        conn = sqlite3.connect("foguth_etf_models.db")
+        conn = sqlite3.connect(database_path)
         df = pd.read_sql_query(query, conn, params=(selected_model,))
         conn.close()
         # Convert ModelWeight to percentage and add '%' sign
@@ -113,7 +114,7 @@ def display_live_factsheet():
     
     
     def load_models():
-        conn = sqlite3.connect("foguth_etf_models.db")
+        conn = sqlite3.connect(database_path)
         models = pd.read_sql_query("SELECT name FROM models", conn)["name"].tolist()
         conn.close()
         return models
@@ -121,7 +122,7 @@ def display_live_factsheet():
     def get_categories_for_etfs(etf_symbols):
         if not etf_symbols:
             return pd.DataFrame(columns=["category", "Weight"])
-        conn = sqlite3.connect("foguth_etf_models.db")
+        conn = sqlite3.connect(database_path)
         placeholders = ','.join(['?'] * len(etf_symbols))
         query = f'''
             SELECT symbol, category FROM etf_infos
@@ -245,7 +246,7 @@ def display_live_factsheet():
         Uses simple sum method to match updatealldataforetpsite.py for consistency.
         Returns a DataFrame with columns: Date, cum_return.
         """
-        conn = sqlite3.connect("foguth_etf_models.db")
+        conn = sqlite3.connect(database_path)
         cursor = conn.cursor()
 
         # Fix the dates of rebalance
@@ -333,7 +334,7 @@ def display_live_factsheet():
             except sqlite3.Error:
                 return pd.DataFrame(columns=["Date", "Close"])
 
-        conn = sqlite3.connect("foguth_etf_models.db")
+        conn = sqlite3.connect(database_path)
 
         benchmark_df = load_benchmark_prices(conn, benchmark_symbol)
         if benchmark_df.empty:
