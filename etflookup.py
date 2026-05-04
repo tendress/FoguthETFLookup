@@ -5,13 +5,13 @@ import sqlite3
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from cache_invalidation import get_db_cache_buster
+from cache_invalidation import get_db_cache_buster, resolve_db_path
 
 
 def etf_lookup():
     st.title("Model & ETF Lookup")
 
-    database_path = "foguth_etf_models.db"
+    database_path = resolve_db_path("foguth_etf_models.db")
     db_cache_buster = get_db_cache_buster(database_path)
 
     @st.cache_data(ttl=30)
