@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import datetime
+from cache_invalidation import get_db_cache_buster
 
 
 # Set the app title and logo
@@ -40,6 +41,13 @@ pages = {
 }
 
 selected_page = st.sidebar.radio("Go to", list(pages.keys()))
+
+if st.sidebar.button("Refresh displayed data"):
+    st.cache_data.clear()
+    try:
+        st.rerun()
+    except AttributeError:
+        st.experimental_rerun()
 
 # Display the last updated date
 def get_last_updated_date():
@@ -87,6 +95,7 @@ if last_updated_date:
 if selected_page == "Home":
     # Database connection
     database_path = 'foguth_etf_models.db'
+    db_cache_buster = get_db_cache_buster(database_path)
     conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
 
@@ -98,8 +107,8 @@ if selected_page == "Home":
     ]
 
         # Fetch security sets and their weights for a given model
-    @st.cache_data
-    def fetch_security_sets_for_model(model_name):
+    @st.cache_data(ttl=300)
+    def fetch_security_sets_for_model(model_name, _db_cache_buster):
         query = '''
             SELECT security_sets.name, model_security_set.weight
             FROM model_security_set

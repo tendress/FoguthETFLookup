@@ -5,15 +5,17 @@ import sqlite3
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from cache_invalidation import get_db_cache_buster
 
 
 def etf_lookup():
     st.title("Model & ETF Lookup")
 
     database_path = "foguth_etf_models.db"
+    db_cache_buster = get_db_cache_buster(database_path)
 
     @st.cache_data(ttl=30)
-    def load_all_etfs_with_names():
+    def load_all_etfs_with_names(_db_cache_buster):
         conn = sqlite3.connect(database_path)
         cursor = conn.cursor()
         cursor.execute("SELECT symbol, name FROM etfs")
@@ -22,7 +24,7 @@ def etf_lookup():
         return result
 
     @st.cache_data(ttl=30)
-    def load_models_and_security_sets():
+    def load_models_and_security_sets(_db_cache_buster):
         conn = sqlite3.connect(database_path)
         cursor = conn.cursor()
         cursor.execute(
@@ -46,7 +48,7 @@ def etf_lookup():
         return models, security_sets
 
     @st.cache_data(ttl=30)
-    def load_security_sets_and_etfs_for_model(selected_model):
+    def load_security_sets_and_etfs_for_model(selected_model, _db_cache_buster):
         conn = sqlite3.connect(database_path)
         cursor = conn.cursor()
         query = """
@@ -69,10 +71,10 @@ def etf_lookup():
         conn.close()
         return pd.DataFrame(results, columns=["Security Set", "Security Set Weight", "ETF", "ETF Weight"])
 
-    all_etfs_with_names = load_all_etfs_with_names()
+    all_etfs_with_names = load_all_etfs_with_names(db_cache_buster)
     etf_options = ["Select an ETF"] + [f"{symbol} - {name}" for symbol, name in all_etfs_with_names]
 
-    models, security_sets = load_models_and_security_sets()
+    models, security_sets = load_models_and_security_sets(db_cache_buster)
 
     st.sidebar.title("Filters")
     selected_model = st.sidebar.selectbox(
@@ -94,7 +96,7 @@ def etf_lookup():
 
     if selected_model != "All Models":
         st.sidebar.title(f"Model: {selected_model}")
-        security_sets_and_etfs = load_security_sets_and_etfs_for_model(selected_model)
+        security_sets_and_etfs = load_security_sets_and_etfs_for_model(selected_model, db_cache_buster)
 
         if not security_sets_and_etfs.empty:
             for security_set in security_sets_and_etfs["Security Set"].unique():
@@ -119,7 +121,7 @@ def etf_lookup():
         st.header("Pick a Model to see its Strategies and ETFs")
 
     if selected_model != "All Models":
-        security_sets_and_etfs = load_security_sets_and_etfs_for_model(selected_model)
+        security_sets_and_etfs = load_security_sets_and_etfs_for_model(selected_model, db_cache_buster)
         if not security_sets_and_etfs.empty:
             st.write(security_sets_and_etfs)
         else:

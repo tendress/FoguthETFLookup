@@ -6,8 +6,11 @@ import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
 import datetime
 from updateytdreturnsmodule import update_etf_ytd_returns, update_security_set_ytd_returns, update_model_ytd_returns
+from cache_invalidation import get_db_cache_buster
 
 def display_live_factsheet():
+    db_cache_buster = get_db_cache_buster("foguth_etf_models.db")
+
     def normalize_df_for_streamlit(dataframe):
         if dataframe is None:
             return dataframe
@@ -67,7 +70,7 @@ def display_live_factsheet():
     """, unsafe_allow_html=True)
     
     @st.cache_data(ttl=31) 
-    def load_etf_weights_for_model(selected_model):
+    def load_etf_weights_for_model(selected_model, _db_cache_buster):
         query = '''
             SELECT 
                 etfs.symbol AS ETF, 
@@ -401,7 +404,7 @@ def display_live_factsheet():
 
 
     if selected_model != "All Models":
-        etf_df = load_etf_weights_for_model(selected_model)
+        etf_df = load_etf_weights_for_model(selected_model, db_cache_buster)
         if not etf_df.empty:
             # Display the selected Model name
             # style the header

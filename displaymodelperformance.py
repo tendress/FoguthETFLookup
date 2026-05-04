@@ -5,6 +5,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
+from cache_invalidation import get_db_cache_buster
 
 def display_model_performance():
     excluded_models = {
@@ -69,10 +70,11 @@ def display_model_performance():
         range_label = f"{start_date.strftime('%b %d, %Y')} to {end_date.strftime('%b %d, %Y')}"
 
     database_path = 'foguth_etf_models.db'
+    db_cache_buster = get_db_cache_buster(database_path)
 
     # Load the models table
     @st.cache_data(ttl=2000)
-    def load_models_table():
+    def load_models_table(_db_cache_buster):
         """
         Load the models table from the database.
         """
@@ -101,7 +103,7 @@ def display_model_performance():
 
     # Load the security_sets table
     @st.cache_data(ttl=7200)
-    def load_security_sets_table():
+    def load_security_sets_table(_db_cache_buster):
         """
         Load the security_sets table from the database.
         """
@@ -122,7 +124,7 @@ def display_model_performance():
             return pd.DataFrame()
 
     @st.cache_data(ttl=7200)
-    def load_model_returns_for_range(start_date, end_date):
+    def load_model_returns_for_range(start_date, end_date, _db_cache_buster):
         try:
             conn = sqlite3.connect(database_path)
             df = pd.read_sql_query(
@@ -151,7 +153,7 @@ def display_model_performance():
         return grouped[['Name', 'Return', 'AsOf']]
 
     @st.cache_data(ttl=7200)
-    def load_security_set_returns_for_range(start_date, end_date):
+    def load_security_set_returns_for_range(start_date, end_date, _db_cache_buster):
         try:
             conn = sqlite3.connect(database_path)
             df = pd.read_sql_query(
@@ -180,14 +182,14 @@ def display_model_performance():
         return grouped[['Name', 'Return', 'AsOf']]
 
     # Load data from the database
-    models_returns_df = load_model_returns_for_range(start_date, end_date)
-    security_set_returns_df = load_security_set_returns_for_range(start_date, end_date)
+    models_returns_df = load_model_returns_for_range(start_date, end_date, db_cache_buster)
+    security_set_returns_df = load_security_set_returns_for_range(start_date, end_date, db_cache_buster)
 
-    models_table_df = load_models_table()
+    models_table_df = load_models_table(db_cache_buster)
     models_table_df = models_table_df[~models_table_df['Name'].isin(excluded_models)].copy()
 
     models_yield_df = models_table_df[['Name', 'AnnualYield', 'ExpenseRatio']].rename(columns={'AnnualYield': 'Yield'})
-    security_sets_yield_df = load_security_sets_table()[['Name', 'Yield']]
+    security_sets_yield_df = load_security_sets_table(db_cache_buster)[['Name', 'Yield']]
 
     models_returns_df = models_returns_df[~models_returns_df['Name'].isin(excluded_models)].copy()
 
@@ -303,7 +305,7 @@ def display_model_performance():
     st.write("This page displays interactive graphs for model performance.")
 
     @st.cache_data(ttl=7200)
-    def load_model_series_for_group(selected_models, start_date, end_date):
+    def load_model_series_for_group(selected_models, start_date, end_date, _db_cache_buster):
         if not selected_models:
             return pd.DataFrame(columns=["model_name", "return_date", "return_amount"])
 
@@ -357,7 +359,7 @@ def display_model_performance():
     group_index = group_mapping[selected_group]
     selected_models = model_groups[group_index]
 
-    model_returns_df = load_model_series_for_group(tuple(selected_models), start_date, end_date)
+    model_returns_df = load_model_series_for_group(tuple(selected_models), start_date, end_date, db_cache_buster)
 
     chart_rows = []
 
