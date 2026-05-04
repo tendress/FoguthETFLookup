@@ -107,7 +107,7 @@ if selected_page == "Home":
     ]
 
         # Fetch security sets and their weights for a given model
-    @st.cache_data(ttl=300)
+    @st.cache_data(ttl=2300)
     def fetch_security_sets_for_model(model_name, _db_cache_buster):
         query = '''
             SELECT security_sets.name, model_security_set.weight
