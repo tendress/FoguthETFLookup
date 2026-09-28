@@ -154,6 +154,7 @@ if selected_page == "Home":
     <div style="background-color:#f8f9fa;padding:10px;border-radius:5px;">
                 <h2 style="color:red;"></h2>
                 <h2 style="color:red;">For Advisor Use Only. Not for public distribution. </h2>
+                <h3>The data on this website is being sourced from Yahoo Finance and values may be inaccurate.</h3>
                 <p>The information provided in this app is for educational purposes only and should not be considered as financial advice. Performance results do not include advisory fees, which would reduce returns. Past performance is not indicative of future results.</p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -169,7 +170,7 @@ if selected_page == "Home":
         
     # Display the model groups and their security sets
     st.title("Welcome to Foguth ETP Model Insights")
-    st.title("ETP Model Menu")
+    # st.title("ETP Model Menu")
     #st.write("")
     #st.write("")
     
@@ -179,30 +180,30 @@ if selected_page == "Home":
     group_headings = ["Growth", "Value", "Rising Dividend"]
 
     # Iterate through each model group
-    for group_index, (group, heading) in enumerate(zip(model_groups, group_headings)):
+    #for group_index, (group, heading) in enumerate(zip(model_groups, group_headings)):
         # Add a heading for each group
-        st.subheader(f"{heading} Models")
+        #st.subheader(f"{heading} Models")
 
         # Create a row with columns for each model in the group
-        cols = st.columns(len(group))
-        for i, model in enumerate(group):
-            with cols[i]:
+        #cols = st.columns(len(group))
+        #for i, model in enumerate(group):
+            #with cols[i]:
                 # Initialize the button state if not already set
-                if model not in st.session_state.open_buttons:
-                    st.session_state.open_buttons[model] = False
+                #if model not in st.session_state.open_buttons:
+                    #st.session_state.open_buttons[model] = False
 
                 # Display model name and YTD return
-                ytd = ytd_returns.get(model, None)
-                if ytd is not None:
-                    st.markdown(f"<div style='text-align:center'><b>{model}</b><br><span style='font-size:18px;color:#0066CC;'>YTD: {ytd:.2f}%</span></div>", unsafe_allow_html=True)
-                else:
-                    st.markdown(f"<div style='text-align:center'><b>{model}</b><br><span style='font-size:18px;color:#888;'>YTD: N/A</span></div>", unsafe_allow_html=True)
+                #ytd = ytd_returns.get(model, None)
+                #if ytd is not None:
+                    #st.markdown(f"<div style='text-align:center'><b>{model}</b><br><span style='font-size:18px;color:#0066CC;'>YTD: {ytd:.2f}%</span></div>", unsafe_allow_html=True)
+                #else:
+                    #st.markdown(f"<div style='text-align:center'><b>{model}</b><br><span style='font-size:18px;color:#888;'>YTD: N/A</span></div>", unsafe_allow_html=True)
 
                 
 
         # Add space and a horizontal line between each row of models
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("<hr>", unsafe_allow_html=True)
+        #st.markdown("<br>", unsafe_allow_html=True)
+        #st.markdown("<hr>", unsafe_allow_html=True)
 
     # Close the database connection
     conn.close()
