@@ -32,7 +32,7 @@ pages = {
     "Home": "Welcome to Foguth ETP Model Insights",
     #"Model Performance": display_model_performance,
     #"Live ETP Factsheet": display_live_factsheet,
-    "ETF Lookup": etf_lookup,
+    #"ETF Lookup": etf_lookup,
     #"Beta Calculator": calculate_beta_page,
     "Correlation Matrix": display_correlation_matrix,
     "Economic Indicators": economic_indicators,
