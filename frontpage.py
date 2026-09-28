@@ -36,7 +36,7 @@ pages = {
     #"Beta Calculator": calculate_beta_page,
     "Correlation Matrix": display_correlation_matrix,
     "Economic Indicators": economic_indicators,
-    "Consumer Indicators": consumer_indicators,
+    #"Consumer Indicators": consumer_indicators,
     "Sector Rotation": sector_rotation_research
 }
 
